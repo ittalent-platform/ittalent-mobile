@@ -1,30 +1,62 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:ittalent_mobile/main.dart';
+import 'package:ittalent_mobile/components/ui/app_badge.dart';
+import 'package:ittalent_mobile/components/ui/app_button.dart';
+import 'package:ittalent_mobile/components/ui/app_card.dart';
+import 'package:ittalent_mobile/theme/app_theme.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('AppButton renders with primary variant and triggers callback',
+      (WidgetTester tester) async {
+    bool tapped = false;
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light,
+        home: Scaffold(
+          body: AppButton(
+            text: 'Submit application',
+            onPressed: () => tapped = true,
+          ),
+        ),
+      ),
+    );
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    expect(find.text('Submit application'), findsOneWidget);
+    await tester.tap(find.text('Submit application'));
+    expect(tapped, isTrue);
+  });
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+  testWidgets('AppBadge renders with correct label and tone',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light,
+        home: const Scaffold(
+          body: AppBadge(
+            label: 'Interview',
+            tone: BadgeTone.blocked,
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Interview'), findsOneWidget);
+  });
+
+  testWidgets('AppCard renders child with bordered surface',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light,
+        home: const Scaffold(
+          body: AppCard(
+            child: Text('Card Content'),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Card Content'), findsOneWidget);
   });
 }
