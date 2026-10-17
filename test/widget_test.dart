@@ -6,8 +6,9 @@ import 'package:ittalent_mobile/components/ui/app_card.dart';
 import 'package:ittalent_mobile/theme/app_theme.dart';
 
 void main() {
-  testWidgets('AppButton renders with primary variant and triggers callback',
-      (WidgetTester tester) async {
+  testWidgets('AppButton renders with primary variant and triggers callback', (
+    WidgetTester tester,
+  ) async {
     bool tapped = false;
 
     await tester.pumpWidget(
@@ -27,16 +28,14 @@ void main() {
     expect(tapped, isTrue);
   });
 
-  testWidgets('AppBadge renders with correct label and tone',
-      (WidgetTester tester) async {
+  testWidgets('AppBadge renders with correct label and tone', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light,
         home: const Scaffold(
-          body: AppBadge(
-            label: 'Interview',
-            tone: BadgeTone.blocked,
-          ),
+          body: AppBadge(label: 'Interview', tone: BadgeTone.blocked),
         ),
       ),
     );
@@ -44,16 +43,13 @@ void main() {
     expect(find.text('Interview'), findsOneWidget);
   });
 
-  testWidgets('AppCard renders child with bordered surface',
-      (WidgetTester tester) async {
+  testWidgets('AppCard renders child with bordered surface', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light,
-        home: const Scaffold(
-          body: AppCard(
-            child: Text('Card Content'),
-          ),
-        ),
+        home: const Scaffold(body: AppCard(child: Text('Card Content'))),
       ),
     );
 

@@ -1,12 +1,13 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../auth/token_storage.dart';
 import '../config/env.dart';
 import 'api_error.dart';
 
 final dioProvider = Provider<Dio>((ref) {
   final tokenStorage = ref.watch(tokenStorageProvider);
-  
+
   final dio = Dio(
     BaseOptions(
       baseUrl: AppEnv.apiBaseUrl,

@@ -9,5 +9,6 @@ class AppRoutes {
   static const String login = '/auth/login';
 
   static String jobDetail(String jobId) => '/jobs/$jobId';
-  static String applicationDetail(String applicationId) => '/my-applications/$applicationId';
+  static String applicationDetail(String applicationId) =>
+      '/my-applications/$applicationId';
 }

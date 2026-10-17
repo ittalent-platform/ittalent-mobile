@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+
 import '../../../components/common/app_empty_state.dart';
 import '../../../components/common/app_error_state.dart';
 import '../../../components/layout/screen_scaffold.dart';
@@ -58,7 +59,8 @@ class ApplicationsScreen extends ConsumerWidget {
             return const AppEmptyState(
               icon: Icon(LucideIcons.inbox),
               title: 'No applications yet',
-              description: 'Apply to open positions to track your progress here.',
+              description:
+                  'Apply to open positions to track your progress here.',
             );
           }
 
@@ -71,8 +73,12 @@ class ApplicationsScreen extends ConsumerWidget {
               separatorBuilder: (context, index) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
                 final item = applications[index];
-                final tone = ApplicationConstants.badgeToneForStatus(item.status);
-                final statusLabel = ApplicationConstants.labelForStatus(item.status);
+                final tone = ApplicationConstants.badgeToneForStatus(
+                  item.status,
+                );
+                final statusLabel = ApplicationConstants.labelForStatus(
+                  item.status,
+                );
 
                 return AppCard(
                   child: Column(
@@ -92,10 +98,7 @@ class ApplicationsScreen extends ConsumerWidget {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          AppBadge(
-                            label: statusLabel,
-                            tone: tone,
-                          ),
+                          AppBadge(label: statusLabel, tone: tone),
                         ],
                       ),
                       const SizedBox(height: 6),

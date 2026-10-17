@@ -1,17 +1,35 @@
-# ittalent_mobile
+# IT-Talent Mobile (`ittalent_mobile`)
 
-A new Flutter project.
+The cross-platform mobile companion application for IT-Talent, built with **Flutter**, designed with architectural and stylistic parity to [`ittalent-web`](../ittalent-web).
 
-## Getting Started
+---
 
-This project is a starting point for a Flutter application.
+## Quickstart
 
-A few resources to get you started if this is your first Flutter project:
+```bash
+# 1. Install dependencies
+flutter pub get
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+# 2. Run static analysis
+flutter analyze
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+# 3. Run unit and widget tests
+flutter test
+
+# 4. Run app on simulator or connected device
+flutter run
+```
+
+---
+
+## Architectural Parity with `ittalent-web`
+
+- **Design System:** 1:1 port of `DESIGN.md` tokens (Ember `#f2470c`, warm canvas `#fafaf8`, status tint pairs, 12px controls, 16px cards) via `AppColors` `ThemeExtension`.
+- **UI Primitives:** Atomic widgets in `lib/components/ui/` (`AppButton`, `AppCard`, `AppBadge`, `AppInput`, `AppSkeleton`) mirroring web shadcn/ui.
+- **State & Queries:** `flutter_riverpod` mimicking TanStack Query (`AsyncValue` with `.when()`).
+- **Navigation:** `go_router` declarative path routing (`AppRoutes`).
+- **Icons:** `lucide_icons` matching `lucide-react` icon names.
+- **Localization:** `easy_localization` using shared JSON translation bundles from web (`assets/translations/{en,vi}.json`).
+- **API Client:** Dio with `flutter_secure_storage` interceptor.
+
+For full developer guidelines and coding rules, see [AGENTS.md](./AGENTS.md).

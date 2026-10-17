@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';
 import '../ui/app_button.dart';
@@ -40,10 +41,7 @@ class AppEmptyState extends StatelessWidget {
                 ),
                 alignment: Alignment.center,
                 child: IconTheme(
-                  data: IconThemeData(
-                    color: colors.mutedForeground,
-                    size: 24,
-                  ),
+                  data: IconThemeData(color: colors.mutedForeground, size: 24),
                   child: icon!,
                 ),
               ),

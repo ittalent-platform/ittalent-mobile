@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../theme/app_colors.dart';
 import '../../theme/app_radius.dart';
 
@@ -27,10 +28,7 @@ class AppCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: backgroundColor ?? colors.card,
         borderRadius: AppRadius.cardRadius,
-        border: Border.all(
-          color: borderColor ?? colors.border,
-          width: 1.0,
-        ),
+        border: Border.all(color: borderColor ?? colors.border, width: 1.0),
       ),
       child: child,
     );

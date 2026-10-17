@@ -16,7 +16,7 @@ class ApiError implements Exception {
   factory ApiError.fromDio(DioException error) {
     final response = error.response;
     final statusCode = response?.statusCode;
-    
+
     String message = 'An unexpected error occurred. Please try again.';
     String? code;
     dynamic details;
@@ -48,5 +48,6 @@ class ApiError implements Exception {
   bool get isNotFound => statusCode == 404;
 
   @override
-  String toString() => 'ApiError(status: $statusCode, code: $code, message: $message)';
+  String toString() =>
+      'ApiError(status: $statusCode, code: $code, message: $message)';
 }

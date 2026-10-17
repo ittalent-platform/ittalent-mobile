@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+
 import '../../theme/app_colors.dart';
 import '../../theme/app_radius.dart';
 import '../../theme/app_typography.dart';
 
 enum AppButtonVariant { primary, secondary, outline, ghost, destructive }
+
 enum AppButtonSize { sm, md, lg, icon }
 
 class AppButton extends StatelessWidget {
@@ -140,7 +142,9 @@ class AppButton extends StatelessWidget {
         onTap: isEnabled ? onPressed : null,
         child: Container(
           height: height,
-          width: size == AppButtonSize.icon ? height : (isFullWidth ? double.infinity : null),
+          width: size == AppButtonSize.icon
+              ? height
+              : (isFullWidth ? double.infinity : null),
           padding: size == AppButtonSize.icon ? EdgeInsets.zero : padding,
           alignment: Alignment.center,
           child: content,

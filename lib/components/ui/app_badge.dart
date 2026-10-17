@@ -1,17 +1,10 @@
 import 'package:flutter/material.dart';
+
 import '../../theme/app_colors.dart';
 import '../../theme/app_radius.dart';
 import '../../theme/app_typography.dart';
 
-enum BadgeTone {
-  success,
-  warning,
-  info,
-  blocked,
-  peach,
-  error,
-  neutral,
-}
+enum BadgeTone { success, warning, info, blocked, peach, error, neutral }
 
 class AppBadge extends StatelessWidget {
   const AppBadge({

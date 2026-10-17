@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../theme/app_colors.dart';
 import '../../theme/app_radius.dart';
 import '../../theme/app_typography.dart';
@@ -75,10 +76,7 @@ class AppStatusPanel extends StatelessWidget {
           Container(
             width: 56,
             height: 56,
-            decoration: BoxDecoration(
-              color: discBg,
-              shape: BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: discBg, shape: BoxShape.circle),
             alignment: Alignment.center,
             child: IconTheme(
               data: IconThemeData(color: discFg, size: 28),
@@ -105,10 +103,7 @@ class AppStatusPanel extends StatelessWidget {
               height: 1.4,
             ),
           ),
-          if (actions != null) ...[
-            const SizedBox(height: 20),
-            actions!,
-          ],
+          if (actions != null) ...[const SizedBox(height: 20), actions!],
           if (footerNote != null) ...[
             const SizedBox(height: 14),
             Text(

@@ -1,10 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../api/client.dart';
 import 'auth_state.dart';
 import 'token_storage.dart';
 
-final authNotifierProvider =
-    NotifierProvider<AuthNotifier, AuthState>(AuthNotifier.new);
+final authNotifierProvider = NotifierProvider<AuthNotifier, AuthState>(
+  AuthNotifier.new,
+);
 
 class AuthNotifier extends Notifier<AuthState> {
   @override
@@ -24,7 +26,9 @@ class AuthNotifier extends Notifier<AuthState> {
     }
 
     try {
-      final response = await _apiClient.get<Map<String, dynamic>>('/api/v1/auth/me');
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '/api/v1/auth/me',
+      );
       final data = response.data;
       if (data != null) {
         state = AuthState.authenticated(

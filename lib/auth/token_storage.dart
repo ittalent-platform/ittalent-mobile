@@ -6,9 +6,8 @@ final tokenStorageProvider = Provider<TokenStorage>((ref) {
 });
 
 class TokenStorage {
-  const TokenStorage({
-    FlutterSecureStorage? storage,
-  }) : _storage = storage ?? const FlutterSecureStorage();
+  const TokenStorage({FlutterSecureStorage? storage})
+    : _storage = storage ?? const FlutterSecureStorage();
 
   final FlutterSecureStorage _storage;
 

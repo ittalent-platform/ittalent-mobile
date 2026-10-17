@@ -253,52 +253,68 @@ class AppColors extends ThemeExtension<AppColors> {
       card: Color.lerp(card, other.card, t)!,
       cardForeground: Color.lerp(cardForeground, other.cardForeground, t)!,
       secondary: Color.lerp(secondary, other.secondary, t)!,
-      secondaryForeground:
-          Color.lerp(secondaryForeground, other.secondaryForeground, t)!,
+      secondaryForeground: Color.lerp(
+        secondaryForeground,
+        other.secondaryForeground,
+        t,
+      )!,
       muted: Color.lerp(muted, other.muted, t)!,
       mutedForeground: Color.lerp(mutedForeground, other.mutedForeground, t)!,
       border: Color.lerp(border, other.border, t)!,
       input: Color.lerp(input, other.input, t)!,
       ring: Color.lerp(ring, other.ring, t)!,
       primary: Color.lerp(primary, other.primary, t)!,
-      primaryForeground:
-          Color.lerp(primaryForeground, other.primaryForeground, t)!,
-      candidatePrimary:
-          Color.lerp(candidatePrimary, other.candidatePrimary, t)!,
+      primaryForeground: Color.lerp(
+        primaryForeground,
+        other.primaryForeground,
+        t,
+      )!,
+      candidatePrimary: Color.lerp(
+        candidatePrimary,
+        other.candidatePrimary,
+        t,
+      )!,
       destructive: Color.lerp(destructive, other.destructive, t)!,
-      destructiveForeground:
-          Color.lerp(destructiveForeground, other.destructiveForeground, t)!,
+      destructiveForeground: Color.lerp(
+        destructiveForeground,
+        other.destructiveForeground,
+        t,
+      )!,
       fgLink: Color.lerp(fgLink, other.fgLink, t)!,
-      statusSuccessBg:
-          Color.lerp(statusSuccessBg, other.statusSuccessBg, t)!,
-      statusSuccessFg:
-          Color.lerp(statusSuccessFg, other.statusSuccessFg, t)!,
-      statusSuccessBorder:
-          Color.lerp(statusSuccessBorder, other.statusSuccessBorder, t)!,
-      statusWarningBg:
-          Color.lerp(statusWarningBg, other.statusWarningBg, t)!,
-      statusWarningFg:
-          Color.lerp(statusWarningFg, other.statusWarningFg, t)!,
-      statusWarningBorder:
-          Color.lerp(statusWarningBorder, other.statusWarningBorder, t)!,
+      statusSuccessBg: Color.lerp(statusSuccessBg, other.statusSuccessBg, t)!,
+      statusSuccessFg: Color.lerp(statusSuccessFg, other.statusSuccessFg, t)!,
+      statusSuccessBorder: Color.lerp(
+        statusSuccessBorder,
+        other.statusSuccessBorder,
+        t,
+      )!,
+      statusWarningBg: Color.lerp(statusWarningBg, other.statusWarningBg, t)!,
+      statusWarningFg: Color.lerp(statusWarningFg, other.statusWarningFg, t)!,
+      statusWarningBorder: Color.lerp(
+        statusWarningBorder,
+        other.statusWarningBorder,
+        t,
+      )!,
       statusInfoBg: Color.lerp(statusInfoBg, other.statusInfoBg, t)!,
       statusInfoFg: Color.lerp(statusInfoFg, other.statusInfoFg, t)!,
-      statusInfoBorder:
-          Color.lerp(statusInfoBorder, other.statusInfoBorder, t)!,
-      statusBlockedBg:
-          Color.lerp(statusBlockedBg, other.statusBlockedBg, t)!,
-      statusBlockedFg:
-          Color.lerp(statusBlockedFg, other.statusBlockedFg, t)!,
-      statusBlockedBorder:
-          Color.lerp(statusBlockedBorder, other.statusBlockedBorder, t)!,
+      statusInfoBorder: Color.lerp(
+        statusInfoBorder,
+        other.statusInfoBorder,
+        t,
+      )!,
+      statusBlockedBg: Color.lerp(statusBlockedBg, other.statusBlockedBg, t)!,
+      statusBlockedFg: Color.lerp(statusBlockedFg, other.statusBlockedFg, t)!,
+      statusBlockedBorder: Color.lerp(
+        statusBlockedBorder,
+        other.statusBlockedBorder,
+        t,
+      )!,
       statusPeachBg: Color.lerp(statusPeachBg, other.statusPeachBg, t)!,
       statusPeachFg: Color.lerp(statusPeachFg, other.statusPeachFg, t)!,
       statusErrorBg: Color.lerp(statusErrorBg, other.statusErrorBg, t)!,
       statusErrorFg: Color.lerp(statusErrorFg, other.statusErrorFg, t)!,
-      statusNeutralBg:
-          Color.lerp(statusNeutralBg, other.statusNeutralBg, t)!,
-      statusNeutralFg:
-          Color.lerp(statusNeutralFg, other.statusNeutralFg, t)!,
+      statusNeutralBg: Color.lerp(statusNeutralBg, other.statusNeutralBg, t)!,
+      statusNeutralFg: Color.lerp(statusNeutralFg, other.statusNeutralFg, t)!,
     );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../theme/app_colors.dart';
 
 class ScreenScaffold extends StatelessWidget {
@@ -23,10 +24,7 @@ class ScreenScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colors;
 
-    Widget content = Padding(
-      padding: padding,
-      child: body,
-    );
+    Widget content = Padding(padding: padding, child: body);
 
     if (safeArea) {
       content = SafeArea(child: content);

@@ -1,9 +1,4 @@
-enum AuthStatus {
-  initial,
-  loading,
-  authenticated,
-  unauthenticated,
-}
+enum AuthStatus { initial, loading, authenticated, unauthenticated }
 
 class AuthState {
   const AuthState({
@@ -30,13 +25,12 @@ class AuthState {
     required String userId,
     required String email,
     required String role,
-  }) =>
-      AuthState(
-        status: AuthStatus.authenticated,
-        userId: userId,
-        email: email,
-        role: role,
-      );
+  }) => AuthState(
+    status: AuthStatus.authenticated,
+    userId: userId,
+    email: email,
+    role: role,
+  );
 
   AuthState copyWith({
     AuthStatus? status,

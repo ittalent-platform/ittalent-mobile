@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+
 import '../components/common/app_empty_state.dart';
 import '../components/layout/screen_scaffold.dart';
 import '../config/routes.dart';
@@ -32,12 +33,18 @@ final routerProvider = Provider<GoRouter>((ref) {
               destinations: [
                 NavigationDestination(
                   icon: const Icon(LucideIcons.briefcase),
-                  selectedIcon: Icon(LucideIcons.briefcase, color: colors.primary),
+                  selectedIcon: Icon(
+                    LucideIcons.briefcase,
+                    color: colors.primary,
+                  ),
                   label: tr('accountNav.jobSearch'),
                 ),
                 NavigationDestination(
                   icon: const Icon(LucideIcons.fileText),
-                  selectedIcon: Icon(LucideIcons.fileText, color: colors.primary),
+                  selectedIcon: Icon(
+                    LucideIcons.fileText,
+                    color: colors.primary,
+                  ),
                   label: tr('accountNav.myApplications'),
                 ),
                 NavigationDestination(
@@ -59,7 +66,8 @@ final routerProvider = Provider<GoRouter>((ref) {
                   body: AppEmptyState(
                     icon: const Icon(LucideIcons.search),
                     title: tr('accountNav.jobSearch'),
-                    description: 'Search open tech positions matching your skills.',
+                    description:
+                        'Search open tech positions matching your skills.',
                   ),
                 ),
               ),
@@ -82,7 +90,8 @@ final routerProvider = Provider<GoRouter>((ref) {
                   body: AppEmptyState(
                     icon: const Icon(LucideIcons.user),
                     title: tr('accountNav.myProfile'),
-                    description: 'Manage your candidate profile, resume, and skills.',
+                    description:
+                        'Manage your candidate profile, resume, and skills.',
                   ),
                 ),
               ),

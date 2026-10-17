@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../theme/app_colors.dart';
 import '../../theme/app_radius.dart';
 import '../../theme/app_typography.dart';
@@ -60,10 +61,7 @@ class AppInput extends StatelessWidget {
           readOnly: readOnly,
           onTap: onTap,
           maxLines: maxLines,
-          style: AppTypography.body(
-            fontSize: 14,
-            color: colors.foreground,
-          ),
+          style: AppTypography.body(fontSize: 14, color: colors.foreground),
           decoration: InputDecoration(
             hintText: hintText,
             hintStyle: AppTypography.body(
