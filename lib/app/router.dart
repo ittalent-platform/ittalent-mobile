@@ -2,18 +2,129 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../auth/auth_notifier.dart';
+import '../auth/auth_state.dart';
 import '../components/common/app_empty_state.dart';
 import '../components/layout/screen_scaffold.dart';
 import '../config/routes.dart';
 import '../features/applicant/applications/applications_screen.dart';
 import '../theme/app_colors.dart';
 
+class RouterNotifier extends ChangeNotifier {
+  RouterNotifier(this._ref) {
+    _ref.listen(authNotifierProvider, (previous, next) => notifyListeners());
+  }
+
+  final Ref _ref;
+
+  AuthState get authState => _ref.read(authNotifierProvider);
+
+  String? redirect(BuildContext context, GoRouterState state) {
+    if (authState.status == AuthStatus.initial) {
+      return null;
+    }
+
+    final loc = state.matchedLocation;
+    final isAuthRoute =
+        loc == AppRoutes.welcome ||
+        loc == AppRoutes.login ||
+        loc == AppRoutes.register ||
+        loc == AppRoutes.forgotPassword ||
+        loc == AppRoutes.verifyEmail ||
+        loc == AppRoutes.resetPassword;
+
+    final isGuestAllowed = isAuthRoute || loc.startsWith(AppRoutes.jobs);
+
+    if (!authState.isAuthenticated && !isGuestAllowed) {
+      return AppRoutes.welcome;
+    }
+
+    if (authState.isAuthenticated &&
+        (loc == AppRoutes.welcome ||
+            loc == AppRoutes.login ||
+            loc == AppRoutes.register)) {
+      return AppRoutes.myApplications;
+    }
+
+    return null;
+  }
+}
+
+final routerNotifierProvider = Provider<RouterNotifier>((ref) {
+  return RouterNotifier(ref);
+});
+
 final routerProvider = Provider<GoRouter>((ref) {
+  final notifier = ref.watch(routerNotifierProvider);
+
   return GoRouter(
     initialLocation: AppRoutes.myApplications,
+    refreshListenable: notifier,
+    redirect: notifier.redirect,
     routes: [
+      GoRoute(
+        path: AppRoutes.welcome,
+        builder: (context, state) => ScreenScaffold(
+          body: AppEmptyState(
+            icon: const Icon(LucideIcons.sparkles),
+            title: 'Welcome to ITTalent',
+            description:
+                'Discover tech opportunities and accelerate your career.',
+          ),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.login,
+        builder: (context, state) => ScreenScaffold(
+          body: AppEmptyState(
+            icon: const Icon(LucideIcons.logIn),
+            title: 'Sign In',
+            description: 'Sign in to access your profile and applications.',
+          ),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.register,
+        builder: (context, state) => ScreenScaffold(
+          body: AppEmptyState(
+            icon: const Icon(LucideIcons.userPlus),
+            title: 'Create Account',
+            description: 'Sign up to discover opportunities.',
+          ),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.forgotPassword,
+        builder: (context, state) => ScreenScaffold(
+          body: AppEmptyState(
+            icon: const Icon(LucideIcons.keyRound),
+            title: 'Forgot Password',
+            description: 'Reset your password instructions.',
+          ),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.verifyEmail,
+        builder: (context, state) => ScreenScaffold(
+          body: AppEmptyState(
+            icon: const Icon(LucideIcons.mail),
+            title: 'Verify Email',
+            description: 'Check your email for the verification link.',
+          ),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.resetPassword,
+        builder: (context, state) => ScreenScaffold(
+          body: AppEmptyState(
+            icon: const Icon(LucideIcons.lock),
+            title: 'Reset Password',
+            description: 'Set a new password for your account.',
+          ),
+        ),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
           final colors = context.colors;
