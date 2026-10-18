@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -48,7 +49,8 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
   @override
   void initState() {
     super.initState();
-    if (widget.skipTokenValidationForTesting) {
+    if (widget.skipTokenValidationForTesting ||
+        (kDebugMode && widget.token == 'dev-mock-valid')) {
       _isValidatingToken = false;
       _isTokenValid = true;
     } else {
