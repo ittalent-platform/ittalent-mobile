@@ -70,115 +70,142 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     return Scaffold(
       backgroundColor: colors.background,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 8),
-              const AuthBrandHeader(
-                title: 'Welcome back',
-                subtitle: 'Sign in to your ITTalent candidate account.',
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20.0,
+                vertical: 16.0,
               ),
-              if (authState.errorMessage != null &&
-                  authState.errorMessage!.isNotEmpty) ...[
-                const SizedBox(height: 20),
-                AuthErrorBanner(
-                  message: authState.errorMessage!,
-                  tone: authState.errorMessage!.toLowerCase().contains('verify')
-                      ? AuthBannerTone.warning
-                      : authState.errorMessage!.toLowerCase().contains(
-                          'attempt',
-                        )
-                      ? AuthBannerTone.info
-                      : AuthBannerTone.error,
-                  actionLabel:
-                      authState.errorMessage!.toLowerCase().contains('verify')
-                      ? 'Resend link'
-                      : null,
-                  onAction:
-                      authState.errorMessage!.toLowerCase().contains('verify')
-                      ? () {
-                          final email = _identifierController.text.trim();
-                          if (email.isNotEmpty) {
-                            ref
-                                .read(authNotifierProvider.notifier)
-                                .resendVerificationEmail(email);
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxHeight - 32.0,
+                ),
+                child: IntrinsicHeight(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 8),
+                      const AuthBrandHeader(
+                        title: 'Welcome back',
+                        subtitle: 'Sign in to your ITTalent candidate account.',
+                      ),
+                      if (authState.errorMessage != null &&
+                          authState.errorMessage!.isNotEmpty) ...[
+                        const SizedBox(height: 20),
+                        AuthErrorBanner(
+                          message: authState.errorMessage!,
+                          tone:
+                              authState.errorMessage!.toLowerCase().contains(
+                                'verify',
+                              )
+                              ? AuthBannerTone.warning
+                              : authState.errorMessage!.toLowerCase().contains(
+                                  'attempt',
+                                )
+                              ? AuthBannerTone.info
+                              : AuthBannerTone.error,
+                          actionLabel:
+                              authState.errorMessage!.toLowerCase().contains(
+                                'verify',
+                              )
+                              ? 'Resend link'
+                              : null,
+                          onAction:
+                              authState.errorMessage!.toLowerCase().contains(
+                                'verify',
+                              )
+                              ? () {
+                                  final email = _identifierController.text
+                                      .trim();
+                                  if (email.isNotEmpty) {
+                                    ref
+                                        .read(authNotifierProvider.notifier)
+                                        .resendVerificationEmail(email);
+                                  }
+                                }
+                              : null,
+                        ),
+                      ],
+                      const SizedBox(height: 24),
+                      AppInput(
+                        controller: _identifierController,
+                        label: 'Email',
+                        hintText: 'an.nguyen@gmail.com',
+                        keyboardType: TextInputType.emailAddress,
+                        errorText: _identifierError,
+                        onChanged: (_) {
+                          if (_identifierError != null) {
+                            setState(() => _identifierError = null);
                           }
-                        }
-                      : null,
-                ),
-              ],
-              const SizedBox(height: 24),
-              AppInput(
-                controller: _identifierController,
-                label: 'Email',
-                hintText: 'an.nguyen@gmail.com',
-                keyboardType: TextInputType.emailAddress,
-                errorText: _identifierError,
-                onChanged: (_) {
-                  if (_identifierError != null) {
-                    setState(() => _identifierError = null);
-                  }
-                },
-              ),
-              const SizedBox(height: 18),
-              AppInput(
-                controller: _passwordController,
-                label: 'Password',
-                hintText: '••••••••',
-                obscureText: _obscurePassword,
-                errorText: _passwordError,
-                labelTrailing: GestureDetector(
-                  onTap: () => context.push(AppRoutes.forgotPassword),
-                  child: Text(
-                    'Forgot password?',
-                    style: AppTypography.body(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: colors.fgLink,
-                    ),
+                        },
+                      ),
+                      const SizedBox(height: 18),
+                      AppInput(
+                        controller: _passwordController,
+                        label: 'Password',
+                        hintText: '••••••••',
+                        obscureText: _obscurePassword,
+                        errorText: _passwordError,
+                        labelTrailing: GestureDetector(
+                          onTap: () => context.push(AppRoutes.forgotPassword),
+                          child: Text(
+                            'Forgot password?',
+                            style: AppTypography.body(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: colors.fgLink,
+                            ),
+                          ),
+                        ),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword
+                                ? LucideIcons.eye
+                                : LucideIcons.eyeOff,
+                            size: 18,
+                            color: colors.mutedForeground,
+                          ),
+                          onPressed: () {
+                            setState(
+                              () => _obscurePassword = !_obscurePassword,
+                            );
+                          },
+                        ),
+                        onChanged: (_) {
+                          if (_passwordError != null) {
+                            setState(() => _passwordError = null);
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 24),
+                      AppButton(
+                        text: 'Sign in',
+                        size: AppButtonSize.lg,
+                        isFullWidth: true,
+                        isLoading: authState.isLoading,
+                        onPressed: _handleSubmit,
+                      ),
+                      const SizedBox(height: 24),
+                      const AuthDivider(text: 'New to ITTalent?'),
+                      const SizedBox(height: 20),
+                      AppButton(
+                        text: 'Create a candidate account',
+                        variant: AppButtonVariant.outline,
+                        size: AppButtonSize.lg,
+                        isFullWidth: true,
+                        onPressed: () => context.push(AppRoutes.register),
+                      ),
+                      const Spacer(),
+                      const SizedBox(height: 24),
+                      const AuthFooterNote(),
+                      const SizedBox(height: 8),
+                    ],
                   ),
                 ),
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    _obscurePassword ? LucideIcons.eye : LucideIcons.eyeOff,
-                    size: 18,
-                    color: colors.mutedForeground,
-                  ),
-                  onPressed: () {
-                    setState(() => _obscurePassword = !_obscurePassword);
-                  },
-                ),
-                onChanged: (_) {
-                  if (_passwordError != null) {
-                    setState(() => _passwordError = null);
-                  }
-                },
               ),
-              const SizedBox(height: 24),
-              AppButton(
-                text: 'Sign in',
-                size: AppButtonSize.lg,
-                isFullWidth: true,
-                isLoading: authState.isLoading,
-                onPressed: _handleSubmit,
-              ),
-              const SizedBox(height: 24),
-              const AuthDivider(text: 'New to ITTalent?'),
-              const SizedBox(height: 20),
-              AppButton(
-                text: 'Create a candidate account',
-                variant: AppButtonVariant.outline,
-                size: AppButtonSize.lg,
-                isFullWidth: true,
-                onPressed: () => context.push(AppRoutes.register),
-              ),
-              const SizedBox(height: 48),
-              const AuthFooterNote(),
-              const SizedBox(height: 16),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );

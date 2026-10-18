@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../../components/ui/ittalent_monogram.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_typography.dart';
 
@@ -38,27 +39,14 @@ class AuthBrandHeader extends StatelessWidget {
         if (showLogo) ...[
           Row(
             children: [
-              Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: colors.primary,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Center(
-                  child: Icon(
-                    LucideIcons.userRound,
-                    size: 16,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
+              const ITTalentMonogram(size: 26),
               const SizedBox(width: 8),
               Text(
                 'ITTALENT',
-                style: AppTypography.body(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
+                style: AppTypography.display(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.04 * 15,
                   color: colors.foreground,
                 ),
               ),
