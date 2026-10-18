@@ -14,6 +14,7 @@ import '../features/auth/forgot_password/forgot_password_screen.dart';
 import '../features/auth/forgot_password/reset_link_sent_screen.dart';
 import '../features/auth/login/login_screen.dart';
 import '../features/auth/register/register_screen.dart';
+import '../features/auth/reset_password/reset_password_screen.dart';
 import '../features/auth/verify_email/check_email_screen.dart';
 import '../features/auth/welcome/welcome_screen.dart';
 import '../theme/app_colors.dart';
@@ -117,13 +118,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.resetPassword,
-        builder: (context, state) => ScreenScaffold(
-          body: AppEmptyState(
-            icon: const Icon(LucideIcons.lock),
-            title: 'Reset Password',
-            description: 'Set a new password for your account.',
-          ),
-        ),
+        builder: (context, state) {
+          final token = state.uri.queryParameters['token'] ?? '';
+          final email = state.uri.queryParameters['email'];
+          return ResetPasswordScreen(token: token, email: email);
+        },
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
