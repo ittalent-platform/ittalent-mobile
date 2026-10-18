@@ -9,6 +9,7 @@ class AppInput extends StatelessWidget {
     super.key,
     this.controller,
     this.label,
+    this.labelTrailing,
     this.hintText,
     this.errorText,
     this.obscureText = false,
@@ -23,6 +24,7 @@ class AppInput extends StatelessWidget {
 
   final TextEditingController? controller;
   final String? label;
+  final Widget? labelTrailing;
   final String? hintText;
   final String? errorText;
   final bool obscureText;
@@ -42,14 +44,23 @@ class AppInput extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (label != null) ...[
-          Text(
-            label!,
-            style: AppTypography.body(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: colors.foreground,
-            ),
+        if (label != null || labelTrailing != null) ...[
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              if (label != null)
+                Text(
+                  label!,
+                  style: AppTypography.body(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: colors.foreground,
+                  ),
+                )
+              else
+                const SizedBox.shrink(),
+              ?labelTrailing,
+            ],
           ),
           const SizedBox(height: 6),
         ],
