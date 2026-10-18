@@ -10,6 +10,8 @@ import '../components/common/app_empty_state.dart';
 import '../components/layout/screen_scaffold.dart';
 import '../config/routes.dart';
 import '../features/applicant/applications/applications_screen.dart';
+import '../features/auth/login/login_screen.dart';
+import '../features/auth/welcome/welcome_screen.dart';
 import '../theme/app_colors.dart';
 
 class RouterNotifier extends ChangeNotifier {
@@ -66,24 +68,11 @@ final routerProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(
         path: AppRoutes.welcome,
-        builder: (context, state) => ScreenScaffold(
-          body: AppEmptyState(
-            icon: const Icon(LucideIcons.sparkles),
-            title: 'Welcome to ITTalent',
-            description:
-                'Discover tech opportunities and accelerate your career.',
-          ),
-        ),
+        builder: (context, state) => const WelcomeScreen(),
       ),
       GoRoute(
         path: AppRoutes.login,
-        builder: (context, state) => ScreenScaffold(
-          body: AppEmptyState(
-            icon: const Icon(LucideIcons.logIn),
-            title: 'Sign In',
-            description: 'Sign in to access your profile and applications.',
-          ),
-        ),
+        builder: (context, state) => const LoginScreen(),
       ),
       GoRoute(
         path: AppRoutes.register,
