@@ -65,8 +65,13 @@ class AppButton extends StatelessWidget {
     }
 
     if (!isEnabled) {
-      backgroundColor = backgroundColor.withValues(alpha: 0.5);
-      foregroundColor = foregroundColor.withValues(alpha: 0.5);
+      if (variant == AppButtonVariant.primary) {
+        backgroundColor = const Color(0xFFECEBE7);
+        foregroundColor = const Color(0xFFA3A3A8);
+      } else {
+        backgroundColor = backgroundColor.withValues(alpha: 0.5);
+        foregroundColor = foregroundColor.withValues(alpha: 0.5);
+      }
     }
 
     EdgeInsets padding;
