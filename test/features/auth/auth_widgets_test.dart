@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ittalent_mobile/features/auth/widgets/auth_brand_header.dart';
 import 'package:ittalent_mobile/features/auth/widgets/auth_divider.dart';
+import 'package:ittalent_mobile/features/auth/widgets/auth_email_hero.dart';
 import 'package:ittalent_mobile/features/auth/widgets/auth_error_banner.dart';
 import 'package:ittalent_mobile/features/auth/widgets/auth_footer_note.dart';
+import 'package:ittalent_mobile/features/auth/widgets/cooldown_timer_button.dart';
 import 'package:ittalent_mobile/theme/app_theme.dart';
 
 void main() {
@@ -122,5 +124,56 @@ void main() {
       await tester.tap(find.byType(AuthFooterNote));
       expect(tapped, isTrue);
     });
+  });
+
+  group('AuthEmailHero Tests', () {
+    testWidgets('renders email, title, and circular mail icon', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        buildTestableWidget(
+          const AuthEmailHero(email: 'candidate@example.com'),
+        ),
+      );
+
+      expect(find.text('Check your email'), findsOneWidget);
+      expect(find.textContaining('candidate@example.com'), findsOneWidget);
+      expect(find.byIcon(Icons.mail_outline_rounded), findsOneWidget);
+    });
+  });
+
+  group('CooldownTimerButton Tests', () {
+    testWidgets(
+      'renders countdown when active and transitions to active button',
+      (WidgetTester tester) async {
+        bool resendCalled = false;
+
+        await tester.pumpWidget(
+          buildTestableWidget(
+            CooldownTimerButton(
+              initialCooldownSeconds: 2,
+              startActive: true,
+              onResend: () async {
+                resendCalled = true;
+                return true;
+              },
+            ),
+          ),
+        );
+
+        expect(find.text('Resend link in 0:02'), findsOneWidget);
+
+        await tester.pump(const Duration(seconds: 1));
+        expect(find.text('Resend link in 0:01'), findsOneWidget);
+
+        await tester.pump(const Duration(seconds: 1));
+        expect(find.text('Resend link'), findsOneWidget);
+
+        await tester.tap(find.text('Resend link'));
+        await tester.pump();
+
+        expect(resendCalled, isTrue);
+      },
+    );
   });
 }

@@ -11,7 +11,9 @@ class AppInput extends StatelessWidget {
     this.label,
     this.labelTrailing,
     this.hintText,
+    this.helperText,
     this.errorText,
+    this.isRequired = false,
     this.obscureText = false,
     this.keyboardType,
     this.onChanged,
@@ -26,7 +28,9 @@ class AppInput extends StatelessWidget {
   final String? label;
   final Widget? labelTrailing;
   final String? hintText;
+  final String? helperText;
   final String? errorText;
+  final bool isRequired;
   final bool obscureText;
   final TextInputType? keyboardType;
   final ValueChanged<String>? onChanged;
@@ -49,13 +53,27 @@ class AppInput extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               if (label != null)
-                Text(
-                  label!,
-                  style: AppTypography.body(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: colors.foreground,
-                  ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      label!,
+                      style: AppTypography.body(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: colors.foreground,
+                      ),
+                    ),
+                    if (isRequired)
+                      Text(
+                        ' *',
+                        style: AppTypography.body(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: colors.destructive,
+                        ),
+                      ),
+                  ],
                 )
               else
                 const SizedBox.shrink(),
@@ -77,6 +95,12 @@ class AppInput extends StatelessWidget {
             hintText: hintText,
             hintStyle: AppTypography.body(
               fontSize: 14,
+              color: colors.mutedForeground,
+            ),
+            helperText: helperText,
+            helperMaxLines: 2,
+            helperStyle: AppTypography.body(
+              fontSize: 13.5,
               color: colors.mutedForeground,
             ),
             errorText: errorText,
