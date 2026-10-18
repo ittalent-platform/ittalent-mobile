@@ -112,6 +112,32 @@ class UserDTO {
     );
   }
 
+  UserDTO copyWith({
+    String? id,
+    String? email,
+    String? username,
+    String? fullName,
+    String? phone,
+    String? role,
+    String? status,
+    bool? emailVerified,
+    String? enterpriseId,
+    String? enterpriseName,
+  }) {
+    return UserDTO(
+      id: id ?? this.id,
+      email: email ?? this.email,
+      username: username ?? this.username,
+      fullName: fullName ?? this.fullName,
+      phone: phone ?? this.phone,
+      role: role ?? this.role,
+      status: status ?? this.status,
+      emailVerified: emailVerified ?? this.emailVerified,
+      enterpriseId: enterpriseId ?? this.enterpriseId,
+      enterpriseName: enterpriseName ?? this.enterpriseName,
+    );
+  }
+
   Map<String, dynamic> toJson() => {
     'id': id,
     'email': email,
