@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ittalent_mobile/api/api_error.dart';
 import 'package:ittalent_mobile/api/client.dart';
+import 'package:ittalent_mobile/auth/auth_dto.dart';
 import 'package:ittalent_mobile/auth/auth_notifier.dart';
 import 'package:ittalent_mobile/auth/auth_state.dart';
 import 'package:ittalent_mobile/auth/token_storage.dart';
@@ -237,6 +238,122 @@ void main() {
       expect(state.status, AuthStatus.unauthenticated);
       expect(state.errorMessage, 'Invalid credentials');
     });
+
+    test('register sends payload and stores tokens on success', () async {
+      fakeApiClient.postResponse = {
+        'user': {
+          'id': 'usr-new',
+          'email': 'new_dev@example.com',
+          'username': 'new_dev',
+          'role': 'candidate',
+          'emailVerified': false,
+        },
+        'tokens': {
+          'accessToken': 'reg-access-jwt',
+          'refreshToken': 'reg-refresh-jwt',
+        },
+        'verificationEmailSent': true,
+      };
+
+      final notifier = container.read(authNotifierProvider.notifier);
+      final result = await notifier.register(
+        const RegisterRequest(
+          email: 'new_dev@example.com',
+          username: 'new_dev',
+          password: 'Password123!',
+        ),
+      );
+
+      expect(result, isTrue);
+      expect(fakeApiClient.lastPostPath, '/api/v1/auth/register');
+      expect(fakeTokenStorage.accessToken, 'reg-access-jwt');
+      expect(fakeTokenStorage.refreshToken, 'reg-refresh-jwt');
+
+      final state = container.read(authNotifierProvider);
+      expect(state.status, AuthStatus.authenticated);
+      expect(state.userId, 'usr-new');
+      expect(state.isEmailVerified, isFalse);
+    });
+
+    test('forgotPassword sends email payload and handles ApiError', () async {
+      fakeApiClient.postResponse = {'success': true, 'message': 'Email sent'};
+
+      final notifier = container.read(authNotifierProvider.notifier);
+      final result = await notifier.forgotPassword('alex@example.com');
+
+      expect(result, isTrue);
+      expect(fakeApiClient.lastPostPath, '/api/v1/auth/forgot-password');
+      expect(fakeApiClient.lastPostData, {'email': 'alex@example.com'});
+
+      fakeApiClient.postError = const ApiError(
+        message: 'Too many requests',
+        statusCode: 429,
+      );
+      final errorResult = await notifier.forgotPassword('alex@example.com');
+      expect(errorResult, isFalse);
+      expect(
+        container.read(authNotifierProvider).errorMessage,
+        'Too many requests',
+      );
+    });
+
+    test('validateResetToken returns token validity', () async {
+      fakeApiClient.getResponse = {
+        'success': true,
+        'data': {'valid': true},
+      };
+
+      final notifier = container.read(authNotifierProvider.notifier);
+      final res = await notifier.validateResetToken('token-abc');
+
+      expect(fakeApiClient.lastGetPath, '/api/v1/auth/reset-password');
+      expect(res.valid, isTrue);
+      expect(res.success, isTrue);
+    });
+
+    test('resetPassword sends new password and token', () async {
+      fakeApiClient.postResponse = {'success': true};
+
+      final notifier = container.read(authNotifierProvider.notifier);
+      final result = await notifier.resetPassword(
+        'token-abc',
+        'BrandNewPassword123!',
+      );
+
+      expect(result, isTrue);
+      expect(fakeApiClient.lastPostPath, '/api/v1/auth/reset-password');
+      expect(fakeApiClient.lastPostData, {
+        'token': 'token-abc',
+        'newPassword': 'BrandNewPassword123!',
+      });
+    });
+
+    test('resendVerificationEmail calls endpoint with email', () async {
+      fakeApiClient.postResponse = {'success': true};
+
+      final notifier = container.read(authNotifierProvider.notifier);
+      final result = await notifier.resendVerificationEmail('dev@example.com');
+
+      expect(result, isTrue);
+      expect(
+        fakeApiClient.lastPostPath,
+        '/api/v1/auth/resend-verification-email',
+      );
+      expect(fakeApiClient.lastPostData, {'email': 'dev@example.com'});
+    });
+
+    test(
+      'verifyEmail calls endpoint with token and checks auth status',
+      () async {
+        fakeApiClient.getResponse = {'success': true};
+
+        final notifier = container.read(authNotifierProvider.notifier);
+        final result = await notifier.verifyEmail('verify-token-123');
+
+        expect(result, isTrue);
+        expect(fakeApiClient.lastGetPath, '/api/v1/auth/verify-email');
+      },
+    );
 
     test('logout clears tokens and sets unauthenticated state', () async {
       fakeTokenStorage.accessToken = 'jwt-token';

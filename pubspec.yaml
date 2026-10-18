@@ -39,8 +39,8 @@ dependencies:
   dio: ^5.11.1
   flutter_secure_storage: ^11.2.0
   google_fonts: ^9.0.0
-  lucide_icons: ^0.257.0
   easy_localization: ^3.0.8
+  lucide_icons_flutter: ^4.0.0
 
 dev_dependencies:
   flutter_test:
