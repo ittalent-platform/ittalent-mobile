@@ -11,6 +11,8 @@ import '../components/layout/screen_scaffold.dart';
 import '../config/routes.dart';
 import '../features/applicant/applications/applications_screen.dart';
 import '../features/auth/login/login_screen.dart';
+import '../features/auth/register/register_screen.dart';
+import '../features/auth/verify_email/check_email_screen.dart';
 import '../features/auth/welcome/welcome_screen.dart';
 import '../theme/app_colors.dart';
 
@@ -35,6 +37,7 @@ class RouterNotifier extends ChangeNotifier {
         loc == AppRoutes.register ||
         loc == AppRoutes.forgotPassword ||
         loc == AppRoutes.verifyEmail ||
+        loc == AppRoutes.verifyEmailNotice ||
         loc == AppRoutes.resetPassword;
 
     final isGuestAllowed = isAuthRoute || loc.startsWith(AppRoutes.jobs);
@@ -46,7 +49,8 @@ class RouterNotifier extends ChangeNotifier {
     if (authState.isAuthenticated &&
         (loc == AppRoutes.welcome ||
             loc == AppRoutes.login ||
-            loc == AppRoutes.register)) {
+            loc == AppRoutes.register ||
+            loc == AppRoutes.verifyEmailNotice)) {
       return AppRoutes.myApplications;
     }
 
@@ -76,13 +80,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.register,
-        builder: (context, state) => ScreenScaffold(
-          body: AppEmptyState(
-            icon: const Icon(LucideIcons.userPlus),
-            title: 'Create Account',
-            description: 'Sign up to discover opportunities.',
-          ),
-        ),
+        builder: (context, state) => const RegisterScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.verifyEmailNotice,
+        builder: (context, state) {
+          final email = state.uri.queryParameters['email'];
+          return CheckEmailScreen(email: email);
+        },
       ),
       GoRoute(
         path: AppRoutes.forgotPassword,
