@@ -117,34 +117,40 @@ void main() {
       expect(state.status, AuthStatus.initial);
     });
 
-    test('checkAuthStatus sets unauthenticated when token is missing', () async {
-      final notifier = container.read(authNotifierProvider.notifier);
-      await notifier.checkAuthStatus();
+    test(
+      'checkAuthStatus sets unauthenticated when token is missing',
+      () async {
+        final notifier = container.read(authNotifierProvider.notifier);
+        await notifier.checkAuthStatus();
 
-      final state = container.read(authNotifierProvider);
-      expect(state.status, AuthStatus.unauthenticated);
-      expect(state.isAuthenticated, isFalse);
-    });
+        final state = container.read(authNotifierProvider);
+        expect(state.status, AuthStatus.unauthenticated);
+        expect(state.isAuthenticated, isFalse);
+      },
+    );
 
-    test('checkAuthStatus sets authenticated when token is valid and /me succeeds', () async {
-      fakeTokenStorage.accessToken = 'valid-token';
-      fakeApiClient.getResponse = {
-        'id': 'usr-123',
-        'email': 'alex@example.com',
-        'role': 'candidate',
-      };
+    test(
+      'checkAuthStatus sets authenticated when token is valid and /me succeeds',
+      () async {
+        fakeTokenStorage.accessToken = 'valid-token';
+        fakeApiClient.getResponse = {
+          'id': 'usr-123',
+          'email': 'alex@example.com',
+          'role': 'candidate',
+        };
 
-      final notifier = container.read(authNotifierProvider.notifier);
-      await notifier.checkAuthStatus();
+        final notifier = container.read(authNotifierProvider.notifier);
+        await notifier.checkAuthStatus();
 
-      expect(fakeApiClient.lastGetPath, '/api/v1/auth/me');
-      final state = container.read(authNotifierProvider);
-      expect(state.status, AuthStatus.authenticated);
-      expect(state.userId, 'usr-123');
-      expect(state.email, 'alex@example.com');
-      expect(state.role, 'candidate');
-      expect(state.isAuthenticated, isTrue);
-    });
+        expect(fakeApiClient.lastGetPath, '/api/v1/auth/me');
+        final state = container.read(authNotifierProvider);
+        expect(state.status, AuthStatus.authenticated);
+        expect(state.userId, 'usr-123');
+        expect(state.email, 'alex@example.com');
+        expect(state.role, 'candidate');
+        expect(state.isAuthenticated, isTrue);
+      },
+    );
 
     test('login sends identifier and parses nested tokens correctly', () async {
       fakeApiClient.postResponse = {
@@ -179,25 +185,28 @@ void main() {
       expect(state.errorMessage, isNull);
     });
 
-    test('login with email identifier sets email fallback when user email omitted', () async {
-      fakeApiClient.postResponse = {
-        'user': {
-          'id': 'usr-789',
-          'role': 'candidate',
-        },
-        'tokens': {
-          'accessToken': 'jwt-token-123',
-          'refreshToken': 'jwt-refresh-456',
-        },
-      };
+    test(
+      'login with email identifier sets email fallback when user email omitted',
+      () async {
+        fakeApiClient.postResponse = {
+          'user': {'id': 'usr-789', 'role': 'candidate'},
+          'tokens': {
+            'accessToken': 'jwt-token-123',
+            'refreshToken': 'jwt-refresh-456',
+          },
+        };
 
-      final notifier = container.read(authNotifierProvider.notifier);
-      final result = await notifier.login('developer@example.com', 'Password123!');
+        final notifier = container.read(authNotifierProvider.notifier);
+        final result = await notifier.login(
+          'developer@example.com',
+          'Password123!',
+        );
 
-      expect(result, isTrue);
-      final state = container.read(authNotifierProvider);
-      expect(state.email, 'developer@example.com');
-    });
+        expect(result, isTrue);
+        final state = container.read(authNotifierProvider);
+        expect(state.email, 'developer@example.com');
+      },
+    );
 
     test('login captures ApiError message when credentials invalid', () async {
       fakeApiClient.postError = const ApiError(

@@ -51,18 +51,17 @@ class AuthNotifier extends Notifier<AuthState> {
     try {
       final response = await _apiClient.post<Map<String, dynamic>>(
         '/api/v1/auth/login',
-        data: {
-          'identifier': identifier.trim(),
-          'password': password,
-        },
+        data: {'identifier': identifier.trim(), 'password': password},
       );
 
       final data = response.data;
       final tokens = data?['tokens'] as Map<String, dynamic>?;
       final accessToken =
-          tokens?['accessToken']?.toString() ?? data?['accessToken']?.toString();
+          tokens?['accessToken']?.toString() ??
+          data?['accessToken']?.toString();
       final refreshToken =
-          tokens?['refreshToken']?.toString() ?? data?['refreshToken']?.toString();
+          tokens?['refreshToken']?.toString() ??
+          data?['refreshToken']?.toString();
 
       if (accessToken != null && accessToken.isNotEmpty) {
         await _tokenStorage.saveAccessToken(accessToken);
@@ -73,7 +72,8 @@ class AuthNotifier extends Notifier<AuthState> {
         final user = data?['user'] as Map<String, dynamic>?;
         state = AuthState.authenticated(
           userId: user?['id']?.toString() ?? '',
-          email: user?['email']?.toString() ??
+          email:
+              user?['email']?.toString() ??
               (identifier.contains('@') ? identifier.trim() : ''),
           role: user?['role']?.toString() ?? 'candidate',
         );
