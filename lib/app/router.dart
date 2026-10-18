@@ -10,6 +10,7 @@ import '../components/common/app_empty_state.dart';
 import '../components/layout/screen_scaffold.dart';
 import '../config/routes.dart';
 import '../features/applicant/applications/applications_screen.dart';
+import '../features/auth/forgot_password/forgot_password_screen.dart';
 import '../features/auth/login/login_screen.dart';
 import '../features/auth/register/register_screen.dart';
 import '../features/auth/verify_email/check_email_screen.dart';
@@ -36,6 +37,7 @@ class RouterNotifier extends ChangeNotifier {
         loc == AppRoutes.login ||
         loc == AppRoutes.register ||
         loc == AppRoutes.forgotPassword ||
+        loc == AppRoutes.resetLinkSent ||
         loc == AppRoutes.verifyEmail ||
         loc == AppRoutes.verifyEmailNotice ||
         loc == AppRoutes.resetPassword;
@@ -50,6 +52,8 @@ class RouterNotifier extends ChangeNotifier {
         (loc == AppRoutes.welcome ||
             loc == AppRoutes.login ||
             loc == AppRoutes.register ||
+            loc == AppRoutes.forgotPassword ||
+            loc == AppRoutes.resetLinkSent ||
             loc == AppRoutes.verifyEmailNotice)) {
       return AppRoutes.myApplications;
     }
@@ -91,13 +95,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.forgotPassword,
-        builder: (context, state) => ScreenScaffold(
-          body: AppEmptyState(
-            icon: const Icon(LucideIcons.keyRound),
-            title: 'Forgot Password',
-            description: 'Reset your password instructions.',
-          ),
-        ),
+        builder: (context, state) => const ForgotPasswordScreen(),
       ),
       GoRoute(
         path: AppRoutes.verifyEmail,
