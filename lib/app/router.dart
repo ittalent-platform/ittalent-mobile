@@ -11,6 +11,7 @@ import '../components/layout/screen_scaffold.dart';
 import '../config/routes.dart';
 import '../features/applicant/applications/applications_screen.dart';
 import '../features/auth/forgot_password/forgot_password_screen.dart';
+import '../features/auth/forgot_password/reset_link_sent_screen.dart';
 import '../features/auth/login/login_screen.dart';
 import '../features/auth/register/register_screen.dart';
 import '../features/auth/verify_email/check_email_screen.dart';
@@ -96,6 +97,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.forgotPassword,
         builder: (context, state) => const ForgotPasswordScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.resetLinkSent,
+        builder: (context, state) {
+          final email = state.uri.queryParameters['email'];
+          return ResetLinkSentScreen(email: email);
+        },
       ),
       GoRoute(
         path: AppRoutes.verifyEmail,
