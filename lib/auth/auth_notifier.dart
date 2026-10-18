@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../api/api_error.dart';
 import '../api/client.dart';
 import 'auth_state.dart';
 import 'token_storage.dart';
@@ -44,29 +45,36 @@ class AuthNotifier extends Notifier<AuthState> {
     }
   }
 
-  Future<bool> login(String email, String password) async {
+  Future<bool> login(String identifier, String password) async {
     state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
 
     try {
       final response = await _apiClient.post<Map<String, dynamic>>(
         '/api/v1/auth/login',
-        data: {'email': email, 'password': password},
+        data: {
+          'identifier': identifier.trim(),
+          'password': password,
+        },
       );
 
       final data = response.data;
-      final accessToken = data?['accessToken']?.toString();
-      final refreshToken = data?['refreshToken']?.toString();
+      final tokens = data?['tokens'] as Map<String, dynamic>?;
+      final accessToken =
+          tokens?['accessToken']?.toString() ?? data?['accessToken']?.toString();
+      final refreshToken =
+          tokens?['refreshToken']?.toString() ?? data?['refreshToken']?.toString();
 
-      if (accessToken != null) {
+      if (accessToken != null && accessToken.isNotEmpty) {
         await _tokenStorage.saveAccessToken(accessToken);
-        if (refreshToken != null) {
+        if (refreshToken != null && refreshToken.isNotEmpty) {
           await _tokenStorage.saveRefreshToken(refreshToken);
         }
 
         final user = data?['user'] as Map<String, dynamic>?;
         state = AuthState.authenticated(
           userId: user?['id']?.toString() ?? '',
-          email: user?['email']?.toString() ?? email,
+          email: user?['email']?.toString() ??
+              (identifier.contains('@') ? identifier.trim() : ''),
           role: user?['role']?.toString() ?? 'candidate',
         );
         return true;
@@ -74,6 +82,9 @@ class AuthNotifier extends Notifier<AuthState> {
         state = AuthState.unauthenticated('Invalid credentials');
         return false;
       }
+    } on ApiError catch (e) {
+      state = AuthState.unauthenticated(e.message);
+      return false;
     } catch (e) {
       state = AuthState.unauthenticated(e.toString());
       return false;
