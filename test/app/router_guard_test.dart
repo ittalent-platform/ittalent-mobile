@@ -92,6 +92,7 @@ void main() {
         AppRoutes.register,
         AppRoutes.forgotPassword,
         AppRoutes.verifyEmail,
+        AppRoutes.verifyEmailNotice,
         AppRoutes.resetPassword,
       ]) {
         final result = notifier.redirect(
@@ -129,6 +130,7 @@ void main() {
           AppRoutes.welcome,
           AppRoutes.login,
           AppRoutes.register,
+          AppRoutes.verifyEmailNotice,
         ]) {
           final result = notifier.redirect(
             _FakeContext(),
