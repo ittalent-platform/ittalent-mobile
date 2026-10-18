@@ -8,11 +8,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       const MaterialApp(
-        home: Scaffold(
-          body: Center(
-            child: ITTalentMonogram(),
-          ),
-        ),
+        home: Scaffold(body: Center(child: ITTalentMonogram())),
       ),
     );
 
@@ -23,10 +19,7 @@ void main() {
     expect(size.width, 26.0);
     expect(size.height, 26.0);
     expect(
-      find.descendant(
-        of: monogramFinder,
-        matching: find.byType(CustomPaint),
-      ),
+      find.descendant(of: monogramFinder, matching: find.byType(CustomPaint)),
       findsOneWidget,
     );
   });
