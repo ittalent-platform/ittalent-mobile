@@ -120,14 +120,20 @@ class ApplicationsScreen extends ConsumerWidget {
                               color: colors.mutedForeground,
                             ),
                             const SizedBox(width: 4),
-                            Text(
-                              item.location!,
-                              style: AppTypography.body(
-                                fontSize: 12,
-                                color: colors.mutedForeground,
+                            Expanded(
+                              child: Text(
+                                item.location!,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppTypography.body(
+                                  fontSize: 12,
+                                  color: colors.mutedForeground,
+                                ),
                               ),
                             ),
-                            const SizedBox(width: 14),
+                            const SizedBox(width: 8),
+                          ] else ...[
+                            const Spacer(),
                           ],
                           Icon(
                             LucideIcons.calendar,
@@ -142,7 +148,7 @@ class ApplicationsScreen extends ConsumerWidget {
                               color: colors.mutedForeground,
                             ),
                           ),
-                          const Spacer(),
+                          const SizedBox(width: 12),
                           Text(
                             item.id,
                             style: AppTypography.mono(
