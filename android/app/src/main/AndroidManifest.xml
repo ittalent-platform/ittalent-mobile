@@ -41,6 +41,19 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="ittalent" />
             </intent-filter>
+
+            <!-- Local Development Deep Links (http://localhost:5173, http://10.0.2.2:5173, http://127.0.0.1:5173) -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="http" android:host="localhost" android:port="5173" android:pathPrefix="/verify-email" />
+                <data android:scheme="http" android:host="localhost" android:port="5173" android:pathPrefix="/reset-password" />
+                <data android:scheme="http" android:host="10.0.2.2" android:port="5173" android:pathPrefix="/verify-email" />
+                <data android:scheme="http" android:host="10.0.2.2" android:port="5173" android:pathPrefix="/reset-password" />
+                <data android:scheme="http" android:host="127.0.0.1" android:port="5173" android:pathPrefix="/verify-email" />
+                <data android:scheme="http" android:host="127.0.0.1" android:port="5173" android:pathPrefix="/reset-password" />
+            </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->

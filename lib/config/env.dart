@@ -11,11 +11,11 @@ class AppEnv {
     if (fromEnv.isNotEmpty) return fromEnv;
 
     if (kIsWeb) {
-      return 'http://localhost:3001';
+      return 'http://localhost:3000';
     } else if (defaultTargetPlatform == TargetPlatform.android) {
-      return 'http://10.0.2.2:3001';
+      return 'http://10.0.2.2:3000';
     } else {
-      return 'http://localhost:3001';
+      return 'http://localhost:3000';
     }
   }
 }
