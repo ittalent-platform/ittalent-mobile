@@ -29,6 +29,8 @@ class FakeApiClient extends ApiClient {
   FakeApiClient() : super(dio: Dio());
 
   dynamic getResponse;
+  int getStatusCode = 200;
+  Map<String, List<String>> getHeaders = {};
   Exception? getError;
   String? lastGetPath;
   Map<String, dynamic>? lastGetParams;
@@ -49,7 +51,8 @@ class FakeApiClient extends ApiClient {
     return Response<T>(
       requestOptions: RequestOptions(path: path),
       data: getResponse as T,
-      statusCode: 200,
+      statusCode: getStatusCode,
+      headers: Headers.fromMap(getHeaders),
     );
   }
 }
@@ -251,4 +254,74 @@ void main() {
     );
     expect(find.text('Sign in'), findsOneWidget);
   });
+
+  testWidgets(
+    'handles 302 redirect to stage=success and transitions to Email verified',
+    (tester) async {
+      tester.view.physicalSize = const Size(800, 1200);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      final fakeApiClient = FakeApiClient()
+        ..getStatusCode = 302
+        ..getHeaders = {
+          'location': ['http://localhost:5173/verify-email?stage=success'],
+        };
+
+      await tester.pumpWidget(
+        buildTestableScreen(
+          token: 'token_302_success',
+          email: 'candidate@example.com',
+          apiClient: fakeApiClient,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Verify email'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Email verified'), findsOneWidget);
+      expect(
+        find.text('Your account is ready. Sign in to start applying.'),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'handles 302 redirect to stage=already-verified and transitions to Email verified',
+    (tester) async {
+      tester.view.physicalSize = const Size(800, 1200);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      final fakeApiClient = FakeApiClient()
+        ..getStatusCode = 302
+        ..getHeaders = {
+          'location': [
+            'http://localhost:5173/verify-email?stage=already-verified',
+          ],
+        };
+
+      await tester.pumpWidget(
+        buildTestableScreen(
+          token: 'token_302_already_verified',
+          email: 'candidate@example.com',
+          apiClient: fakeApiClient,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Verify email'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Email verified'), findsOneWidget);
+    },
+  );
 }

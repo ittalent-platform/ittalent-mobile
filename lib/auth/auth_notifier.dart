@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../api/api_error.dart';
@@ -219,10 +220,69 @@ class AuthNotifier extends Notifier<AuthState> {
   Future<bool> verifyEmail(String token) async {
     state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
     try {
-      await _apiClient.get<dynamic>(
+      final response = await _apiClient.get<dynamic>(
         '/api/v1/auth/verify-email',
         queryParameters: {'token': token},
+        options: Options(
+          followRedirects: false,
+          validateStatus: (status) => status != null && status < 400,
+        ),
       );
+
+      // Handle HTTP 302 Redirect (issued when backend redirects to frontend verify page)
+      if (response.statusCode == 302 || response.statusCode == 301) {
+        final location = response.headers.value('location') ?? '';
+        final uri = Uri.tryParse(location);
+        final stage = uri?.queryParameters['stage'];
+        if (stage == 'success' || stage == 'already-verified') {
+          await checkAuthStatus();
+          state = state.copyWith(errorMessage: null);
+          return true;
+        } else if (stage == 'invalid') {
+          state = state.copyWith(
+            status: AuthStatus.unauthenticated,
+            errorMessage: 'This verification link is invalid or has expired.',
+          );
+          return false;
+        } else if (stage == 'expired') {
+          state = state.copyWith(
+            status: AuthStatus.unauthenticated,
+            errorMessage: 'This verification link has expired.',
+          );
+          return false;
+        } else if (stage == 'retry-later') {
+          state = state.copyWith(
+            status: AuthStatus.unauthenticated,
+            errorMessage:
+                'Too many verification attempts. Please try again later.',
+          );
+          return false;
+        }
+      }
+
+      // Handle direct JSON API response
+      if (response.data is Map<String, dynamic>) {
+        final data = response.data as Map<String, dynamic>;
+        final stage = data['stage']?.toString();
+        final success =
+            data['success'] == true ||
+            stage == 'success' ||
+            stage == 'already-verified';
+        if (success) {
+          await checkAuthStatus();
+          state = state.copyWith(errorMessage: null);
+          return true;
+        } else {
+          state = state.copyWith(
+            status: AuthStatus.unauthenticated,
+            errorMessage:
+                data['message']?.toString() ??
+                'This verification link is invalid or has expired.',
+          );
+          return false;
+        }
+      }
+
       await checkAuthStatus();
       return true;
     } on ApiError catch (e) {
