@@ -96,7 +96,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.verifyEmailNotice,
         builder: (context, state) {
           final email = state.uri.queryParameters['email'];
-          return CheckEmailScreen(email: email);
+          final cooldownParam = state.uri.queryParameters['cooldown'];
+          final cooldown = cooldownParam != null
+              ? int.tryParse(cooldownParam) ?? 60
+              : 60;
+          return CheckEmailScreen(
+            email: email,
+            initialCooldownSeconds: cooldown,
+          );
         },
       ),
       GoRoute(

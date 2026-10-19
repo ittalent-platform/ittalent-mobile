@@ -55,6 +55,32 @@ class FakeApiClient extends ApiClient {
       headers: Headers.fromMap(getHeaders),
     );
   }
+
+  dynamic postResponse;
+  String? lastPostPath;
+  dynamic lastPostData;
+  Exception? postError;
+
+  @override
+  Future<Response<T>> post<T>(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  }) async {
+    lastPostPath = path;
+    lastPostData = data;
+
+    if (postError != null) {
+      throw postError!;
+    }
+
+    return Response<T>(
+      requestOptions: RequestOptions(path: path),
+      data: (postResponse ?? {'success': true}) as T,
+      statusCode: 200,
+    );
+  }
 }
 
 void main() {
@@ -228,6 +254,11 @@ void main() {
     await tester.tap(find.text('Resend link'));
     await tester.pumpAndSettle();
 
+    expect(
+      fakeApiClient.lastPostPath,
+      '/api/v1/auth/resend-verification-email',
+    );
+    expect(fakeApiClient.lastPostData, {'email': 'candidate@example.com'});
     expect(
       find.text('Verify Email Notice Screen: candidate@example.com'),
       findsOneWidget,
