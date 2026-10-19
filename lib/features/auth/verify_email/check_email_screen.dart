@@ -87,9 +87,41 @@ class CheckEmailScreen extends ConsumerWidget {
                             CooldownTimerButton(
                               initialCooldownSeconds: initialCooldownSeconds,
                               onResend: () async {
-                                return ref
+                                final success = await ref
                                     .read(authNotifierProvider.notifier)
                                     .resendVerificationEmail(currentEmail);
+                                if (context.mounted) {
+                                  if (success) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          'A verification email has been sent to $currentEmail',
+                                        ),
+                                        backgroundColor: const Color(
+                                          0xFF12764A,
+                                        ),
+                                        behavior: SnackBarBehavior.floating,
+                                      ),
+                                    );
+                                  } else {
+                                    final authState = ref.read(
+                                      authNotifierProvider,
+                                    );
+                                    final error =
+                                        authState.errorMessage ??
+                                        'Failed to resend verification email';
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(error),
+                                        backgroundColor: const Color(
+                                          0xFFB33305,
+                                        ),
+                                        behavior: SnackBarBehavior.floating,
+                                      ),
+                                    );
+                                  }
+                                }
+                                return success;
                               },
                             ),
                           ],

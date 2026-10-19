@@ -31,12 +31,53 @@ class VerifyEmailScreen extends ConsumerStatefulWidget {
 class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
   late bool _isVerified;
   bool _isVerifying = false;
+  bool _isResending = false;
   String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
     _isVerified = widget.initialVerified;
+  }
+
+  Future<void> _handleResend(String email) async {
+    setState(() {
+      _isResending = true;
+    });
+
+    final success = await ref
+        .read(authNotifierProvider.notifier)
+        .resendVerificationEmail(email);
+
+    if (!mounted) return;
+
+    setState(() {
+      _isResending = false;
+    });
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('A verification email has been sent to $email'),
+          backgroundColor: const Color(0xFF12764A),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      context.go(
+        '${AppRoutes.verifyEmailNotice}?email=${Uri.encodeComponent(email)}',
+      );
+    } else {
+      final authState = ref.read(authNotifierProvider);
+      final error =
+          authState.errorMessage ?? 'Failed to resend verification email';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error),
+          backgroundColor: const Color(0xFFB33305),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   Future<void> _handleVerify() async {
@@ -162,11 +203,8 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
                             variant: AppButtonVariant.primary,
                             size: AppButtonSize.lg,
                             isFullWidth: true,
-                            onPressed: () {
-                              context.go(
-                                '${AppRoutes.verifyEmailNotice}?email=${Uri.encodeComponent(currentEmail)}',
-                              );
-                            },
+                            isLoading: _isResending,
+                            onPressed: () => _handleResend(currentEmail),
                           ),
                         ),
                       ] else if (_isVerified) ...[
