@@ -9,6 +9,7 @@ class AppRoutes {
   static const String resetLinkSent = '/reset-link-sent';
   static const String verifyEmail = '/verify-email';
   static const String verifyEmailNotice = '/verify-email-notice';
+  static const String emailVerified = '/email-verified';
   static const String resetPassword = '/reset-password';
 
   static const String jobs = '/jobs';

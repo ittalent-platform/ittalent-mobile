@@ -16,6 +16,7 @@ import '../features/auth/login/login_screen.dart';
 import '../features/auth/register/register_screen.dart';
 import '../features/auth/reset_password/reset_password_screen.dart';
 import '../features/auth/verify_email/check_email_screen.dart';
+import '../features/auth/verify_email/verify_email_screen.dart';
 import '../features/auth/welcome/welcome_screen.dart';
 import '../theme/app_colors.dart';
 
@@ -42,6 +43,7 @@ class RouterNotifier extends ChangeNotifier {
         loc == AppRoutes.resetLinkSent ||
         loc == AppRoutes.verifyEmail ||
         loc == AppRoutes.verifyEmailNotice ||
+        loc == AppRoutes.emailVerified ||
         loc == AppRoutes.resetPassword;
 
     final isGuestAllowed = isAuthRoute || loc.startsWith(AppRoutes.jobs);
@@ -56,7 +58,8 @@ class RouterNotifier extends ChangeNotifier {
             loc == AppRoutes.register ||
             loc == AppRoutes.forgotPassword ||
             loc == AppRoutes.resetLinkSent ||
-            loc == AppRoutes.verifyEmailNotice)) {
+            loc == AppRoutes.verifyEmailNotice ||
+            loc == AppRoutes.emailVerified)) {
       return AppRoutes.myApplications;
     }
 
@@ -108,13 +111,18 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.verifyEmail,
-        builder: (context, state) => ScreenScaffold(
-          body: AppEmptyState(
-            icon: const Icon(LucideIcons.mail),
-            title: 'Verify Email',
-            description: 'Check your email for the verification link.',
-          ),
-        ),
+        builder: (context, state) {
+          final token = state.uri.queryParameters['token'];
+          final email = state.uri.queryParameters['email'];
+          return VerifyEmailScreen(token: token, email: email);
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.emailVerified,
+        builder: (context, state) {
+          final email = state.uri.queryParameters['email'];
+          return VerifyEmailScreen(initialVerified: true, email: email);
+        },
       ),
       GoRoute(
         path: AppRoutes.resetPassword,
