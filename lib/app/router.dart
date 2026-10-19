@@ -18,6 +18,7 @@ import '../features/auth/reset_password/reset_password_screen.dart';
 import '../features/auth/verify_email/check_email_screen.dart';
 import '../features/auth/verify_email/verify_email_screen.dart';
 import '../features/auth/welcome/welcome_screen.dart';
+import '../features/profile/me_screen.dart';
 import '../theme/app_colors.dart';
 
 class RouterNotifier extends ChangeNotifier {
@@ -168,7 +169,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                 NavigationDestination(
                   icon: const Icon(LucideIcons.user),
                   selectedIcon: Icon(LucideIcons.user, color: colors.primary),
-                  label: tr('accountNav.myProfile'),
+                  label: 'Me',
                 ),
               ],
             ),
@@ -203,15 +204,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: AppRoutes.profile,
-                builder: (context, state) => ScreenScaffold(
-                  appBar: AppBar(title: Text(tr('accountNav.myProfile'))),
-                  body: AppEmptyState(
-                    icon: const Icon(LucideIcons.user),
-                    title: tr('accountNav.myProfile'),
-                    description:
-                        'Manage your candidate profile, resume, and skills.',
-                  ),
-                ),
+                builder: (context, state) => const MeScreen(),
               ),
             ],
           ),
