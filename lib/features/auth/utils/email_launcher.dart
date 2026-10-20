@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:open_mail_app/open_mail_app.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// Helper to open the device's native mail app or fallback to webmail/inbox.
@@ -6,25 +7,33 @@ Future<bool> launchEmailApp(
   BuildContext context, {
   String? email,
   @visibleForTesting
+  Future<OpenMailAppResult> Function({String? nativePickerTitle})?
+  mailAppOpener,
+  @visibleForTesting
   Future<bool> Function(Uri uri, {LaunchMode mode})? urlLauncher,
   @visibleForTesting Future<bool> Function(Uri uri)? canLaunchUrlChecker,
 }) async {
-  final mailtoUri = Uri(scheme: 'mailto');
+  final openMail = mailAppOpener ?? OpenMailApp.openMailApp;
   final launcher =
       urlLauncher ??
       (uri, {mode = LaunchMode.platformDefault}) => launchUrl(uri, mode: mode);
   final canLaunch = canLaunchUrlChecker ?? canLaunchUrl;
 
   try {
-    if (await canLaunch(mailtoUri)) {
-      final launched = await launcher(
-        mailtoUri,
-        mode: LaunchMode.externalApplication,
+    final result = await openMail(nativePickerTitle: 'Select email app');
+    if (result.didOpen) {
+      return true;
+    }
+
+    if (!result.didOpen && result.canOpen && context.mounted) {
+      await showDialog<void>(
+        context: context,
+        builder: (_) => MailAppPickerDialog(mailApps: result.options),
       );
-      if (launched) return true;
+      return true;
     }
   } catch (_) {
-    // If mailto throws or cannot be handled by the platform, fall through to webmail fallback
+    // If open_mail_app throws on platform, fall through to webmail fallback
   }
 
   // Fallback to webmail inbox if domain is known
