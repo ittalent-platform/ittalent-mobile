@@ -42,17 +42,30 @@
                 <data android:scheme="ittalent" />
             </intent-filter>
 
-            <!-- Local Development Deep Links (http://localhost:5173, http://10.0.2.2:5173, http://127.0.0.1:5173) -->
+            <!-- Local Development: Password Reset Deep Links (ports 5173 and 3000) -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="http" android:host="localhost" android:port="5173" android:pathPrefix="/reset-password" />
+                <data android:scheme="http" android:host="localhost" android:port="3000" android:pathPrefix="/reset-password" />
+                <data android:scheme="http" android:host="10.0.2.2" android:port="5173" android:pathPrefix="/reset-password" />
+                <data android:scheme="http" android:host="10.0.2.2" android:port="3000" android:pathPrefix="/reset-password" />
+                <data android:scheme="http" android:host="127.0.0.1" android:port="5173" android:pathPrefix="/reset-password" />
+                <data android:scheme="http" android:host="127.0.0.1" android:port="3000" android:pathPrefix="/reset-password" />
+            </intent-filter>
+
+            <!-- Local Development: Email Verification Deep Links (ports 5173 and 3000) -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="http" android:host="localhost" android:port="5173" android:pathPrefix="/verify-email" />
-                <data android:scheme="http" android:host="localhost" android:port="5173" android:pathPrefix="/reset-password" />
+                <data android:scheme="http" android:host="localhost" android:port="3000" android:pathPrefix="/verify-email" />
                 <data android:scheme="http" android:host="10.0.2.2" android:port="5173" android:pathPrefix="/verify-email" />
-                <data android:scheme="http" android:host="10.0.2.2" android:port="5173" android:pathPrefix="/reset-password" />
+                <data android:scheme="http" android:host="10.0.2.2" android:port="3000" android:pathPrefix="/verify-email" />
                 <data android:scheme="http" android:host="127.0.0.1" android:port="5173" android:pathPrefix="/verify-email" />
-                <data android:scheme="http" android:host="127.0.0.1" android:port="5173" android:pathPrefix="/reset-password" />
+                <data android:scheme="http" android:host="127.0.0.1" android:port="3000" android:pathPrefix="/verify-email" />
             </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.
@@ -72,6 +85,10 @@
             <data android:mimeType="text/plain"/>
         </intent>
         <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.APP_EMAIL" />
+        </intent>
+        <intent>
             <action android:name="android.intent.action.SENDTO"/>
             <data android:scheme="mailto"/>
         </intent>
@@ -79,5 +96,8 @@
             <action android:name="android.intent.action.VIEW"/>
             <data android:scheme="https"/>
         </intent>
+        <package android:name="com.google.android.gm" />
+        <package android:name="com.microsoft.office.outlook" />
+        <package android:name="com.yahoo.mobile.client.android.mail" />
     </queries>
 </manifest>
