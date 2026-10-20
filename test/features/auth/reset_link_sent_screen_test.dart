@@ -189,4 +189,24 @@ void main() {
 
     expect(find.text('Login Screen'), findsOneWidget);
   });
+
+  testWidgets(
+    'tapping default Open email app without custom callback does not crash',
+    (tester) async {
+      tester.view.physicalSize = const Size(800, 1200);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(buildTestableScreen(email: 'user@example.com'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Open email app'));
+      await tester.pump();
+
+      expect(tester.takeException(), isNull);
+    },
+  );
 }

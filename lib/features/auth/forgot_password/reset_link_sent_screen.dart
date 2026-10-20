@@ -8,6 +8,7 @@ import '../../../components/ui/app_button.dart';
 import '../../../config/routes.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_typography.dart';
+import '../utils/email_launcher.dart';
 import '../widgets/auth_email_hero.dart';
 import '../widgets/cooldown_timer_button.dart';
 
@@ -87,7 +88,12 @@ class ResetLinkSentScreen extends ConsumerWidget {
                               icon: const Icon(LucideIcons.mail, size: 18),
                               size: AppButtonSize.lg,
                               isFullWidth: true,
-                              onPressed: onOpenEmailApp ?? () {},
+                              onPressed:
+                                  onOpenEmailApp ??
+                                  () => launchEmailApp(
+                                    context,
+                                    email: currentEmail,
+                                  ),
                             ),
                             const SizedBox(height: 10),
                             CooldownTimerButton(

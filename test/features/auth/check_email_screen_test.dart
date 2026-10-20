@@ -192,4 +192,24 @@ void main() {
       );
     },
   );
+
+  testWidgets(
+    'CheckEmailScreen does not crash when default Open email app tapped',
+    (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(800, 1200);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(buildTestableScreen(email: 'user@example.com'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Open email app'));
+      await tester.pump();
+
+      expect(tester.takeException(), isNull);
+    },
+  );
 }
