@@ -6,10 +6,10 @@ import 'package:url_launcher/url_launcher.dart';
 void main() {
   group('launchEmailApp Inbox Launcher Tests', () {
     testWidgets(
-      'launches Android Gmail inbox intent for @gmail.com when supported',
+      'launches native mail client via nativeLauncher when available',
       (WidgetTester tester) async {
-        Uri? launchedUri;
-        LaunchMode? launchMode;
+        String? targetEmail;
+        var nativeInvoked = false;
 
         await tester.pumpWidget(
           MaterialApp(
@@ -20,17 +20,11 @@ void main() {
                     onPressed: () => launchEmailApp(
                       context,
                       email: 'alex.dev@gmail.com',
-                      canLaunchUrlChecker: (uri) async {
-                        return uri.toString().contains(
-                          'package=com.google.android.gm',
-                        );
+                      nativeLauncher: (email) async {
+                        targetEmail = email;
+                        nativeInvoked = true;
+                        return true;
                       },
-                      urlLauncher:
-                          (uri, {mode = LaunchMode.platformDefault}) async {
-                            launchedUri = uri;
-                            launchMode = mode;
-                            return true;
-                          },
                     ),
                     child: const Text('Open'),
                   );
@@ -43,18 +37,13 @@ void main() {
         await tester.tap(find.text('Open'));
         await tester.pumpAndSettle();
 
-        expect(
-          launchedUri,
-          Uri.parse(
-            'intent:#Intent;action=android.intent.action.MAIN;package=com.google.android.gm;end',
-          ),
-        );
-        expect(launchMode, LaunchMode.externalApplication);
+        expect(nativeInvoked, isTrue);
+        expect(targetEmail, 'alex.dev@gmail.com');
       },
     );
 
     testWidgets(
-      'falls back to Gmail web inbox when native Gmail apps cannot launch',
+      'falls back to Gmail web inbox when native mail app cannot launch',
       (WidgetTester tester) async {
         Uri? launchedUri;
 
@@ -67,9 +56,8 @@ void main() {
                     onPressed: () => launchEmailApp(
                       context,
                       email: 'alex.dev@gmail.com',
-                      canLaunchUrlChecker: (uri) async {
-                        return uri.scheme == 'https';
-                      },
+                      nativeLauncher: (_) async => false,
+                      canLaunchUrlChecker: (uri) async => uri.scheme == 'https',
                       urlLauncher:
                           (uri, {mode = LaunchMode.platformDefault}) async {
                             launchedUri = uri;
@@ -92,7 +80,7 @@ void main() {
     );
 
     testWidgets(
-      'launches Outlook web inbox when Outlook app not installed for @outlook.com',
+      'launches Outlook web inbox when native app fails for @outlook.com',
       (WidgetTester tester) async {
         Uri? launchedUri;
 
@@ -105,6 +93,7 @@ void main() {
                     onPressed: () => launchEmailApp(
                       context,
                       email: 'alex.dev@outlook.com',
+                      nativeLauncher: (_) async => false,
                       canLaunchUrlChecker: (uri) async => uri.scheme == 'https',
                       urlLauncher:
                           (uri, {mode = LaunchMode.platformDefault}) async {
@@ -128,7 +117,7 @@ void main() {
     );
 
     testWidgets(
-      'launches generic system email app inbox for custom corporate domain',
+      'launches fallback webmail for custom corporate domain when native fails',
       (WidgetTester tester) async {
         Uri? launchedUri;
 
@@ -141,11 +130,8 @@ void main() {
                     onPressed: () => launchEmailApp(
                       context,
                       email: 'hr@techcorp.vn',
-                      canLaunchUrlChecker: (uri) async {
-                        return uri.toString().contains(
-                          'category=android.intent.category.APP_EMAIL',
-                        );
-                      },
+                      nativeLauncher: (_) async => false,
+                      canLaunchUrlChecker: (uri) async => uri.scheme == 'https',
                       urlLauncher:
                           (uri, {mode = LaunchMode.platformDefault}) async {
                             launchedUri = uri;
@@ -163,12 +149,7 @@ void main() {
         await tester.tap(find.text('Open'));
         await tester.pumpAndSettle();
 
-        expect(
-          launchedUri,
-          Uri.parse(
-            'intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.APP_EMAIL;end',
-          ),
-        );
+        expect(launchedUri, Uri.parse('https://mail.google.com'));
       },
     );
 
@@ -184,6 +165,7 @@ void main() {
                     onPressed: () => launchEmailApp(
                       context,
                       email: 'custom@private-server.org',
+                      nativeLauncher: (_) async => false,
                       canLaunchUrlChecker: (_) async => false,
                       urlLauncher: (
                         _, {
