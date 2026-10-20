@@ -239,41 +239,45 @@ void main() {
       expect(state.errorMessage, 'Invalid credentials');
     });
 
-    test('register sends payload and stores tokens on success', () async {
-      fakeApiClient.postResponse = {
-        'user': {
-          'id': 'usr-new',
-          'email': 'new_dev@example.com',
-          'username': 'new_dev',
-          'role': 'candidate',
-          'emailVerified': false,
-        },
-        'tokens': {
-          'accessToken': 'reg-access-jwt',
-          'refreshToken': 'reg-refresh-jwt',
-        },
-        'verificationEmailSent': true,
-      };
+    test(
+      'register sends payload and keeps unauthenticated state on success',
+      () async {
+        fakeApiClient.postResponse = {
+          'user': {
+            'id': 'usr-new',
+            'email': 'new_dev@example.com',
+            'username': 'new_dev',
+            'role': 'candidate',
+            'emailVerified': false,
+          },
+          'tokens': {
+            'accessToken': 'reg-access-jwt',
+            'refreshToken': 'reg-refresh-jwt',
+          },
+          'verificationEmailSent': true,
+        };
 
-      final notifier = container.read(authNotifierProvider.notifier);
-      final result = await notifier.register(
-        const RegisterRequest(
-          email: 'new_dev@example.com',
-          username: 'new_dev',
-          password: 'Password123!',
-        ),
-      );
+        final notifier = container.read(authNotifierProvider.notifier);
+        final result = await notifier.register(
+          const RegisterRequest(
+            email: 'new_dev@example.com',
+            username: 'new_dev',
+            password: 'Password123!',
+          ),
+        );
 
-      expect(result, isTrue);
-      expect(fakeApiClient.lastPostPath, '/api/v1/auth/register');
-      expect(fakeTokenStorage.accessToken, 'reg-access-jwt');
-      expect(fakeTokenStorage.refreshToken, 'reg-refresh-jwt');
+        expect(result, isTrue);
+        expect(fakeApiClient.lastPostPath, '/api/v1/auth/register');
+        // Tokens must NOT be stored upon registration; user is not logged in immediately
+        expect(fakeTokenStorage.accessToken, isNull);
+        expect(fakeTokenStorage.refreshToken, isNull);
 
-      final state = container.read(authNotifierProvider);
-      expect(state.status, AuthStatus.authenticated);
-      expect(state.userId, 'usr-new');
-      expect(state.isEmailVerified, isFalse);
-    });
+        final state = container.read(authNotifierProvider);
+        expect(state.status, AuthStatus.unauthenticated);
+        expect(state.userId, 'usr-new');
+        expect(state.isEmailVerified, isFalse);
+      },
+    );
 
     test('forgotPassword sends email payload and handles ApiError', () async {
       fakeApiClient.postResponse = {'success': true, 'message': 'Email sent'};

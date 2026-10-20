@@ -110,14 +110,11 @@ class AuthNotifier extends Notifier<AuthState> {
       }
 
       final res = RegisterResponse.fromJson(data);
-      if (res.tokens.accessToken.isNotEmpty) {
-        await _tokenStorage.saveAccessToken(res.tokens.accessToken);
-        if (res.tokens.refreshToken.isNotEmpty) {
-          await _tokenStorage.saveRefreshToken(res.tokens.refreshToken);
-        }
-      }
+      // Keep user unauthenticated pending email verification.
+      // Do not store session tokens to prevent premature auto-login.
+      await _tokenStorage.clear();
 
-      state = AuthState.authenticated(user: res.user);
+      state = AuthState(status: AuthStatus.unauthenticated, user: res.user);
       return true;
     } on ApiError catch (e) {
       state = AuthState.unauthenticated(e.message);

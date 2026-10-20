@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -20,6 +21,36 @@ class MockTokenStorage extends TokenStorage {
   Future<void> saveRefreshToken(String token) async {}
   @override
   Future<void> clear() async {}
+}
+
+class FakeApiClient extends ApiClient {
+  FakeApiClient() : super(dio: Dio());
+
+  dynamic postResponse;
+  String? lastPostPath;
+  dynamic lastPostData;
+  Exception? postError;
+
+  @override
+  Future<Response<T>> post<T>(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  }) async {
+    lastPostPath = path;
+    lastPostData = data;
+
+    if (postError != null) {
+      throw postError!;
+    }
+
+    return Response<T>(
+      requestOptions: RequestOptions(path: path),
+      data: (postResponse ?? {'success': true}) as T,
+      statusCode: 200,
+    );
+  }
 }
 
 void main() {
@@ -181,4 +212,48 @@ void main() {
 
     expect(find.text('Login Screen'), findsOneWidget);
   });
+
+  testWidgets(
+    'RegisterScreen navigates to verifyEmailNotice on successful submission without auto-login',
+    (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(800, 1200);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      final fakeApiClient = FakeApiClient()
+        ..postResponse = {
+          'user': {
+            'id': 'usr-new',
+            'email': 'an.nguyen@example.com',
+            'username': 'an_nguyen',
+            'role': 'candidate',
+            'emailVerified': false,
+          },
+          'tokens': {
+            'accessToken': 'reg-access-jwt',
+            'refreshToken': 'reg-refresh-jwt',
+          },
+          'verificationEmailSent': true,
+        };
+
+      await tester.pumpWidget(buildTestableScreen(apiClient: fakeApiClient));
+      await tester.pumpAndSettle();
+
+      final textFields = find.byType(TextField);
+      await tester.enterText(textFields.at(0), 'Nguyễn Văn An');
+      await tester.enterText(textFields.at(1), 'an.nguyen@example.com');
+      await tester.enterText(textFields.at(3), 'Password123!');
+      await tester.enterText(textFields.at(4), 'Password123!');
+      await tester.tap(find.byType(AppCheckbox));
+
+      await tester.tap(find.text('Create account'));
+      await tester.pumpAndSettle();
+
+      expect(fakeApiClient.lastPostPath, '/api/v1/auth/register');
+      expect(find.text('Verify Email Notice Screen'), findsOneWidget);
+    },
+  );
 }
