@@ -1,14 +1,38 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+const MethodChannel _emailChannel = MethodChannel(
+  'com.example.ittalent_mobile/email_launcher',
+);
 
 /// Helper to open the device's native mail inbox or fallback to webmail.
 Future<bool> launchEmailApp(
   BuildContext context, {
   String? email,
+  @visibleForTesting Future<bool> Function(String? email)? nativeLauncher,
   @visibleForTesting
   Future<bool> Function(Uri uri, {LaunchMode mode})? urlLauncher,
   @visibleForTesting Future<bool> Function(Uri uri)? canLaunchUrlChecker,
 }) async {
+  // 1. Try native platform inbox launch on Android first
+  final isAndroid = !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+  if (nativeLauncher != null) {
+    try {
+      final launched = await nativeLauncher(email);
+      if (launched) return true;
+    } catch (_) {}
+  } else if (isAndroid) {
+    try {
+      final launched = await _emailChannel.invokeMethod<bool>('openEmailApp', {
+        'email': email,
+      });
+      if (launched == true) return true;
+    } catch (_) {}
+  }
+
+  // 2. iOS schemes & Webmail fallbacks
   final launcher =
       urlLauncher ??
       (uri, {mode = LaunchMode.platformDefault}) => launchUrl(uri, mode: mode);
@@ -22,47 +46,24 @@ Future<bool> launchEmailApp(
 
   if (domain != null) {
     if (domain == 'gmail.com' || domain.contains('google')) {
-      // Direct Gmail app launcher, then iOS scheme, then webmail inbox
-      candidates.add(
-        Uri.parse(
-          'intent:#Intent;action=android.intent.action.MAIN;package=com.google.android.gm;end',
-        ),
-      );
       candidates.add(Uri.parse('googlegmail://'));
       candidates.add(Uri.parse('https://mail.google.com'));
     } else if (domain == 'outlook.com' ||
         domain == 'hotmail.com' ||
         domain == 'live.com' ||
         domain.contains('microsoft')) {
-      // Direct Outlook app launcher, then iOS scheme, then webmail inbox
-      candidates.add(
-        Uri.parse(
-          'intent:#Intent;action=android.intent.action.MAIN;package=com.microsoft.office.outlook;end',
-        ),
-      );
       candidates.add(Uri.parse('ms-outlook://'));
       candidates.add(Uri.parse('https://outlook.live.com'));
     } else if (domain == 'yahoo.com') {
-      // Direct Yahoo app launcher, then iOS scheme, then webmail inbox
-      candidates.add(
-        Uri.parse(
-          'intent:#Intent;action=android.intent.action.MAIN;package=com.yahoo.mobile.client.android.mail;end',
-        ),
-      );
       candidates.add(Uri.parse('ymail://'));
       candidates.add(Uri.parse('https://mail.yahoo.com'));
     }
   }
 
-  // Generic mail app inboxes (Android system email, Gmail fallback, Apple Mail)
+  // Generic fallback: iOS Apple Mail, and fallback webmail
   candidates.addAll([
-    Uri.parse(
-      'intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.APP_EMAIL;end',
-    ),
-    Uri.parse(
-      'intent:#Intent;action=android.intent.action.MAIN;package=com.google.android.gm;end',
-    ),
     Uri.parse('message://'),
+    Uri.parse('https://mail.google.com'),
   ]);
 
   for (final uri in candidates) {
