@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ittalent_mobile/features/auth/utils/email_launcher.dart';
+import 'package:open_mail_app/open_mail_app.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 void main() {
   group('launchEmailApp Tests', () {
-    testWidgets('launches mailto scheme when canLaunch returns true', (
+    testWidgets('launches native email app inbox when open_mail_app succeeds', (
       WidgetTester tester,
     ) async {
-      Uri? launchedUri;
-      LaunchMode? launchMode;
+      bool mailAppOpened = false;
 
       await tester.pumpWidget(
         MaterialApp(
@@ -20,13 +20,10 @@ void main() {
                   onPressed: () => launchEmailApp(
                     context,
                     email: 'candidate@company.com',
-                    canLaunchUrlChecker: (uri) async => uri.scheme == 'mailto',
-                    urlLauncher:
-                        (uri, {mode = LaunchMode.platformDefault}) async {
-                          launchedUri = uri;
-                          launchMode = mode;
-                          return true;
-                        },
+                    mailAppOpener: ({nativePickerTitle}) async {
+                      mailAppOpened = true;
+                      return OpenMailAppResult(didOpen: true);
+                    },
                   ),
                   child: const Text('Open'),
                 );
@@ -39,12 +36,54 @@ void main() {
       await tester.tap(find.text('Open'));
       await tester.pumpAndSettle();
 
-      expect(launchedUri, Uri(scheme: 'mailto'));
-      expect(launchMode, LaunchMode.externalApplication);
+      expect(mailAppOpened, isTrue);
     });
 
     testWidgets(
-      'falls back to Gmail web inbox when mailto fails for @gmail.com',
+      'displays picker dialog when multiple mail apps are available',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: Builder(
+                builder: (context) {
+                  return ElevatedButton(
+                    onPressed: () => launchEmailApp(
+                      context,
+                      email: 'candidate@company.com',
+                      mailAppOpener: ({nativePickerTitle}) async {
+                        return OpenMailAppResult(
+                          didOpen: false,
+                          options: const [
+                            MailApp(
+                              name: 'Gmail',
+                              iosLaunchScheme: 'googlegmail://',
+                            ),
+                            MailApp(
+                              name: 'Outlook',
+                              iosLaunchScheme: 'ms-outlook://',
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                    child: const Text('Open'),
+                  );
+                },
+              ),
+            ),
+          ),
+        );
+
+        await tester.tap(find.text('Open'));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(MailAppPickerDialog), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'falls back to Gmail web inbox when native mail fails for @gmail.com',
       (WidgetTester tester) async {
         Uri? launchedUri;
 
@@ -57,6 +96,9 @@ void main() {
                     onPressed: () => launchEmailApp(
                       context,
                       email: 'alex.dev@gmail.com',
+                      mailAppOpener: ({nativePickerTitle}) async {
+                        return OpenMailAppResult(didOpen: false);
+                      },
                       canLaunchUrlChecker: (uri) async => uri.scheme == 'https',
                       urlLauncher:
                           (uri, {mode = LaunchMode.platformDefault}) async {
@@ -80,7 +122,7 @@ void main() {
     );
 
     testWidgets(
-      'falls back to Outlook web inbox when mailto fails for @outlook.com',
+      'falls back to Outlook web inbox when native mail fails for @outlook.com',
       (WidgetTester tester) async {
         Uri? launchedUri;
 
@@ -93,6 +135,9 @@ void main() {
                     onPressed: () => launchEmailApp(
                       context,
                       email: 'alex.dev@outlook.com',
+                      mailAppOpener: ({nativePickerTitle}) async {
+                        return OpenMailAppResult(didOpen: false);
+                      },
                       canLaunchUrlChecker: (uri) async => uri.scheme == 'https',
                       urlLauncher:
                           (uri, {mode = LaunchMode.platformDefault}) async {
@@ -127,6 +172,9 @@ void main() {
                     onPressed: () => launchEmailApp(
                       context,
                       email: 'custom@private-server.org',
+                      mailAppOpener: ({nativePickerTitle}) async {
+                        return OpenMailAppResult(didOpen: false);
+                      },
                       canLaunchUrlChecker: (_) async => false,
                       urlLauncher: (
                         _, {
