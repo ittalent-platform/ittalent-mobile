@@ -178,6 +178,7 @@ class _CertificatesScreenState extends ConsumerState<CertificatesScreen> {
                   : 'certificates.toast.saved',
               namedArgs: {'name': result.link.name},
             ),
+      error: result.suggestFailed,
     );
   }
 
@@ -198,9 +199,9 @@ class _CertificatesScreenState extends ConsumerState<CertificatesScreen> {
         }
       } else if (e.isNotFound) {
         ref.invalidate(certificatesProvider);
-        _toast(tr('certificates.gone.title'));
+        _toast(tr('certificates.gone.title'), error: true);
       } else {
-        _toast(tr('certificates.errors.deleteFailed'));
+        _toast(tr('certificates.errors.deleteFailed'), error: true);
       }
     }
   }
