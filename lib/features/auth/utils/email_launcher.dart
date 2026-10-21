@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../components/common/app_toast.dart';
+
 const MethodChannel _emailChannel = MethodChannel(
   'com.example.ittalent_mobile/email_launcher',
 );
@@ -81,13 +83,10 @@ Future<bool> launchEmailApp(
   }
 
   if (context.mounted) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Could not open email app. Please check your inbox manually.',
-        ),
-        behavior: SnackBarBehavior.floating,
-      ),
+    showAppToast(
+      ScaffoldMessenger.of(context),
+      'Could not open email app. Please check your inbox manually.',
+      error: true,
     );
   }
   return false;

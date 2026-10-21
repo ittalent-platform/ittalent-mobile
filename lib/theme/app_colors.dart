@@ -125,6 +125,11 @@ class AppColors extends ThemeExtension<AppColors> {
     statusNeutralFg: Color(0xFF52525B),
   );
 
+  /// The opposite palette, for surfaces like toasts that must stand out from
+  /// the screen: dark on the light theme, light on the dark theme.
+  static AppColors inverseOf(Brightness brightness) =>
+      brightness == Brightness.light ? dark : light;
+
   static const dark = AppColors(
     background: Color(0xFF121214),
     foreground: Color(0xFFF5F5F5),
