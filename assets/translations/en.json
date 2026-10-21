@@ -49,11 +49,11 @@
     },
     "empty": {
       "title": "No certificates yet",
-      "description": "Add links to certificates you've earned. You choose which ones to send when you apply."
+      "description": "Add a link to a certificate so companies can check it when you apply."
     },
     "errors": {
-      "loadTitle": "Your certificates didn't load",
-      "loadDescription": "Check your connection and try again.",
+      "loadTitle": "Couldn't load certificates",
+      "loadDescription": "Try again in a moment.",
       "retry": "Try again",
       "switchFailed": "Couldn't update this certificate. Nothing changed. Please try again.",
       "deleteFailed": "Couldn't delete the certificate. It's still in your list. Please try again."
@@ -64,11 +64,12 @@
       "signIn": "Sign in"
     },
     "toast": {
-      "suggested": "Will be suggested when you apply.",
+      "suggested": "Suggested when you apply. You can untick it on each application.",
       "unsuggested": "Won't be suggested when you apply.",
       "added": "{{name}} added.",
       "saved": "{{name}} saved.",
-      "deleted": "{{name}} deleted. Sent copies are kept."
+      "deleted": "{{name}} deleted. Sent copies are kept.",
+      "undo": "Undo"
     },
     "delete": {
       "title": "Delete this certificate?",
@@ -79,8 +80,8 @@
       "confirm": "Delete"
     },
     "conflict": {
-      "title": "This certificate changed somewhere else",
-      "description": "It was edited or deleted in another tab. Load the latest version, then make your change again.",
+      "title": "This certificate was updated",
+      "description": "You saved a newer version on another device. Load it, then edit again.",
       "loadLatest": "Load latest"
     },
     "form": {
@@ -122,9 +123,22 @@
       "validity": "Validity",
       "valid": "Valid",
       "apply": "Apply",
-      "clear": "Clear filters"
+      "clear": "Clear filters",
+      "all": "All",
+      "yes": "Yes",
+      "no": "No",
+      "suggestedLabel": "Suggested",
+      "pill": "{{label}}: {{value}}"
     },
-    "loadMore": "Could not load more certificates."
+    "loadMore": "Could not load more certificates.",
+    "back": "Me",
+    "suggestWhenApply": "Suggest when I apply",
+    "moreFor": "More actions for {{name}}",
+    "linkFailed": "{{domain}} didn't respond. Check the link or edit it.",
+    "gone": {
+      "title": "This certificate isn't available",
+      "description": "It may have been deleted on another device."
+    }
   },
   "actions": {
     "save": "Save",

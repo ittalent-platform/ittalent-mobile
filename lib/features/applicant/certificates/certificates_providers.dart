@@ -26,6 +26,28 @@ class CertificateLink {
   final String? issuedDate;
   final String? expiryDate;
 
+  CertificateLink copyWith({bool? suggested}) => CertificateLink(
+    id: id,
+    name: name,
+    url: url,
+    version: version,
+    suggested: suggested ?? this.suggested,
+    sentCount: sentCount,
+    issuer: issuer,
+    issuedDate: issuedDate,
+    expiryDate: expiryDate,
+  );
+
+  /// Host without "www.", shown instead of the full link.
+  String get domain {
+    final host = Uri.tryParse(url)?.host ?? '';
+    return host.startsWith('www.')
+        ? host.substring(4)
+        : (host.isEmpty ? url : host);
+  }
+
+  bool get isHttps => url.startsWith('https://');
+
   /// Expiry dates are YYYY-MM-DD, so comparing the strings compares the dates.
   bool isExpired(DateTime now) =>
       expiryDate != null &&
@@ -121,6 +143,7 @@ class CertificatesListState {
     List<CertificateLink>? items,
     int? page,
     int? totalPages,
+    int? suggestedTotal,
     bool? loadingMore,
     bool? loadMoreFailed,
   }) => CertificatesListState(
@@ -128,7 +151,7 @@ class CertificatesListState {
     page: page ?? this.page,
     totalPages: totalPages ?? this.totalPages,
     total: total,
-    suggestedTotal: suggestedTotal,
+    suggestedTotal: suggestedTotal ?? this.suggestedTotal,
     loadingMore: loadingMore ?? this.loadingMore,
     loadMoreFailed: loadMoreFailed ?? this.loadMoreFailed,
   );
@@ -172,6 +195,38 @@ class CertificatesNotifier extends AsyncNotifier<CertificatesListState> {
       totalPages: data['totalPages'] as int? ?? 0,
       total: data['total'] as int? ?? 0,
       suggestedTotal: data['suggestedTotal'] as int? ?? 0,
+    );
+  }
+
+  /// Flips "Suggest when I apply" at once, then PATCHes it with the version shown.
+  /// Returns the saved link; on failure the switch goes back and the error is rethrown.
+  Future<CertificateLink> setSuggested(CertificateLink item, bool value) async {
+    final delta = value == item.suggested ? 0 : (value ? 1 : -1);
+    _replace(item.copyWith(suggested: value), delta);
+    try {
+      final response = await ref
+          .read(apiClientProvider)
+          .patch<Map<String, dynamic>>(
+            CertificateConstants.itemPath(item.id),
+            data: {'expectedVersion': item.version, 'suggested': value},
+          );
+      final saved = CertificateLink.fromJson(response.data ?? const {});
+      _replace(saved, 0);
+      return saved;
+    } catch (_) {
+      _replace(item, -delta);
+      rethrow;
+    }
+  }
+
+  void _replace(CertificateLink link, int suggestedDelta) {
+    final current = state.value;
+    if (current == null) return;
+    state = AsyncData(
+      current.copyWith(
+        items: [for (final e in current.items) e.id == link.id ? link : e],
+        suggestedTotal: current.suggestedTotal + suggestedDelta,
+      ),
     );
   }
 
