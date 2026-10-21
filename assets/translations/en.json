@@ -213,7 +213,10 @@
       "appliesRightAway": "Applies right away",
       "inProgress": "In progress",
       "closed": "Closed",
-      "selectAll": "Select all"
+      "selectAll": "Select all",
+      "title": "Filters",
+      "apply": "Apply",
+      "sort": "Sort by"
     },
     "range": {
       "any": "Any time",
@@ -242,7 +245,8 @@
       "offered": "Offered",
       "hired": "Hired",
       "rejected": "Rejected",
-      "withdrawn": "Withdrawn"
+      "withdrawn": "Withdrawn",
+      "position_filled": "Position filled"
     },
     "attachment": {
       "cv": "CV",
@@ -373,7 +377,14 @@
     "withdrawPartial": "{{done}} withdrawn, {{failed}} left unchanged.",
     "withdrawDescriptionReapplied": "This closes your application. This was already your second application to this job, so you won't be able to apply to it again.",
     "acrossCompanies_one": "across {{count}} company",
-    "acrossCompanies_other": "across {{count}} companies"
+    "acrossCompanies_other": "across {{count}} companies",
+    "sort": {
+      "newest": "Newest first",
+      "oldest": "Oldest first"
+    },
+    "loadMore": "Load more",
+    "loadMoreFailed": "Could not load more applications.",
+    "retry": "Try again"
   },
   "loadingScreen": {
     "message": "Loading your session and app state."

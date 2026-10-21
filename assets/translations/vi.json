@@ -208,7 +208,10 @@
       "appliesRightAway": "Áp dụng ngay",
       "inProgress": "Đang xử lý",
       "closed": "Đã đóng",
-      "selectAll": "Chọn tất cả"
+      "selectAll": "Chọn tất cả",
+      "title": "Bộ lọc",
+      "apply": "Áp dụng",
+      "sort": "Sắp xếp theo"
     },
     "range": {
       "any": "Mọi lúc",
@@ -237,7 +240,8 @@
       "offered": "Đã nhận offer",
       "hired": "Đã trúng tuyển",
       "rejected": "Bị từ chối",
-      "withdrawn": "Đã rút đơn"
+      "withdrawn": "Đã rút đơn",
+      "position_filled": "Vị trí đã tuyển đủ"
     },
     "attachment": {
       "cv": "CV",
@@ -365,7 +369,14 @@
     "invalidLinkDescription": "Địa chỉ đơn ứng tuyển bị sai. Hãy quay lại danh sách và mở đơn từ đó.",
     "withdrawPartial": "Đã rút {{done}} đơn, {{failed}} đơn giữ nguyên.",
     "withdrawDescriptionReapplied": "Thao tác này đóng đơn ứng tuyển của bạn. Đây đã là đơn thứ hai cho vị trí này nên bạn sẽ không thể ứng tuyển lại.",
-    "acrossCompanies_other": "tại {{count}} công ty"
+    "acrossCompanies_other": "tại {{count}} công ty",
+    "sort": {
+      "newest": "Mới nhất trước",
+      "oldest": "Cũ nhất trước"
+    },
+    "loadMore": "Tải thêm",
+    "loadMoreFailed": "Không tải thêm được đơn ứng tuyển.",
+    "retry": "Thử lại"
   },
   "loadingScreen": {
     "message": "Đang tải phiên đăng nhập và dữ liệu ứng dụng."

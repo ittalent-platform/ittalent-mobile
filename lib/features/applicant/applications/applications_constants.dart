@@ -4,20 +4,50 @@ class ApplicationConstants {
   const ApplicationConstants._();
 
   static const String statusSubmitted = 'submitted';
-  static const String statusReview = 'review';
-  static const String statusInterview = 'interview';
+  static const String statusUnderReview = 'under_review';
+  static const String statusInterviewing = 'interviewing';
   static const String statusOffered = 'offered';
   static const String statusHired = 'hired';
   static const String statusRejected = 'rejected';
   static const String statusWithdrawn = 'withdrawn';
+  static const String statusPositionFilled = 'position_filled';
+
+  static const List<String> statuses = [
+    statusSubmitted,
+    statusUnderReview,
+    statusInterviewing,
+    statusOffered,
+    statusHired,
+    statusRejected,
+    statusWithdrawn,
+    statusPositionFilled,
+  ];
+
+  static const List<String> reviewStages = [
+    'screening',
+    'interview',
+    'offer',
+    'hired',
+    'rejected',
+  ];
+
+  static const String sortSubmittedAt = 'submittedAt';
+  static const String orderDescending = 'desc';
+  static const String orderAscending = 'asc';
+
+  static const String listPath = '/api/v1/me/applications';
+  static const int pageSize = 20;
+  static const int searchMaxLength = 100;
+  static const Duration searchDebounce = Duration(milliseconds: 400);
+  static const double loadMoreThreshold = 240;
 
   static BadgeTone badgeToneForStatus(String status) {
-    switch (status.toLowerCase()) {
+    switch (status) {
       case statusSubmitted:
         return BadgeTone.neutral;
-      case statusReview:
+      case statusUnderReview:
         return BadgeTone.info;
-      case statusInterview:
+      case statusInterviewing:
         return BadgeTone.blocked;
       case statusOffered:
         return BadgeTone.warning;
@@ -25,30 +55,12 @@ class ApplicationConstants {
         return BadgeTone.success;
       case statusRejected:
         return BadgeTone.error;
-      case statusWithdrawn:
       default:
         return BadgeTone.neutral;
     }
   }
 
-  static String labelForStatus(String status) {
-    switch (status.toLowerCase()) {
-      case statusSubmitted:
-        return 'Submitted';
-      case statusReview:
-        return 'In Review';
-      case statusInterview:
-        return 'Interview';
-      case statusOffered:
-        return 'Offered';
-      case statusHired:
-        return 'Hired';
-      case statusRejected:
-        return 'Rejected';
-      case statusWithdrawn:
-        return 'Withdrawn';
-      default:
-        return status;
-    }
-  }
+  /// Translation key of the status word; unknown statuses fall back to the raw value.
+  static String statusKey(String status) =>
+      statuses.contains(status) ? 'applications.status.$status' : status;
 }
