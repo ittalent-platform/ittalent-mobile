@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../../components/common/app_toast.dart';
 import '../../../auth/auth_notifier.dart';
 import '../../../components/ui/app_button.dart';
 import '../../../config/routes.dart';
@@ -98,16 +99,9 @@ class CheckEmailScreen extends ConsumerWidget {
                                     .resendVerificationEmail(currentEmail);
                                 if (context.mounted) {
                                   if (success) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          'A verification email has been sent to $currentEmail',
-                                        ),
-                                        backgroundColor: const Color(
-                                          0xFF12764A,
-                                        ),
-                                        behavior: SnackBarBehavior.floating,
-                                      ),
+                                    showAppToast(
+                                      ScaffoldMessenger.of(context),
+                                      'A verification email has been sent to $currentEmail',
                                     );
                                   } else {
                                     final authState = ref.read(
@@ -116,14 +110,10 @@ class CheckEmailScreen extends ConsumerWidget {
                                     final error =
                                         authState.errorMessage ??
                                         'Failed to resend verification email';
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(error),
-                                        backgroundColor: const Color(
-                                          0xFFB33305,
-                                        ),
-                                        behavior: SnackBarBehavior.floating,
-                                      ),
+                                    showAppToast(
+                                      ScaffoldMessenger.of(context),
+                                      error,
+                                      error: true,
                                     );
                                   }
                                 }

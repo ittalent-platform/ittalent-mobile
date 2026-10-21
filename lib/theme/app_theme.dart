@@ -51,6 +51,7 @@ class AppTheme {
         ),
         margin: EdgeInsets.zero,
       ),
+      snackBarTheme: _snackBarTheme(Brightness.light),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: colors.card,
@@ -155,6 +156,7 @@ class AppTheme {
         ),
         margin: EdgeInsets.zero,
       ),
+      snackBarTheme: _snackBarTheme(Brightness.dark),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: colors.card,
@@ -212,6 +214,22 @@ class AppTheme {
           color: colors.mutedForeground,
         ),
       ),
+    );
+  }
+
+  static SnackBarThemeData _snackBarTheme(Brightness brightness) {
+    final colors = AppColors.inverseOf(brightness);
+    return SnackBarThemeData(
+      behavior: SnackBarBehavior.floating,
+      backgroundColor: colors.card,
+      contentTextStyle: AppTypography.body(
+        fontSize: 14,
+        color: colors.foreground,
+      ),
+      actionTextColor: colors.primary,
+      elevation: 4,
+      shape: const RoundedRectangleBorder(borderRadius: AppRadius.inputRadius),
+      insetPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
     );
   }
 }
