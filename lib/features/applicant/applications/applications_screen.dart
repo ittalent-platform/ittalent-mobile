@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../api/api_error.dart';
@@ -13,6 +14,7 @@ import '../../../components/ui/app_button.dart';
 import '../../../components/ui/app_card.dart';
 import '../../../components/ui/app_input.dart';
 import '../../../components/ui/app_skeleton.dart';
+import '../../../config/routes.dart';
 import '../../../theme/app_colors.dart';
 import 'applications_constants.dart';
 import 'applications_providers.dart';
@@ -219,7 +221,12 @@ class _ApplicationsScreenState extends ConsumerState<ApplicationsScreen> {
                         const SizedBox(height: 12),
                     itemBuilder: (context, index) => index == data.items.length
                         ? _footer(data)
-                        : ApplicationCard(item: data.items[index]),
+                        : ApplicationCard(
+                            item: data.items[index],
+                            onTap: () => context.push(
+                              AppRoutes.applicationDetail(data.items[index].id),
+                            ),
+                          ),
                   ),
                 );
               },

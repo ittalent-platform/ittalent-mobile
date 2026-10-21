@@ -36,10 +36,17 @@ class ApplicationConstants {
   static const String orderAscending = 'asc';
 
   static const String listPath = '/api/v1/me/applications';
+  static String detailPath(String id) => '$listPath/$id';
+  static String historyPath(String id) => '$listPath/$id/history';
+  static const int historyPageSize = 100;
   static const int pageSize = 20;
   static const int searchMaxLength = 100;
   static const Duration searchDebounce = Duration(milliseconds: 400);
   static const double loadMoreThreshold = 240;
+
+  /// Calendar day (YYYY-MM-DD) of a timestamp, in the device's time zone.
+  static String day(DateTime value) =>
+      value.toLocal().toIso8601String().substring(0, 10);
 
   static BadgeTone badgeToneForStatus(String status) {
     switch (status) {

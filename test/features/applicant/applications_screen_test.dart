@@ -1,43 +1,11 @@
-import 'dart:convert';
-import 'dart:typed_data';
-
-import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ittalent_mobile/api/client.dart';
 import 'package:ittalent_mobile/features/applicant/applications/applications_providers.dart';
 import 'package:ittalent_mobile/features/applicant/applications/applications_screen.dart';
-import 'package:ittalent_mobile/theme/app_theme.dart';
 
-class _FakeAdapter implements HttpClientAdapter {
-  _FakeAdapter(this.handler);
-
-  final ResponseBody Function(RequestOptions options) handler;
-  final List<RequestOptions> requests = [];
-
-  @override
-  Future<ResponseBody> fetch(
-    RequestOptions options,
-    Stream<Uint8List>? requestStream,
-    Future<void>? cancelFuture,
-  ) async {
-    requests.add(options);
-    return handler(options);
-  }
-
-  @override
-  void close({bool force = false}) {}
-}
-
-ResponseBody _json(Object body, {int status = 200}) => ResponseBody.fromString(
-  jsonEncode(body),
-  status,
-  headers: {
-    Headers.contentTypeHeader: [Headers.jsonContentType],
-  },
-);
+import '../../helpers/fake_api.dart';
 
 Map<String, dynamic> _app(
   String id,
@@ -70,33 +38,9 @@ Map<String, dynamic> _page(
 
 Future<ProviderContainer> _pump(
   WidgetTester tester,
-  _FakeAdapter adapter, {
+  FakeAdapter adapter, {
   Size size = const Size(390, 844),
-}) async {
-  tester.view.physicalSize = size;
-  tester.view.devicePixelRatio = 1.0;
-  addTearDown(() {
-    tester.view.resetPhysicalSize();
-    tester.view.resetDevicePixelRatio();
-  });
-  final dio = Dio(BaseOptions(baseUrl: 'http://test'))
-    ..httpClientAdapter = adapter;
-  final container = ProviderContainer(
-    overrides: [dioProvider.overrideWithValue(dio)],
-  );
-  addTearDown(container.dispose);
-  await tester.pumpWidget(
-    UncontrolledProviderScope(
-      container: container,
-      child: MaterialApp(
-        theme: AppTheme.light,
-        home: const ApplicationsScreen(),
-      ),
-    ),
-  );
-  await tester.pumpAndSettle();
-  return container;
-}
+}) => pumpWithApi(tester, adapter, const ApplicationsScreen(), size: size);
 
 void main() {
   setUpAll(() async {
@@ -156,8 +100,8 @@ void main() {
       testWidgets('renders the list without overflow at ${size.width}px', (
         tester,
       ) async {
-        final adapter = _FakeAdapter(
-          (_) => _json(
+        final adapter = FakeAdapter(
+          (_) => jsonBody(
             _page([
               _app('a1', 'Senior Flutter Developer', status: 'interviewing'),
               _app('a2', 'Full-Stack TypeScript Engineer with a Long Title'),
@@ -176,16 +120,16 @@ void main() {
     testWidgets('shows the empty state when there are no applications', (
       tester,
     ) async {
-      await _pump(tester, _FakeAdapter((_) => _json(_page(const []))));
+      await _pump(tester, FakeAdapter((_) => jsonBody(_page(const []))));
       expect(find.text('applications.noApplications'), findsOneWidget);
     });
 
     testWidgets('shows a retryable error and never fake data', (tester) async {
       var fail = true;
-      final adapter = _FakeAdapter(
+      final adapter = FakeAdapter(
         (_) => fail
-            ? _json({'message': 'Boom'}, status: 500)
-            : _json(_page([_app('a1', 'Recovered job')])),
+            ? jsonBody({'message': 'Boom'}, status: 500)
+            : jsonBody(_page([_app('a1', 'Recovered job')])),
       );
       await _pump(tester, adapter);
 
@@ -201,9 +145,9 @@ void main() {
     testWidgets('searches on the server after the debounce, trimmed', (
       tester,
     ) async {
-      final adapter = _FakeAdapter((options) {
+      final adapter = FakeAdapter((options) {
         final search = options.queryParameters['search'];
-        return _json(
+        return jsonBody(
           search == null
               ? _page([_app('a1', 'Flutter Dev'), _app('a2', 'Java Dev')])
               : _page([_app('a1', 'Flutter Dev')]),
@@ -221,7 +165,7 @@ void main() {
     });
 
     testWidgets('rejects a blank keyword without a request', (tester) async {
-      final adapter = _FakeAdapter((_) => _json(_page([_app('a1', 'Job')])));
+      final adapter = FakeAdapter((_) => jsonBody(_page([_app('a1', 'Job')])));
       await _pump(tester, adapter);
       final before = adapter.requests.length;
 
@@ -235,8 +179,8 @@ void main() {
     testWidgets('shows no-match state with a way to clear the search', (
       tester,
     ) async {
-      final adapter = _FakeAdapter(
-        (options) => _json(
+      final adapter = FakeAdapter(
+        (options) => jsonBody(
           options.queryParameters.containsKey('search')
               ? _page(const [])
               : _page([_app('a1', 'Job')]),
@@ -256,9 +200,9 @@ void main() {
     });
 
     testWidgets('loads the next page when scrolled to the end', (tester) async {
-      final adapter = _FakeAdapter((options) {
+      final adapter = FakeAdapter((options) {
         final page = options.queryParameters['page'] as int;
-        return _json(
+        return jsonBody(
           page == 1
               ? _page([
                   for (var i = 0; i < 8; i++) _app('p1-$i', 'First page $i'),

@@ -256,3 +256,138 @@ final myApplicationsProvider =
       MyApplicationsNotifier,
       ApplicationsListState
     >(MyApplicationsNotifier.new);
+
+class ApplicationAttachment {
+  const ApplicationAttachment({required this.type, required this.fileName});
+
+  final String type;
+  final String fileName;
+
+  factory ApplicationAttachment.fromJson(Map<String, dynamic> json) =>
+      ApplicationAttachment(
+        type: json['type'] as String? ?? '',
+        fileName: json['fileName'] as String? ?? '',
+      );
+}
+
+/// A certificate as it was when the application was sent; later edits do not change it.
+class ApplicationCertificate {
+  const ApplicationCertificate({
+    required this.name,
+    required this.url,
+    this.issuer,
+    this.issuedDate,
+    this.expiryDate,
+  });
+
+  final String name;
+  final String url;
+  final String? issuer;
+  final String? issuedDate;
+  final String? expiryDate;
+
+  factory ApplicationCertificate.fromJson(Map<String, dynamic> json) =>
+      ApplicationCertificate(
+        name: json['name'] as String? ?? '',
+        url: json['url'] as String? ?? '',
+        issuer: json['issuer'] as String?,
+        issuedDate: json['issuedDate'] as String?,
+        expiryDate: json['expiryDate'] as String?,
+      );
+}
+
+class ApplicationDetail {
+  const ApplicationDetail({
+    required this.summary,
+    required this.version,
+    required this.attachments,
+    required this.certificates,
+    this.message,
+    this.withdrawalReason,
+    this.latestStatusAt,
+  });
+
+  final ApplicationItem summary;
+  final int version;
+  final List<ApplicationAttachment> attachments;
+  final List<ApplicationCertificate> certificates;
+  final String? message;
+  final String? withdrawalReason;
+  final DateTime? latestStatusAt;
+
+  factory ApplicationDetail.fromJson(Map<String, dynamic> json) {
+    List<T> list<T>(String key, T Function(Map<String, dynamic>) parse) =>
+        ((json[key] as List<dynamic>?) ?? const [])
+            .map((e) => parse(e as Map<String, dynamic>))
+            .toList();
+    return ApplicationDetail(
+      summary: ApplicationItem.fromJson(json),
+      version: json['version'] as int? ?? 0,
+      attachments: list('attachments', ApplicationAttachment.fromJson),
+      certificates: list('certificates', ApplicationCertificate.fromJson),
+      message: json['message'] as String?,
+      withdrawalReason: json['withdrawalReason'] as String?,
+      latestStatusAt: DateTime.tryParse(
+        json['latestStatusAt'] as String? ?? '',
+      ),
+    );
+  }
+}
+
+final applicationDetailProvider = FutureProvider.autoDispose
+    .family<ApplicationDetail, String>((ref, id) async {
+      final response = await ref
+          .watch(apiClientProvider)
+          .get<Map<String, dynamic>>(ApplicationConstants.detailPath(id));
+      return ApplicationDetail.fromJson(response.data ?? const {});
+    });
+
+class ApplicationHistoryEntry {
+  const ApplicationHistoryEntry({
+    required this.status,
+    required this.actorRole,
+    required this.occurredAt,
+    this.reviewStage,
+  });
+
+  final String status;
+  final String actorRole;
+  final DateTime? occurredAt;
+  final String? reviewStage;
+
+  factory ApplicationHistoryEntry.fromJson(Map<String, dynamic> json) =>
+      ApplicationHistoryEntry(
+        status: json['status'] as String? ?? '',
+        actorRole: json['actorRole'] as String? ?? '',
+        occurredAt: DateTime.tryParse(json['occurredAt'] as String? ?? ''),
+        reviewStage: json['reviewStage'] as String?,
+      );
+}
+
+/// Every history entry in chronological order (UC-S3-MYAPP-03); histories are short,
+/// so pages are read until the last one.
+final applicationHistoryProvider = FutureProvider.autoDispose
+    .family<List<ApplicationHistoryEntry>, String>((ref, id) async {
+      final client = ref.watch(apiClientProvider);
+      final entries = <ApplicationHistoryEntry>[];
+      var page = 1;
+      var totalPages = 1;
+      while (page <= totalPages) {
+        final response = await client.get<Map<String, dynamic>>(
+          ApplicationConstants.historyPath(id),
+          queryParameters: {
+            'page': page,
+            'limit': ApplicationConstants.historyPageSize,
+          },
+        );
+        final data = response.data ?? const {};
+        entries.addAll(
+          ((data['items'] as List<dynamic>?) ?? const []).map(
+            (e) => ApplicationHistoryEntry.fromJson(e as Map<String, dynamic>),
+          ),
+        );
+        totalPages = data['totalPages'] as int? ?? 1;
+        page++;
+      }
+      return entries;
+    });

@@ -9,6 +9,8 @@ import '../auth/auth_state.dart';
 import '../components/common/app_empty_state.dart';
 import '../components/layout/screen_scaffold.dart';
 import '../config/routes.dart';
+import '../features/applicant/applications/application_detail_screen.dart';
+import '../features/applicant/applications/application_history_screen.dart';
 import '../features/applicant/applications/applications_screen.dart';
 import '../features/auth/forgot_password/forgot_password_screen.dart';
 import '../features/auth/forgot_password/reset_link_sent_screen.dart';
@@ -204,6 +206,22 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: AppRoutes.myApplications,
                 builder: (context, state) => const ApplicationsScreen(),
+                routes: [
+                  GoRoute(
+                    path: ':id',
+                    builder: (context, state) => ApplicationDetailScreen(
+                      applicationId: state.pathParameters['id']!,
+                    ),
+                    routes: [
+                      GoRoute(
+                        path: 'history',
+                        builder: (context, state) => ApplicationHistoryScreen(
+                          applicationId: state.pathParameters['id']!,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ],
           ),
