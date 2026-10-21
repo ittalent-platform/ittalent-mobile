@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app/app.dart';
+import 'utils/double_brace_asset_loader.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -12,6 +13,7 @@ void main() async {
     EasyLocalization(
       supportedLocales: const [Locale('en'), Locale('vi')],
       path: 'assets/translations',
+      assetLoader: const DoubleBraceAssetLoader(),
       fallbackLocale: const Locale('en'),
       child: const ProviderScope(child: ItTalentApp()),
     ),
