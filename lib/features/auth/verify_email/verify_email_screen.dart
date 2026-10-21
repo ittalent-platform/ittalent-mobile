@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../../components/common/app_toast.dart';
 import '../../../auth/auth_notifier.dart';
 import '../../../components/ui/app_button.dart';
 import '../../../config/routes.dart';
@@ -56,12 +57,9 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
     });
 
     if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('A verification email has been sent to $email'),
-          backgroundColor: const Color(0xFF12764A),
-          behavior: SnackBarBehavior.floating,
-        ),
+      showAppToast(
+        ScaffoldMessenger.of(context),
+        'A verification email has been sent to $email',
       );
       context.go(
         '${AppRoutes.verifyEmailNotice}?email=${Uri.encodeComponent(email)}',
@@ -70,13 +68,7 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
       final authState = ref.read(authNotifierProvider);
       final error =
           authState.errorMessage ?? 'Failed to resend verification email';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(error),
-          backgroundColor: const Color(0xFFB33305),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      showAppToast(ScaffoldMessenger.of(context), error, error: true);
     }
   }
 
