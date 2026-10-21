@@ -9,6 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../api/api_error.dart';
 import '../../../components/common/app_empty_state.dart';
+import '../../../components/common/app_toast.dart';
 import '../../../components/layout/screen_scaffold.dart';
 import '../../../components/ui/app_button.dart';
 import '../../../components/ui/app_card.dart';
@@ -85,11 +86,13 @@ class _CertificatesScreenState extends ConsumerState<CertificatesScreen> {
     });
   }
 
-  void _toast(String message, {SnackBarAction? action}) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message), action: action));
-  }
+  void _toast(String message, {bool error = false, SnackBarAction? action}) =>
+      showAppToast(
+        ScaffoldMessenger.of(context),
+        message,
+        error: error,
+        action: action,
+      );
 
   /// Saves the switch at once; the toast offers Undo (which itself is not undoable).
   Future<void> _setSuggested(
@@ -124,9 +127,9 @@ class _CertificatesScreenState extends ConsumerState<CertificatesScreen> {
         }
       } else if (e.isNotFound) {
         ref.invalidate(certificatesProvider);
-        _toast(tr('certificates.gone.title'));
+        _toast(tr('certificates.gone.title'), error: true);
       } else {
-        _toast(tr('certificates.errors.switchFailed'));
+        _toast(tr('certificates.errors.switchFailed'), error: true);
       }
     } finally {
       if (mounted) setState(() => _saving.remove(item.id));
@@ -142,7 +145,10 @@ class _CertificatesScreenState extends ConsumerState<CertificatesScreen> {
       );
     } catch (_) {}
     if (!opened && mounted) {
-      _toast(tr('certificates.linkFailed', namedArgs: {'domain': item.domain}));
+      _toast(
+        tr('certificates.linkFailed', namedArgs: {'domain': item.domain}),
+        error: true,
+      );
     }
   }
 
