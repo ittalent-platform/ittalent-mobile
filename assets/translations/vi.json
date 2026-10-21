@@ -2592,11 +2592,11 @@
     "openLink": "Mở liên kết",
     "empty": {
       "title": "Chưa có liên kết portfolio",
-      "description": "Thêm liên kết đến sản phẩm của bạn. Chỉ mình bạn nhìn thấy."
+      "description": "Thêm liên kết tới sản phẩm của bạn để doanh nghiệp xem khi bạn ứng tuyển."
     },
     "errors": {
       "loadTitle": "Không tải được portfolio",
-      "loadDescription": "Kiểm tra kết nối và thử lại.",
+      "loadDescription": "Hãy thử lại sau ít phút.",
       "retry": "Thử lại",
       "deleteFailed": "Không xóa được liên kết. Liên kết vẫn còn trong danh sách. Vui lòng thử lại.",
       "loadMore": "Không tải thêm được liên kết."
@@ -2607,28 +2607,38 @@
       "title": "Tiêu đề",
       "titlePlaceholder": "VD: Website portfolio của tôi",
       "url": "Liên kết",
-      "urlHint": "Trang hiển thị sản phẩm của bạn. ITTalent không mở hay kiểm tra liên kết.",
+      "urlHint": "Nơi doanh nghiệp xem được sản phẩm của bạn. Phải bắt đầu bằng https://",
       "description": "Mô tả",
       "optional": "không bắt buộc",
-      "add": "Thêm liên kết",
+      "add": "Lưu liên kết",
       "errors": {
-        "title": "Hãy đặt tiêu đề cho liên kết.",
-        "url": "Dùng liên kết web bắt đầu bằng https:// (hoặc http://).",
+        "title": "Nhập tiêu đề.",
+        "url": "Dùng liên kết an toàn bắt đầu bằng https://",
         "duplicate": "Bạn đã thêm liên kết này rồi.",
-        "saveFailed": "Không lưu được liên kết. Chưa có gì được thêm. Vui lòng thử lại."
-      }
+        "saveFailed": "Không lưu được liên kết. Chưa có gì thay đổi. Hãy thử lại.",
+        "summary_one": "Sửa 1 trường để lưu.",
+        "summary_other": "Sửa {{count}} trường để lưu."
+      },
+      "optionalHint": "Không bắt buộc",
+      "saving": "Đang lưu…"
     },
     "delete": {
-      "title": "Xóa liên kết này?",
-      "description": "{{name}} sẽ bị xóa khỏi portfolio. Trang mà liên kết trỏ tới không bị ảnh hưởng.",
+      "title": "Xoá {{name}}?",
+      "description": "Bạn không thể hoàn tác thao tác này. Trang mà liên kết trỏ tới không bị ảnh hưởng.",
       "keep": "Giữ lại",
-      "confirm": "Xóa"
+      "confirm": "Xoá liên kết"
     },
     "toast": {
-      "added": "Đã thêm {{name}}.",
+      "added": "Đã thêm liên kết",
       "deleted": "Đã xóa {{name}}.",
       "alreadyGone": "Liên kết đó đã bị xóa trước đó."
-    }
+    },
+    "back": "Tôi",
+    "version": "Phiên bản {{version}}",
+    "moreFor": "Thao tác khác cho {{name}}",
+    "deleteMenu": "Xoá…",
+    "notHttps": "Không phải HTTPS",
+    "linkFailed": "{{name}} không phản hồi. Hãy kiểm tra liên kết."
   }
 }
 

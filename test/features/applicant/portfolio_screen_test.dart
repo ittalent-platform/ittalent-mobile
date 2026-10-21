@@ -3,17 +3,22 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ittalent_mobile/features/applicant/portfolio/portfolio_screen.dart';
-import 'package:ittalent_mobile/features/applicant/portfolio/widgets/portfolio_form_sheet.dart';
+import 'package:ittalent_mobile/features/applicant/portfolio/widgets/portfolio_form_page.dart';
 
 import '../../helpers/fake_api.dart';
 
 // Tall and wide: the sheet is long and untranslated keys render long in the test font.
 const _size = Size(900, 1400);
 
-Map<String, dynamic> _link(String id, String title, {String? description}) => {
+Map<String, dynamic> _link(
+  String id,
+  String title, {
+  String? description,
+  String? url,
+}) => {
   'id': id,
   'title': title,
-  'url': 'https://me.example/$id',
+  'url': url ?? 'https://www.me.example/$id',
   'description': description,
   'version': 1,
 };
@@ -44,8 +49,15 @@ Future<FakeAdapter> _open(
   return adapter;
 }
 
-// The page behind the sheet has no text fields, so every field belongs to the form.
+// The list behind the page has no text fields, so every field belongs to the form.
 Finder _fields() => find.byType(TextField);
+
+Future<void> _menu(WidgetTester tester, String item) async {
+  await tester.tap(find.byTooltip('portfolio.moreFor'));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text(item));
+  await tester.pumpAndSettle();
+}
 
 Future<void> _fillAdd(WidgetTester tester) async {
   await tester.tap(find.byTooltip('portfolio.add'));
@@ -75,6 +87,7 @@ void main() {
     });
 
     for (final url in const [
+      'http://me.example',
       'javascript:alert(1)',
       'data:text/html,x',
       'ftp://me.example',
@@ -97,7 +110,23 @@ void main() {
     expect(adapter.requests.single.path, '/api/v1/me/portfolio-links');
     expect(find.text('My site'), findsOneWidget);
     expect(find.text('Projects'), findsOneWidget);
+    expect(find.text('me.example'), findsOneWidget);
+    expect(find.text('portfolio.notHttps'), findsNothing);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('tags an http link as not HTTPS', (tester) async {
+    await _open(tester, items: [_link('p1', 'Old', url: 'http://old.example')]);
+    expect(find.text('portfolio.notHttps'), findsOneWidget);
+  });
+
+  testWidgets('the ⋯ menu shows the domain and version', (tester) async {
+    await _open(tester);
+    await tester.tap(find.byTooltip('portfolio.moreFor'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('me.example · '), findsOneWidget);
+    expect(find.text('portfolio.openLink'), findsOneWidget);
+    expect(find.text('portfolio.deleteMenu'), findsOneWidget);
   });
 
   testWidgets('shows the empty state with a way to add', (tester) async {
@@ -166,16 +195,21 @@ void main() {
         matches(RegExp(r'^[0-9a-f]{32}$')),
       );
       expect(adapter.requests.where((r) => r.method == 'GET').length, 2);
+      expect(find.byType(PortfolioFormPage), findsNothing);
       expect(find.text('portfolio.toast.added'), findsOneWidget);
     });
 
-    testWidgets('does not send an invalid form', (tester) async {
+    testWidgets('does not send an invalid form and sums up the errors', (
+      tester,
+    ) async {
       final adapter = await _open(tester);
       await tester.tap(find.byTooltip('portfolio.add'));
       await tester.pumpAndSettle();
+      await tester.enterText(_fields().at(1), 'http://me.example/work');
       await tester.tap(find.text('portfolio.form.add'));
       await tester.pumpAndSettle();
 
+      expect(find.text('portfolio.form.errors.summary_other'), findsOneWidget);
       expect(find.text('portfolio.form.errors.title'), findsOneWidget);
       expect(find.text('portfolio.form.errors.url'), findsOneWidget);
       expect(adapter.requests.where((r) => r.method == 'POST'), isEmpty);
@@ -194,7 +228,7 @@ void main() {
       await _fillAdd(tester);
       await tester.tap(find.text('portfolio.form.add'));
       await tester.pumpAndSettle();
-      expect(find.text('Boom'), findsOneWidget);
+      expect(find.text('portfolio.form.errors.saveFailed'), findsOneWidget);
 
       await tester.tap(find.text('portfolio.form.add'));
       await tester.pumpAndSettle();
@@ -227,14 +261,9 @@ void main() {
 
   group('delete', () {
     Future<void> confirmDelete(WidgetTester tester) async {
-      await tester.tap(find.byTooltip('portfolio.delete.confirm'));
-      await tester.pumpAndSettle();
-      await tester.tap(
-        find.descendant(
-          of: find.byType(AlertDialog),
-          matching: find.text('portfolio.delete.confirm'),
-        ),
-      );
+      await _menu(tester, 'portfolio.deleteMenu');
+      expect(find.text('portfolio.delete.title'), findsOneWidget);
+      await tester.tap(find.text('portfolio.delete.confirm'));
       await tester.pumpAndSettle();
     }
 
@@ -256,9 +285,8 @@ void main() {
 
     testWidgets('keeps the link when deletion is cancelled', (tester) async {
       final adapter = await _open(tester);
-      await tester.tap(find.byTooltip('portfolio.delete.confirm'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('portfolio.delete.keep'));
+      await _menu(tester, 'portfolio.deleteMenu');
+      await tester.tap(find.text('actions.cancel'));
       await tester.pumpAndSettle();
 
       expect(adapter.requests.where((r) => r.method == 'DELETE'), isEmpty);

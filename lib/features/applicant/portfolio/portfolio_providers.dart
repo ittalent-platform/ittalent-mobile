@@ -19,6 +19,15 @@ class PortfolioLink {
   final int version;
   final String? description;
 
+  /// Host without "www.", shown instead of the full link.
+  String get domain {
+    final host = Uri.tryParse(url)?.host ?? '';
+    if (host.isEmpty) return url;
+    return host.startsWith('www.') ? host.substring(4) : host;
+  }
+
+  bool get isHttps => url.startsWith('https://');
+
   factory PortfolioLink.fromJson(Map<String, dynamic> json) => PortfolioLink(
     id: json['id'] as String? ?? '',
     title: json['title'] as String? ?? '',
@@ -131,13 +140,13 @@ class PortfolioActions {
   final Ref _ref;
 
   /// UC-S4-PORT-01. Reusing [idempotencyKey] for a retry returns the committed link.
-  Future<void> create({
+  Future<PortfolioLink> create({
     required String idempotencyKey,
     required String title,
     required String url,
     String? description,
   }) async {
-    await _ref
+    final response = await _ref
         .read(apiClientProvider)
         .post<Map<String, dynamic>>(
           PortfolioConstants.listPath,
@@ -147,6 +156,7 @@ class PortfolioActions {
           ),
         );
     _ref.invalidate(portfolioProvider);
+    return PortfolioLink.fromJson(response.data ?? const {});
   }
 
   /// UC-S4-PORT-03. Only the platform's reference goes, never the page it points to.
