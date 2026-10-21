@@ -81,16 +81,12 @@ class AppBadge extends StatelessWidget {
             ),
             const SizedBox(width: 4),
           ],
-          Flexible(
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AppTypography.body(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: fg,
-              ),
+          Text(
+            label,
+            style: AppTypography.body(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: fg,
             ),
           ),
         ],
