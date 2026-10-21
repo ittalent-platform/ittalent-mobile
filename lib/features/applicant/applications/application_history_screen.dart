@@ -8,11 +8,11 @@ import '../../../components/common/app_empty_state.dart';
 import '../../../components/common/app_error_state.dart';
 import '../../../components/layout/screen_scaffold.dart';
 import '../../../components/ui/app_card.dart';
-import '../../../components/ui/app_skeleton.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_typography.dart';
 import 'applications_constants.dart';
 import 'applications_providers.dart';
+import 'widgets/application_skeletons.dart';
 import 'widgets/back_link.dart';
 
 /// UC-S3-MYAPP-03: append-only status history, public actor role only.
@@ -42,10 +42,7 @@ class ApplicationHistoryScreen extends ConsumerWidget {
         ),
       ),
       body: history.when(
-        loading: () => const Padding(
-          padding: EdgeInsets.symmetric(vertical: 16),
-          child: AppCard(child: AppSkeleton(width: 200, height: 18)),
-        ),
+        loading: () => const ApplicationHistorySkeleton(),
         error: (error, _) => error is ApiError && error.isNotFound
             ? AppEmptyState(
                 icon: const Icon(LucideIcons.fileX),

@@ -11,12 +11,12 @@ import '../../../components/common/app_error_state.dart';
 import '../../../components/layout/screen_scaffold.dart';
 import '../../../components/ui/app_button.dart';
 import '../../../components/ui/app_card.dart';
-import '../../../components/ui/app_skeleton.dart';
 import '../../../config/routes.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_typography.dart';
 import 'applications_constants.dart';
 import 'applications_providers.dart';
+import 'widgets/application_skeletons.dart';
 import 'widgets/back_link.dart';
 import 'widgets/company_avatar.dart';
 
@@ -45,19 +45,7 @@ class ApplicationDetailScreen extends ConsumerWidget {
         ],
       ),
       body: detail.when(
-        loading: () => const Padding(
-          padding: EdgeInsets.symmetric(vertical: 16),
-          child: AppCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                AppSkeleton(width: 180, height: 20),
-                SizedBox(height: 10),
-                AppSkeleton(width: 120, height: 14),
-              ],
-            ),
-          ),
-        ),
+        loading: () => const ApplicationDetailSkeleton(),
         // E2: a foreign or unknown id looks the same as a missing one.
         error: (error, _) => error is ApiError && error.isNotFound
             ? AppEmptyState(
