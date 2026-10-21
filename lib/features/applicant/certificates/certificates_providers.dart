@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../api/client.dart';
@@ -11,6 +12,7 @@ class CertificateLink {
     required this.version,
     required this.suggested,
     required this.sentCount,
+    this.updatedAt,
     this.issuer,
     this.issuedDate,
     this.expiryDate,
@@ -22,6 +24,7 @@ class CertificateLink {
   final int version;
   final bool suggested;
   final int sentCount;
+  final DateTime? updatedAt;
   final String? issuer;
   final String? issuedDate;
   final String? expiryDate;
@@ -39,6 +42,7 @@ class CertificateLink {
         version: json['version'] as int? ?? 1,
         suggested: json['suggested'] as bool? ?? false,
         sentCount: json['sentCount'] as int? ?? 0,
+        updatedAt: DateTime.tryParse(json['updatedAt'] as String? ?? ''),
         issuer: json['issuer'] as String?,
         issuedDate: json['issuedDate'] as String?,
         expiryDate: json['expiryDate'] as String?,
@@ -212,3 +216,94 @@ final certificatesProvider =
       CertificatesNotifier,
       CertificatesListState
     >(CertificatesNotifier.new);
+
+/// What the add / edit form collects. Empty optional fields are null.
+class CertificateDraft {
+  const CertificateDraft({
+    required this.name,
+    required this.url,
+    this.issuer,
+    this.issuedDate,
+    this.expiryDate,
+  });
+
+  final String name;
+  final String url;
+  final String? issuer;
+  final String? issuedDate;
+  final String? expiryDate;
+}
+
+/// Writes on the Candidate's certificates. Every success refreshes the list.
+class CertificateActions {
+  CertificateActions(this._ref);
+
+  final Ref _ref;
+
+  /// UC-S4-CERT-01. Reusing [idempotencyKey] for a retry returns the committed link
+  /// instead of creating a second one.
+  Future<void> create({
+    required String idempotencyKey,
+    required CertificateDraft draft,
+  }) async {
+    await _ref
+        .read(apiClientProvider)
+        .post<Map<String, dynamic>>(
+          CertificateConstants.listPath,
+          data: {
+            'name': draft.name,
+            'url': draft.url,
+            if (draft.issuer != null) 'issuer': draft.issuer,
+            if (draft.issuedDate != null) 'issuedDate': draft.issuedDate,
+            if (draft.expiryDate != null) 'expiryDate': draft.expiryDate,
+          },
+          options: Options(
+            headers: {CertificateConstants.idempotencyHeader: idempotencyKey},
+          ),
+        );
+    _ref.invalidate(certificatesProvider);
+  }
+
+  /// UC-S4-CERT-02. Sends only what changed, with the version the form was opened on;
+  /// a cleared optional field goes as null. Nothing is sent when nothing changed.
+  Future<void> update({
+    required CertificateLink current,
+    required CertificateDraft draft,
+    bool? suggested,
+  }) async {
+    final changes = <String, dynamic>{
+      if (draft.name != current.name) 'name': draft.name,
+      if (draft.url != current.url) 'url': draft.url,
+      if (draft.issuer != current.issuer) 'issuer': draft.issuer,
+      if (draft.issuedDate != current.issuedDate)
+        'issuedDate': draft.issuedDate,
+      if (draft.expiryDate != current.expiryDate)
+        'expiryDate': draft.expiryDate,
+      if (suggested != null && suggested != current.suggested)
+        'suggested': suggested,
+    };
+    if (changes.isEmpty) return;
+    await _ref
+        .read(apiClientProvider)
+        .patch<Map<String, dynamic>>(
+          CertificateConstants.itemPath(current.id),
+          data: {'expectedVersion': current.version, ...changes},
+        );
+    _ref.invalidate(certificatesProvider);
+  }
+
+  /// UC-S4-CERT-03. Applications already sent keep their own copy.
+  Future<void> delete(CertificateLink current) async {
+    await _ref
+        .read(apiClientProvider)
+        .delete<void>(
+          CertificateConstants.itemPath(current.id),
+          queryParameters: {'expectedVersion': current.version},
+        );
+    _ref.invalidate(certificatesProvider);
+  }
+}
+
+final certificateActionsProvider = Provider<CertificateActions>(
+  CertificateActions.new,
+);

@@ -17,6 +17,7 @@ import '../../../theme/app_colors.dart';
 import 'certificates_constants.dart';
 import 'certificates_providers.dart';
 import 'widgets/certificate_card.dart';
+import 'widgets/certificate_form_sheet.dart';
 import 'widgets/certificates_filter_sheet.dart';
 
 /// UC-S4-CERT-04 list with UC-S4-CERT-06 search and filters.
@@ -89,6 +90,26 @@ class _CertificatesScreenState extends ConsumerState<CertificatesScreen> {
     }
   }
 
+  Future<void> _openForm([CertificateLink? existing]) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final result = await showModalBottomSheet<CertificateFormResult>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => CertificateFormSheet(existing: existing),
+    );
+    if (result == null) return;
+    final key = switch (result.outcome) {
+      CertificateFormOutcome.added => 'certificates.toast.added',
+      CertificateFormOutcome.saved => 'certificates.toast.saved',
+      CertificateFormOutcome.deleted => 'certificates.toast.deleted',
+      CertificateFormOutcome.conflict => 'certificates.conflict.title',
+    };
+    messenger.showSnackBar(
+      SnackBar(content: Text(tr(key, namedArgs: {'name': result.name}))),
+    );
+  }
+
   void _clearAll() {
     _searchController.clear();
     setState(() => _searchError = null);
@@ -147,6 +168,11 @@ class _CertificatesScreenState extends ConsumerState<CertificatesScreen> {
       appBar: AppBar(
         title: Text(tr('certificates.title')),
         actions: [
+          IconButton(
+            tooltip: tr('certificates.add'),
+            icon: const Icon(LucideIcons.plus, size: 20),
+            onPressed: _openForm,
+          ),
           IconButton(
             tooltip: tr('certificates.filter.title'),
             icon: Icon(
@@ -219,7 +245,10 @@ class _CertificatesScreenState extends ConsumerState<CertificatesScreen> {
                         const SizedBox(height: 12),
                     itemBuilder: (context, index) => index == data.items.length
                         ? _footer(data)
-                        : CertificateCard(item: data.items[index]),
+                        : CertificateCard(
+                            item: data.items[index],
+                            onTap: () => _openForm(data.items[index]),
+                          ),
                   ),
                 );
               },
