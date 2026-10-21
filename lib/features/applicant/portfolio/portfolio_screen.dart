@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../api/api_error.dart';
 import '../../../components/common/app_empty_state.dart';
+import '../../../components/common/app_toast.dart';
 import '../../../components/layout/screen_scaffold.dart';
 import '../../../components/ui/app_button.dart';
 import '../../../components/ui/app_card.dart';
@@ -48,13 +49,11 @@ class _PortfolioScreenState extends ConsumerState<PortfolioScreen> {
     super.dispose();
   }
 
-  void _toast(String key, String name) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(content: Text(tr(key, namedArgs: {'name': name}))),
-      );
-  }
+  void _toast(String key, String name, {bool error = false}) => showAppToast(
+    ScaffoldMessenger.of(context),
+    tr(key, namedArgs: {'name': name}),
+    error: error,
+  );
 
   Future<void> _add() async {
     final link = await PortfolioFormPage.open(context);
@@ -71,7 +70,9 @@ class _PortfolioScreenState extends ConsumerState<PortfolioScreen> {
         mode: LaunchMode.externalApplication,
       );
     } catch (_) {}
-    if (!opened && mounted) _toast('portfolio.linkFailed', link.domain);
+    if (!opened && mounted) {
+      _toast('portfolio.linkFailed', link.domain, error: true);
+    }
   }
 
   Future<void> _openMenu(PortfolioLink link) async {
@@ -97,12 +98,14 @@ class _PortfolioScreenState extends ConsumerState<PortfolioScreen> {
       // Changed or removed elsewhere: reload so the list shows the latest.
       if (e.code == PortfolioConstants.codeVersionConflict || e.isNotFound) {
         ref.invalidate(portfolioProvider);
-        _toast('portfolio.toast.alreadyGone', link.title);
+        _toast('portfolio.toast.alreadyGone', link.title, error: true);
         return;
       }
-      _toast('portfolio.errors.deleteFailed', link.title);
+      _toast('portfolio.errors.deleteFailed', link.title, error: true);
     } catch (_) {
-      if (mounted) _toast('portfolio.errors.deleteFailed', link.title);
+      if (mounted) {
+        _toast('portfolio.errors.deleteFailed', link.title, error: true);
+      }
     }
   }
 
