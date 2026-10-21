@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../api/api_error.dart';
 import '../../../components/common/app_empty_state.dart';
 import '../../../components/common/app_error_state.dart';
+import '../../../components/common/app_toast.dart';
 import '../../../components/layout/screen_scaffold.dart';
 import '../../../components/ui/app_button.dart';
 import '../../../components/ui/app_card.dart';
@@ -155,14 +156,11 @@ Future<void> _withdraw(
     ),
   );
   if (withdrawn != true) return;
-  messenger.showSnackBar(
-    SnackBar(
-      content: Text(
-        tr(
-          'applications.toast.withdrawnOne',
-          namedArgs: {'id': ApplicationConstants.displayId(applicationId)},
-        ),
-      ),
+  showAppToast(
+    messenger,
+    tr(
+      'applications.toast.withdrawnOne',
+      namedArgs: {'id': ApplicationConstants.displayId(applicationId)},
     ),
   );
 }
