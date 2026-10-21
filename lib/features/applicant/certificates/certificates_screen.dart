@@ -5,20 +5,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import 'package:url_launcher/url_launcher.dart';
+
 import '../../../api/api_error.dart';
 import '../../../components/common/app_empty_state.dart';
-import '../../../components/common/app_error_state.dart';
 import '../../../components/layout/screen_scaffold.dart';
 import '../../../components/ui/app_button.dart';
 import '../../../components/ui/app_card.dart';
 import '../../../components/ui/app_input.dart';
 import '../../../components/ui/app_skeleton.dart';
 import '../../../theme/app_colors.dart';
+import '../../../theme/app_typography.dart';
 import 'certificates_constants.dart';
 import 'certificates_providers.dart';
+import 'widgets/bold_markup_text.dart';
 import 'widgets/certificate_card.dart';
-import 'widgets/certificate_form_sheet.dart';
-import 'widgets/certificates_filter_sheet.dart';
+import 'widgets/certificate_sheets.dart';
+import 'widgets/certificates_filter_pills.dart';
 
 /// UC-S4-CERT-04 list with UC-S4-CERT-06 search and filters.
 class CertificatesScreen extends ConsumerStatefulWidget {
@@ -33,6 +36,8 @@ class _CertificatesScreenState extends ConsumerState<CertificatesScreen> {
   final _scrollController = ScrollController();
   Timer? _debounce;
   String? _searchError;
+  // Certificates whose switch is being saved; their switch waits.
+  final Set<String> _saving = {};
 
   @override
   void initState() {
@@ -77,37 +82,74 @@ class _CertificatesScreenState extends ConsumerState<CertificatesScreen> {
     });
   }
 
-  Future<void> _openFilters() async {
-    final result = await showModalBottomSheet<CertificatesQuery>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (_) =>
-          CertificatesFilterSheet(initial: ref.read(certificatesQueryProvider)),
-    );
-    if (result != null) {
-      ref.read(certificatesQueryProvider.notifier).update(result);
+  void _toast(String message, {SnackBarAction? action}) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message), action: action));
+  }
+
+  /// Saves the switch at once; the toast offers Undo (which itself is not undoable).
+  Future<void> _setSuggested(
+    CertificateLink item,
+    bool value, {
+    bool undoable = true,
+  }) async {
+    setState(() => _saving.add(item.id));
+    try {
+      final saved = await ref
+          .read(certificatesProvider.notifier)
+          .setSuggested(item, value);
+      if (!mounted) return;
+      _toast(
+        tr(
+          value
+              ? 'certificates.toast.suggested'
+              : 'certificates.toast.unsuggested',
+        ),
+        action: undoable
+            ? SnackBarAction(
+                label: tr('certificates.toast.undo'),
+                onPressed: () => _setSuggested(saved, !value, undoable: false),
+              )
+            : null,
+      );
+    } on ApiError catch (e) {
+      if (!mounted) return;
+      if (e.isConflict) {
+        if (await showCertificateConflictSheet(context)) {
+          ref.invalidate(certificatesProvider);
+        }
+      } else if (e.isNotFound) {
+        ref.invalidate(certificatesProvider);
+        _toast(tr('certificates.gone.title'));
+      } else {
+        _toast(tr('certificates.errors.switchFailed'));
+      }
+    } finally {
+      if (mounted) setState(() => _saving.remove(item.id));
     }
   }
 
-  Future<void> _openForm([CertificateLink? existing]) async {
-    final messenger = ScaffoldMessenger.of(context);
-    final result = await showModalBottomSheet<CertificateFormResult>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (_) => CertificateFormSheet(existing: existing),
+  Future<void> _openLink(CertificateLink item) async {
+    var opened = false;
+    try {
+      opened = await launchUrl(
+        Uri.parse(item.url),
+        mode: LaunchMode.externalApplication,
+      );
+    } catch (_) {}
+    if (!opened && mounted) {
+      _toast(tr('certificates.linkFailed', namedArgs: {'domain': item.domain}));
+    }
+  }
+
+  Future<void> _openMenu(CertificateLink item) async {
+    final action = await showCertificateMenu(
+      context,
+      item,
+      actions: const [CertificateMenuAction.openLink],
     );
-    if (result == null) return;
-    final key = switch (result.outcome) {
-      CertificateFormOutcome.added => 'certificates.toast.added',
-      CertificateFormOutcome.saved => 'certificates.toast.saved',
-      CertificateFormOutcome.deleted => 'certificates.toast.deleted',
-      CertificateFormOutcome.conflict => 'certificates.conflict.title',
-    };
-    messenger.showSnackBar(
-      SnackBar(content: Text(tr(key, namedArgs: {'name': result.name}))),
-    );
+    if (action == CertificateMenuAction.openLink) await _openLink(item);
   }
 
   void _clearAll() {
@@ -131,6 +173,30 @@ class _CertificatesScreenState extends ConsumerState<CertificatesScreen> {
       ),
     ),
   );
+
+  Widget _summary(BuildContext context, int count) {
+    final colors = context.colors;
+    return Row(
+      children: [
+        Icon(LucideIcons.send, size: 14, color: colors.mutedForeground),
+        const SizedBox(width: 8),
+        Expanded(
+          child: BoldMarkupText(
+            tr(
+              count == 1
+                  ? 'certificates.suggestedSummary_one'
+                  : 'certificates.suggestedSummary_other',
+              namedArgs: {'count': '$count'},
+            ),
+            style: AppTypography.body(
+              fontSize: 13,
+              color: colors.mutedForeground,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 
   Widget _footer(CertificatesListState data) {
     if (data.loadMoreFailed) {
@@ -166,49 +232,50 @@ class _CertificatesScreenState extends ConsumerState<CertificatesScreen> {
 
     return ScreenScaffold(
       appBar: AppBar(
-        title: Text(tr('certificates.title')),
-        actions: [
-          IconButton(
-            tooltip: tr('certificates.add'),
-            icon: const Icon(LucideIcons.plus, size: 20),
-            onPressed: _openForm,
-          ),
-          IconButton(
-            tooltip: tr('certificates.filter.title'),
-            icon: Icon(
-              LucideIcons.listFilter,
-              size: 20,
-              color: query.suggested != null || query.validity != null
-                  ? colors.primary
-                  : null,
-            ),
-            onPressed: _openFilters,
-          ),
-        ],
+        leadingWidth: 96,
+        leading: Navigator.of(context).canPop()
+            ? TextButton.icon(
+                style: TextButton.styleFrom(foregroundColor: colors.primary),
+                icon: const Icon(LucideIcons.chevronLeft, size: 20),
+                label: Text(tr('certificates.back')),
+                onPressed: () => Navigator.of(context).maybePop(),
+              )
+            : null,
       ),
       body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 12),
-            child: AppInput(
-              controller: _searchController,
-              hintText: tr('certificates.search.placeholder'),
-              errorText: _searchError,
-              prefixIcon: const Icon(LucideIcons.search, size: 18),
-              onChanged: _onSearchChanged,
+          Text(
+            tr('certificates.title'),
+            style: AppTypography.display(
+              fontSize: 28,
+              fontWeight: FontWeight.w700,
+              color: colors.foreground,
             ),
+          ),
+          const SizedBox(height: 12),
+          AppInput(
+            controller: _searchController,
+            hintText: tr('certificates.search.placeholder'),
+            errorText: _searchError,
+            prefixIcon: const Icon(LucideIcons.search, size: 18),
+            onChanged: _onSearchChanged,
+          ),
+          const SizedBox(height: 10),
+          CertificatesFilterPills(
+            query: query,
+            onChanged: ref.read(certificatesQueryProvider.notifier).update,
           ),
           Expanded(
             child: async.when(
               skipLoadingOnReload: false,
               loading: _skeleton,
-              error: (error, _) => AppErrorState(
+              error: (error, _) => AppEmptyState(
+                icon: const Icon(LucideIcons.triangleAlert),
                 title: tr('certificates.errors.loadTitle'),
-                message: error is ApiError
-                    ? error.message
-                    : tr('certificates.errors.loadDescription'),
-                retryText: tr('certificates.errors.retry'),
-                onRetry: () => ref.invalidate(certificatesProvider),
+                description: tr('certificates.errors.loadDescription'),
+                actionText: tr('certificates.errors.retry'),
+                onAction: () => ref.invalidate(certificatesProvider),
               ),
               data: (data) {
                 if (data.items.isEmpty) {
@@ -239,16 +306,25 @@ class _CertificatesScreenState extends ConsumerState<CertificatesScreen> {
                   child: ListView.separated(
                     controller: _scrollController,
                     physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    itemCount: data.items.length + 1,
+                    padding: const EdgeInsets.only(top: 12, bottom: 96),
+                    itemCount: data.items.length + 2,
                     separatorBuilder: (context, index) =>
                         const SizedBox(height: 12),
-                    itemBuilder: (context, index) => index == data.items.length
-                        ? _footer(data)
-                        : CertificateCard(
-                            item: data.items[index],
-                            onTap: () => _openForm(data.items[index]),
-                          ),
+                    itemBuilder: (context, index) {
+                      if (index == 0) {
+                        return _summary(context, data.suggestedTotal);
+                      }
+                      if (index > data.items.length) return _footer(data);
+                      final item = data.items[index - 1];
+                      return CertificateCard(
+                        item: item,
+                        onOpenLink: () => _openLink(item),
+                        onMore: () => _openMenu(item),
+                        onSuggestedChanged: _saving.contains(item.id)
+                            ? null
+                            : (value) => _setSuggested(item, value),
+                      );
+                    },
                   ),
                 );
               },

@@ -1,3 +1,5 @@
+import 'package:easy_localization/easy_localization.dart';
+
 class CertificateConstants {
   const CertificateConstants._();
 
@@ -31,6 +33,12 @@ class CertificateConstants {
     validityExpired => 'certificates.expired',
     _ => 'certificates.noExpiry',
   };
+
+  /// "12 Mar 2025" from a YYYY-MM-DD date.
+  static String displayDate(String day) {
+    final date = DateTime.tryParse(day);
+    return date == null ? day : DateFormat('d MMM yyyy').format(date);
+  }
 
   /// Calendar day (YYYY-MM-DD) of a timestamp, in the device's time zone.
   static String day(DateTime value) =>
