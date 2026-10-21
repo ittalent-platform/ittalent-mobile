@@ -10,6 +10,7 @@ import '../components/common/app_empty_state.dart';
 import '../components/layout/screen_scaffold.dart';
 import '../config/routes.dart';
 import '../features/applicant/applications/applications_screen.dart';
+import '../features/applicant/portfolio/portfolio_screen.dart';
 import '../features/auth/forgot_password/forgot_password_screen.dart';
 import '../features/auth/forgot_password/reset_link_sent_screen.dart';
 import '../features/auth/login/login_screen.dart';
@@ -80,6 +81,10 @@ final routerProvider = Provider<GoRouter>((ref) {
     refreshListenable: notifier,
     redirect: notifier.redirect,
     routes: [
+      GoRoute(
+        path: AppRoutes.portfolio,
+        builder: (context, state) => const PortfolioScreen(),
+      ),
       GoRoute(
         path: AppRoutes.welcome,
         builder: (context, state) => const WelcomeScreen(),

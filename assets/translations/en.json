@@ -2609,6 +2609,50 @@
       "rangeContradictory": "From date must be earlier than or equal to to date",
       "filterUnsupported": "Some applied filters are unrecognized"
     }
+  },
+  "portfolio": {
+    "title": "Portfolio",
+    "add": "Add portfolio link",
+    "openLink": "Open link",
+    "empty": {
+      "title": "No portfolio links yet",
+      "description": "Add links to your work. They stay private to you."
+    },
+    "errors": {
+      "loadTitle": "Your portfolio didn't load",
+      "loadDescription": "Check your connection and try again.",
+      "retry": "Try again",
+      "deleteFailed": "Couldn't delete the link. It's still in your list. Please try again.",
+      "loadMore": "Could not load more links."
+    },
+    "form": {
+      "addTitle": "Add portfolio link",
+      "addDescription": "Private to you. Add a link to where your work can be seen.",
+      "title": "Title",
+      "titlePlaceholder": "e.g. My portfolio site",
+      "url": "Link",
+      "urlHint": "A page that shows your work. ITTalent doesn't open or check it.",
+      "description": "Description",
+      "optional": "optional",
+      "add": "Add link",
+      "errors": {
+        "title": "Give the link a title.",
+        "url": "Use a web link that starts with https:// (or http://).",
+        "duplicate": "You already added this link.",
+        "saveFailed": "Couldn't save the link. Nothing was added. Please try again."
+      }
+    },
+    "delete": {
+      "title": "Delete this link?",
+      "description": "{{name}} is removed from your portfolio. The page it points to is not affected.",
+      "keep": "Keep it",
+      "confirm": "Delete"
+    },
+    "toast": {
+      "added": "{{name}} added.",
+      "deleted": "{{name}} deleted.",
+      "alreadyGone": "That link was already removed."
+    }
   }
 }
 

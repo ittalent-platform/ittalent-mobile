@@ -15,6 +15,7 @@ class AppRoutes {
   static const String jobs = '/jobs';
   static const String myApplications = '/my-applications';
   static const String certificates = '/certificates';
+  static const String portfolio = '/portfolio';
   static const String profile = '/profile';
 
   static String jobDetail(String jobId) => '/jobs/$jobId';

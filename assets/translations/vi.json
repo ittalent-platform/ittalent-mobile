@@ -2585,6 +2585,50 @@
       "rangeContradictory": "Ngày bắt đầu phải trước hoặc cùng ngày với ngày kết thúc",
       "filterUnsupported": "Một số bộ lọc không hợp lệ"
     }
+  },
+  "portfolio": {
+    "title": "Portfolio",
+    "add": "Thêm liên kết portfolio",
+    "openLink": "Mở liên kết",
+    "empty": {
+      "title": "Chưa có liên kết portfolio",
+      "description": "Thêm liên kết đến sản phẩm của bạn. Chỉ mình bạn nhìn thấy."
+    },
+    "errors": {
+      "loadTitle": "Không tải được portfolio",
+      "loadDescription": "Kiểm tra kết nối và thử lại.",
+      "retry": "Thử lại",
+      "deleteFailed": "Không xóa được liên kết. Liên kết vẫn còn trong danh sách. Vui lòng thử lại.",
+      "loadMore": "Không tải thêm được liên kết."
+    },
+    "form": {
+      "addTitle": "Thêm liên kết portfolio",
+      "addDescription": "Chỉ mình bạn thấy. Thêm liên kết đến nơi xem sản phẩm của bạn.",
+      "title": "Tiêu đề",
+      "titlePlaceholder": "VD: Website portfolio của tôi",
+      "url": "Liên kết",
+      "urlHint": "Trang hiển thị sản phẩm của bạn. ITTalent không mở hay kiểm tra liên kết.",
+      "description": "Mô tả",
+      "optional": "không bắt buộc",
+      "add": "Thêm liên kết",
+      "errors": {
+        "title": "Hãy đặt tiêu đề cho liên kết.",
+        "url": "Dùng liên kết web bắt đầu bằng https:// (hoặc http://).",
+        "duplicate": "Bạn đã thêm liên kết này rồi.",
+        "saveFailed": "Không lưu được liên kết. Chưa có gì được thêm. Vui lòng thử lại."
+      }
+    },
+    "delete": {
+      "title": "Xóa liên kết này?",
+      "description": "{{name}} sẽ bị xóa khỏi portfolio. Trang mà liên kết trỏ tới không bị ảnh hưởng.",
+      "keep": "Giữ lại",
+      "confirm": "Xóa"
+    },
+    "toast": {
+      "added": "Đã thêm {{name}}.",
+      "deleted": "Đã xóa {{name}}.",
+      "alreadyGone": "Liên kết đó đã bị xóa trước đó."
+    }
   }
 }
 
