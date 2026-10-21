@@ -20,6 +20,7 @@ import 'certificates_constants.dart';
 import 'certificates_providers.dart';
 import 'widgets/bold_markup_text.dart';
 import 'widgets/certificate_card.dart';
+import 'widgets/certificate_form_page.dart';
 import 'widgets/certificate_sheets.dart';
 import 'widgets/certificates_filter_pills.dart';
 
@@ -38,6 +39,8 @@ class _CertificatesScreenState extends ConsumerState<CertificatesScreen> {
   String? _searchError;
   // Certificates whose switch is being saved; their switch waits.
   final Set<String> _saving = {};
+  // The certificate just added, outlined until the next add or edit.
+  String? _highlightId;
 
   @override
   void initState() {
@@ -144,12 +147,56 @@ class _CertificatesScreenState extends ConsumerState<CertificatesScreen> {
   }
 
   Future<void> _openMenu(CertificateLink item) async {
-    final action = await showCertificateMenu(
-      context,
-      item,
-      actions: const [CertificateMenuAction.openLink],
+    final action = await showCertificateMenu(context, item);
+    if (!mounted || action == null) return;
+    switch (action) {
+      case CertificateMenuAction.openLink:
+        await _openLink(item);
+      case CertificateMenuAction.edit:
+        await _openForm(item);
+      case CertificateMenuAction.delete:
+        await _delete(item);
+    }
+  }
+
+  Future<void> _openForm([CertificateLink? existing]) async {
+    final result = await CertificateFormPage.open(context, existing);
+    if (result == null || !mounted) return;
+    setState(() => _highlightId = existing == null ? result.link.id : null);
+    _toast(
+      result.suggestFailed
+          ? tr('certificates.errors.switchFailed')
+          : tr(
+              existing == null
+                  ? 'certificates.toast.added'
+                  : 'certificates.toast.saved',
+              namedArgs: {'name': result.link.name},
+            ),
     );
-    if (action == CertificateMenuAction.openLink) await _openLink(item);
+  }
+
+  Future<void> _delete(CertificateLink item) async {
+    if (!await showCertificateDeleteSheet(context, item) || !mounted) return;
+    try {
+      await ref.read(certificateActionsProvider).delete(item);
+      if (mounted) {
+        _toast(
+          tr('certificates.toast.deleted', namedArgs: {'name': item.name}),
+        );
+      }
+    } on ApiError catch (e) {
+      if (!mounted) return;
+      if (e.isConflict) {
+        if (await showCertificateConflictSheet(context)) {
+          ref.invalidate(certificatesProvider);
+        }
+      } else if (e.isNotFound) {
+        ref.invalidate(certificatesProvider);
+        _toast(tr('certificates.gone.title'));
+      } else {
+        _toast(tr('certificates.errors.deleteFailed'));
+      }
+    }
   }
 
   void _clearAll() {
@@ -231,6 +278,14 @@ class _CertificatesScreenState extends ConsumerState<CertificatesScreen> {
     final async = ref.watch(certificatesProvider);
 
     return ScreenScaffold(
+      floatingActionButton: FloatingActionButton(
+        tooltip: tr('certificates.add'),
+        shape: const CircleBorder(),
+        backgroundColor: colors.primary,
+        foregroundColor: colors.primaryForeground,
+        onPressed: _openForm,
+        child: const Icon(LucideIcons.plus),
+      ),
       appBar: AppBar(
         leadingWidth: 96,
         leading: Navigator.of(context).canPop()
@@ -298,6 +353,8 @@ class _CertificatesScreenState extends ConsumerState<CertificatesScreen> {
                           icon: const Icon(LucideIcons.award),
                           title: tr('certificates.empty.title'),
                           description: tr('certificates.empty.description'),
+                          actionText: tr('certificates.add'),
+                          onAction: _openForm,
                         );
                 }
                 return RefreshIndicator(
@@ -320,6 +377,7 @@ class _CertificatesScreenState extends ConsumerState<CertificatesScreen> {
                         item: item,
                         onOpenLink: () => _openLink(item),
                         onMore: () => _openMenu(item),
+                        highlighted: item.id == _highlightId,
                         onSuggestedChanged: _saving.contains(item.id)
                             ? null
                             : (value) => _setSuggested(item, value),

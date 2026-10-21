@@ -282,6 +282,15 @@ class CertificateDraft {
     this.expiryDate,
   });
 
+  /// The link as saved, so an update with it changes nothing else.
+  factory CertificateDraft.of(CertificateLink link) => CertificateDraft(
+    name: link.name,
+    url: link.url,
+    issuer: link.issuer,
+    issuedDate: link.issuedDate,
+    expiryDate: link.expiryDate,
+  );
+
   final String name;
   final String url;
   final String? issuer;
@@ -297,11 +306,11 @@ class CertificateActions {
 
   /// UC-S4-CERT-01. Reusing [idempotencyKey] for a retry returns the committed link
   /// instead of creating a second one.
-  Future<void> create({
+  Future<CertificateLink> create({
     required String idempotencyKey,
     required CertificateDraft draft,
   }) async {
-    await _ref
+    final response = await _ref
         .read(apiClientProvider)
         .post<Map<String, dynamic>>(
           CertificateConstants.listPath,
@@ -317,11 +326,13 @@ class CertificateActions {
           ),
         );
     _ref.invalidate(certificatesProvider);
+    return CertificateLink.fromJson(response.data ?? const {});
   }
 
   /// UC-S4-CERT-02. Sends only what changed, with the version the form was opened on;
   /// a cleared optional field goes as null. Nothing is sent when nothing changed.
-  Future<void> update({
+  /// Returns the saved link.
+  Future<CertificateLink> update({
     required CertificateLink current,
     required CertificateDraft draft,
     bool? suggested,
@@ -337,14 +348,15 @@ class CertificateActions {
       if (suggested != null && suggested != current.suggested)
         'suggested': suggested,
     };
-    if (changes.isEmpty) return;
-    await _ref
+    if (changes.isEmpty) return current;
+    final response = await _ref
         .read(apiClientProvider)
         .patch<Map<String, dynamic>>(
           CertificateConstants.itemPath(current.id),
           data: {'expectedVersion': current.version, ...changes},
         );
     _ref.invalidate(certificatesProvider);
+    return CertificateLink.fromJson(response.data ?? const {});
   }
 
   /// UC-S4-CERT-03. Applications already sent keep their own copy.

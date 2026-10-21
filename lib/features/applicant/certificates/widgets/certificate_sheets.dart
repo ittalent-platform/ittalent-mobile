@@ -6,6 +6,7 @@ import '../../../../components/ui/app_button.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_typography.dart';
 import '../certificates_providers.dart';
+import 'bold_markup_text.dart';
 
 enum CertificateMenuAction { openLink, edit, delete }
 
@@ -27,6 +28,7 @@ Future<T?> _showSheet<T>(BuildContext context, List<Widget> children) =>
               AppButton(
                 text: tr('actions.cancel'),
                 variant: AppButtonVariant.secondary,
+                size: AppButtonSize.lg,
                 isFullWidth: true,
                 onPressed: () => Navigator.of(sheetContext).pop(),
               ),
@@ -114,9 +116,52 @@ Future<bool> showCertificateConflictSheet(BuildContext context) async =>
       Builder(
         builder: (sheetContext) => AppButton(
           text: tr('certificates.conflict.loadLatest'),
+          size: AppButtonSize.lg,
           isFullWidth: true,
           onPressed: () => Navigator.of(sheetContext).pop(true),
         ),
       ),
     ]) ??
     false;
+
+/// UC-S4-CERT-03 confirmation. True means delete.
+Future<bool> showCertificateDeleteSheet(
+  BuildContext context,
+  CertificateLink item,
+) async {
+  final colors = context.colors;
+  return await _showSheet<bool>(context, [
+        _title(
+          context,
+          tr('certificates.delete.title', namedArgs: {'name': item.name}),
+        ),
+        _muted(context, tr('certificates.delete.cantUndo')),
+        if (item.sentCount > 0) ...[
+          const SizedBox(height: 12),
+          BoldMarkupText(
+            tr(
+              item.sentCount == 1
+                  ? 'certificates.delete.sentNote_one'
+                  : 'certificates.delete.sentNote_other',
+              namedArgs: {'count': '${item.sentCount}'},
+            ),
+            style: AppTypography.body(
+              fontSize: 14,
+              color: colors.foreground,
+              height: 1.4,
+            ),
+          ),
+        ],
+        const SizedBox(height: 16),
+        Builder(
+          builder: (sheetContext) => AppButton(
+            text: tr('certificates.delete.confirm'),
+            variant: AppButtonVariant.destructive,
+            size: AppButtonSize.lg,
+            isFullWidth: true,
+            onPressed: () => Navigator.of(sheetContext).pop(true),
+          ),
+        ),
+      ]) ??
+      false;
+}

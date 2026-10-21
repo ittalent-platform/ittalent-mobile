@@ -3,14 +3,19 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ittalent_mobile/features/applicant/certificates/certificates_screen.dart';
-import 'package:ittalent_mobile/features/applicant/certificates/widgets/certificate_form_sheet.dart';
+import 'package:ittalent_mobile/features/applicant/certificates/widgets/certificate_form_page.dart';
 
 import '../../helpers/fake_api.dart';
 
 // Tall and wide: the sheet is long and untranslated keys render long in the test font.
 const _size = Size(900, 1600);
 
-Map<String, dynamic> _cert({String? issuer = 'Amazon', int version = 2}) => {
+Map<String, dynamic> _cert({
+  String? issuer = 'Amazon',
+  int version = 2,
+  int sentCount = 0,
+  bool suggested = false,
+}) => {
   'id': 'c1',
   'name': 'AWS Architect',
   'url': 'https://cert.example/aws',
@@ -18,8 +23,8 @@ Map<String, dynamic> _cert({String? issuer = 'Amazon', int version = 2}) => {
   'issuedDate': '2024-01-01',
   'expiryDate': null,
   'version': version,
-  'suggested': false,
-  'sentCount': 0,
+  'suggested': suggested,
+  'sentCount': sentCount,
   'updatedAt': '2026-10-01T08:00:00.000Z',
 };
 
@@ -46,11 +51,18 @@ Future<FakeAdapter> _open(
   return adapter;
 }
 
-// The list's own search box sits behind the sheet, so only look inside the sheet.
+// The list's own search box sits behind the page, so only look inside the page.
 Finder _formFields() => find.descendant(
-  of: find.byType(CertificateFormSheet),
+  of: find.byType(CertificateFormPage),
   matching: find.byType(TextField),
 );
+
+Future<void> _menu(WidgetTester tester, String item) async {
+  await tester.tap(find.byTooltip('certificates.moreFor'));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text(item));
+  await tester.pumpAndSettle();
+}
 
 Future<void> _fillAdd(WidgetTester tester) async {
   await tester.tap(find.byTooltip('certificates.add'));
@@ -78,9 +90,20 @@ void main() {
       expiryDate: expiry,
     );
 
-    test('accepts a named certificate with a web link', () {
+    test('accepts a named certificate with an https link', () {
       expect(check().any, isFalse);
-      expect(check(url: 'http://cert.example/a').any, isFalse);
+    });
+
+    test('requires https unless the saved http link is unchanged', () {
+      expect(check(url: 'http://cert.example/a').url, isNotNull);
+      expect(
+        validateCertificate(
+          name: 'AWS',
+          url: 'http://cert.example/a',
+          requireHttps: false,
+        ).any,
+        isFalse,
+      );
     });
 
     test('rejects a blank name', () {
@@ -88,6 +111,7 @@ void main() {
     });
 
     for (final url in const [
+      'http://cert.example/a',
       'ftp://cert.example/a',
       'javascript:alert(1)',
       'https://localhost/a',
@@ -136,19 +160,68 @@ void main() {
         matches(RegExp(r'^[0-9a-f]{32}$')),
       );
       expect(adapter.requests.where((r) => r.method == 'GET').length, 2);
+      expect(adapter.requests.where((r) => r.method == 'PATCH'), isEmpty);
+      expect(find.byType(CertificateFormPage), findsNothing);
       expect(find.text('certificates.toast.added'), findsOneWidget);
     });
 
-    testWidgets('does not send an invalid form', (tester) async {
-      final adapter = await _open(tester);
-      await tester.tap(find.byTooltip('certificates.add'));
-      await tester.pumpAndSettle();
+    testWidgets('switches on Suggest with a PATCH after creating', (
+      tester,
+    ) async {
+      final adapter = await _open(
+        tester,
+        onWrite: (options) => jsonBody(
+          options.method == 'POST'
+              ? _cert(version: 1)
+              : _cert(version: 2, suggested: true),
+        ),
+      );
+      await _fillAdd(tester);
+      await tester.tap(
+        find.descendant(
+          of: find.byType(CertificateFormPage),
+          matching: find.byType(Switch),
+        ),
+      );
+      await tester.pump();
       await tester.tap(find.text('certificates.form.add'));
       await tester.pumpAndSettle();
 
+      final post = adapter.requests.singleWhere((r) => r.method == 'POST');
+      expect((post.data as Map).containsKey('suggested'), isFalse);
+      final patch = adapter.requests.singleWhere((r) => r.method == 'PATCH');
+      expect(patch.data, {'expectedVersion': 1, 'suggested': true});
+      expect(find.text('certificates.toast.added'), findsOneWidget);
+    });
+
+    testWidgets('does not send an invalid form and sums up the errors', (
+      tester,
+    ) async {
+      final adapter = await _open(tester);
+      await tester.tap(find.byTooltip('certificates.add'));
+      await tester.pumpAndSettle();
+      await tester.enterText(_formFields().at(1), 'http://cert.example/a');
+      await tester.tap(find.text('certificates.form.add'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('certificates.form.errors.summary_other'),
+        findsOneWidget,
+      );
       expect(find.text('certificates.form.errors.name'), findsOneWidget);
       expect(find.text('certificates.form.errors.url'), findsOneWidget);
       expect(adapter.requests.where((r) => r.method == 'POST'), isEmpty);
+    });
+
+    testWidgets('"doesn\'t expire" hides the expiry date', (tester) async {
+      await _open(tester);
+      await tester.tap(find.byTooltip('certificates.add'));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('certificate_form_expires')), findsOneWidget);
+
+      await tester.tap(find.text('certificates.form.noExpiry'));
+      await tester.pump();
+      expect(find.byKey(const Key('certificate_form_expires')), findsNothing);
     });
 
     testWidgets('retries with the same idempotency key after a failure', (
@@ -164,7 +237,7 @@ void main() {
       await _fillAdd(tester);
       await tester.tap(find.text('certificates.form.add'));
       await tester.pumpAndSettle();
-      expect(find.text('Boom'), findsOneWidget);
+      expect(find.text('certificates.form.errors.saveFailed'), findsOneWidget);
 
       await tester.tap(find.text('certificates.form.add'));
       await tester.pumpAndSettle();
@@ -200,8 +273,7 @@ void main() {
       tester,
     ) async {
       final adapter = await _open(tester);
-      await tester.tap(find.text('AWS Architect'));
-      await tester.pumpAndSettle();
+      await _menu(tester, 'certificates.edit');
       await tester.enterText(_formFields().at(0), 'AWS Architect Pro');
       await tester.tap(find.text('certificates.form.save'));
       await tester.pumpAndSettle();
@@ -214,8 +286,7 @@ void main() {
 
     testWidgets('clears an emptied optional field with null', (tester) async {
       final adapter = await _open(tester);
-      await tester.tap(find.text('AWS Architect'));
-      await tester.pumpAndSettle();
+      await _menu(tester, 'certificates.edit');
       await tester.enterText(_formFields().at(2), '');
       await tester.tap(find.text('certificates.form.save'));
       await tester.pumpAndSettle();
@@ -226,8 +297,8 @@ void main() {
 
     testWidgets('sends nothing when nothing changed', (tester) async {
       final adapter = await _open(tester);
-      await tester.tap(find.text('AWS Architect'));
-      await tester.pumpAndSettle();
+      await _menu(tester, 'certificates.edit');
+      expect(find.text('certificates.form.editDescription'), findsOneWidget);
       await tester.tap(find.text('certificates.form.save'));
       await tester.pumpAndSettle();
 
@@ -244,14 +315,32 @@ void main() {
           'code': 'VERSION_CONFLICT',
         }, status: 409),
       );
-      await tester.tap(find.text('AWS Architect'));
-      await tester.pumpAndSettle();
+      await _menu(tester, 'certificates.edit');
       await tester.enterText(_formFields().at(0), 'Renamed');
       await tester.tap(find.text('certificates.form.save'));
       await tester.pumpAndSettle();
 
       expect(find.text('certificates.conflict.title'), findsOneWidget);
+      await tester.tap(find.text('certificates.conflict.loadLatest'));
+      await tester.pumpAndSettle();
+      expect(find.byType(CertificateFormPage), findsNothing);
       expect(adapter.requests.where((r) => r.method == 'GET').length, 2);
+    });
+
+    testWidgets('says so when it was deleted elsewhere', (tester) async {
+      await _open(
+        tester,
+        onWrite: (_) => jsonBody({'message': 'gone'}, status: 404),
+      );
+      await _menu(tester, 'certificates.edit');
+      await tester.enterText(_formFields().at(0), 'Renamed');
+      await tester.tap(find.text('certificates.form.save'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('certificates.gone.title'), findsOneWidget);
+      await tester.tap(find.text('certificates.gone.back'));
+      await tester.pumpAndSettle();
+      expect(find.byType(CertificateFormPage), findsNothing);
     });
 
     testWidgets('deletes after confirmation with the loaded version', (
@@ -259,18 +348,13 @@ void main() {
     ) async {
       final adapter = await _open(
         tester,
+        items: [_cert(sentCount: 2)],
         onWrite: (_) => ResponseBody.fromString('', 204),
       );
-      await tester.tap(find.text('AWS Architect'));
-      await tester.pumpAndSettle();
+      await _menu(tester, 'certificates.deleteMenu');
+      expect(find.text('certificates.delete.title'), findsOneWidget);
+      expect(find.text('certificates.delete.sentNote_other'), findsOneWidget);
       await tester.tap(find.text('certificates.delete.confirm'));
-      await tester.pumpAndSettle();
-      await tester.tap(
-        find.descendant(
-          of: find.byType(AlertDialog),
-          matching: find.text('certificates.delete.confirm'),
-        ),
-      );
       await tester.pumpAndSettle();
 
       final delete = adapter.requests.singleWhere((r) => r.method == 'DELETE');
@@ -283,11 +367,9 @@ void main() {
       tester,
     ) async {
       final adapter = await _open(tester);
-      await tester.tap(find.text('AWS Architect'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('certificates.delete.confirm'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('certificates.delete.keep'));
+      await _menu(tester, 'certificates.deleteMenu');
+      expect(find.text('certificates.delete.sentNote_other'), findsNothing);
+      await tester.tap(find.text('actions.cancel'));
       await tester.pumpAndSettle();
 
       expect(adapter.requests.where((r) => r.method == 'DELETE'), isEmpty);

@@ -18,12 +18,16 @@ class CertificateCard extends StatelessWidget {
     required this.onOpenLink,
     required this.onMore,
     required this.onSuggestedChanged,
+    this.highlighted = false,
   });
 
   final CertificateLink item;
   final VoidCallback onOpenLink;
   final VoidCallback onMore;
   final ValueChanged<bool>? onSuggestedChanged;
+
+  /// Just added: outlined in the brand colour.
+  final bool highlighted;
 
   @override
   Widget build(BuildContext context) {
@@ -51,6 +55,7 @@ class CertificateCard extends StatelessWidget {
     );
 
     return AppCard(
+      borderColor: highlighted ? colors.primary : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
