@@ -209,16 +209,23 @@
       "inProgress": "Đang xử lý",
       "closed": "Đã đóng",
       "selectAll": "Chọn tất cả",
-      "title": "Bộ lọc",
+      "title": "Lọc đơn ứng tuyển",
       "apply": "Áp dụng",
-      "sort": "Sắp xếp theo"
+      "sort": "Sắp xếp theo",
+      "submittedCaption": "Ngày nộp",
+      "reset": "Đặt lại",
+      "showAll": "Xem kết quả",
+      "showResults_other": "Xem {{count}} kết quả",
+      "selected_one": "Đã chọn {{count}}",
+      "showResults_one": "Xem {{count}} kết quả"
     },
     "range": {
       "any": "Mọi lúc",
       "7d": "7 ngày qua",
       "30d": "30 ngày qua",
       "90d": "90 ngày qua",
-      "custom": "Tùy chọn"
+      "custom": "Tùy chọn",
+      "3m": "3 tháng qua"
     },
     "view": {
       "table": "Bảng",
@@ -260,12 +267,12 @@
     "viewDetail": "Xem chi tiết",
     "rowActions": "Thao tác cho {{id}}",
     "noApplications": "Chưa có đơn ứng tuyển",
-    "noApplicationsDescription": "Khi bạn ứng tuyển một vị trí, đơn sẽ hiển thị ở đây để bạn theo dõi trạng thái.",
-    "noMatches": "Không có đơn phù hợp",
-    "noMatchesDescription": "Kiểm tra lại từ khóa hoặc thử bộ lọc khác.",
+    "noApplicationsDescription": "Các công việc bạn ứng tuyển sẽ hiển thị ở đây cùng trạng thái.",
+    "noMatches": "Không có đơn nào phù hợp",
+    "noMatchesDescription": "Hãy thử trạng thái hoặc thời gian khác.",
     "clearFilters": "Xóa bộ lọc",
-    "loadErrorTitle": "Không tải được đơn ứng tuyển.",
-    "loadErrorHint": "Kiểm tra kết nối mạng. Dữ liệu không bị thay đổi.",
+    "loadErrorTitle": "Không tải được đơn ứng tuyển",
+    "loadErrorHint": "Vui lòng thử lại sau giây lát.",
     "board": {
       "columns": "Các cột trạng thái đơn ứng tuyển",
       "selectionBar": "Các đơn đã chọn",
@@ -376,7 +383,17 @@
     },
     "loadMore": "Tải thêm",
     "loadMoreFailed": "Không tải thêm được đơn ứng tuyển.",
-    "retry": "Thử lại"
+    "retry": "Thử lại",
+    "heading": "Đơn ứng tuyển",
+    "card": {
+      "submitted": "Nộp {{date}}",
+      "updated": "Cập nhật {{date}}",
+      "withdrawn": "Đã rút {{date}}",
+      "applyAgain": "bạn có thể ứng tuyển lại khi tin còn mở",
+      "offer": "Đã nhận offer · hãy phản hồi {{company}}"
+    },
+    "subtitle_one": "{{count}} đơn ứng tuyển",
+    "acrossCompanies_one": "tại {{count}} công ty"
   },
   "loadingScreen": {
     "message": "Đang tải phiên đăng nhập và dữ liệu ứng dụng."

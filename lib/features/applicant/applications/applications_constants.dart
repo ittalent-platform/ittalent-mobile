@@ -1,3 +1,5 @@
+import 'package:easy_localization/easy_localization.dart';
+
 import '../../../components/ui/app_badge.dart';
 
 class ApplicationConstants {
@@ -23,13 +25,47 @@ class ApplicationConstants {
     statusPositionFilled,
   ];
 
-  static const List<String> reviewStages = [
-    'screening',
-    'interview',
-    'offer',
-    'hired',
-    'rejected',
+  /// "Submitted" presets of the filter sheet, keyed like `applications.range.*`.
+  static const String within7Days = '7d';
+  static const String within30Days = '30d';
+  static const String within3Months = '3m';
+  static const List<String> submittedPresets = [
+    within7Days,
+    within30Days,
+    within3Months,
   ];
+
+  /// First day included by a "Submitted" preset, counted back from [now].
+  static DateTime presetStart(String preset, DateTime now) {
+    switch (preset) {
+      case within7Days:
+        return DateTime(now.year, now.month, now.day - 7);
+      case within30Days:
+        return DateTime(now.year, now.month, now.day - 30);
+      default:
+        return DateTime(now.year, now.month - 3, now.day);
+    }
+  }
+
+  /// The preset whose start equals [from] today, if any.
+  static String? presetOf(DateTime? from, DateTime now) {
+    if (from == null) return null;
+    for (final preset in submittedPresets) {
+      if (presetStart(preset, now) == from) return preset;
+    }
+    return null;
+  }
+
+  /// i18next-style count key (`<key>_one` / `<key>_other`) shared with the web
+  /// locale files; easy_localization's plural() expects nested keys instead.
+  static String countText(String key, int count) => tr(
+    '${key}_${count == 1 ? 'one' : 'other'}',
+    namedArgs: {'count': '$count'},
+  );
+
+  /// Short calendar date as in the design ("28 Sep"), in the device time zone.
+  static String shortDate(DateTime value, String locale) =>
+      DateFormat('d MMM', locale).format(value.toLocal());
 
   static const String sortSubmittedAt = 'submittedAt';
   static const String orderDescending = 'desc';

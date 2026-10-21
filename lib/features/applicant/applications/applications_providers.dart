@@ -14,6 +14,9 @@ class ApplicationItem {
     this.location,
     this.jobType,
     this.canWithdraw = false,
+    this.canApplyAgain = false,
+    this.latestStatusAt,
+    this.withdrawnAt,
   });
 
   final String id;
@@ -25,6 +28,9 @@ class ApplicationItem {
   final String? location;
   final String? jobType;
   final bool canWithdraw;
+  final bool canApplyAgain;
+  final DateTime? latestStatusAt;
+  final DateTime? withdrawnAt;
 
   factory ApplicationItem.fromJson(Map<String, dynamic> json) {
     final job = (json['job'] as Map<String, dynamic>?) ?? const {};
@@ -38,6 +44,11 @@ class ApplicationItem {
       location: job['location'] as String?,
       jobType: job['jobType'] as String?,
       canWithdraw: json['canWithdraw'] as bool? ?? false,
+      canApplyAgain: json['canApplyAgain'] as bool? ?? false,
+      latestStatusAt: DateTime.tryParse(
+        json['latestStatusAt'] as String? ?? '',
+      ),
+      withdrawnAt: DateTime.tryParse(json['withdrawnAt'] as String? ?? ''),
     );
   }
 }
@@ -256,3 +267,23 @@ final myApplicationsProvider =
       MyApplicationsNotifier,
       ApplicationsListState
     >(MyApplicationsNotifier.new);
+
+/// Status counts for a search and "submitted from" date, ignoring the status
+/// filter, so the filter sheet can show "Show N results" before applying.
+final applicationStatusCountsProvider = FutureProvider.autoDispose
+    .family<Map<String, int>, ({String search, DateTime? submittedFrom})>((
+      ref,
+      key,
+    ) async {
+      final query = ApplicationsQuery(
+        search: key.search,
+        submittedFrom: key.submittedFrom,
+      );
+      final response = await ref
+          .read(apiClientProvider)
+          .get<Map<String, dynamic>>(
+            ApplicationConstants.listPath,
+            queryParameters: {...query.toQueryParameters(page: 1), 'limit': 1},
+          );
+      return ApplicationsPage.fromJson(response.data ?? const {}).statusCounts;
+    });
