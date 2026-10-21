@@ -63,12 +63,56 @@ void main() {
 
       expect(adapter.requests.single.path, '/api/v1/me/applications/$_id');
       expect(find.text('Senior Flutter Developer'), findsOneWidget);
-      expect(find.text('FPT Software'), findsOneWidget);
+      expect(find.text('FS'), findsOneWidget);
+      expect(find.text('applications.status.under_review'), findsOneWidget);
+      // Step 2 of 5, next is Interviewing.
+      expect(find.text('2'), findsOneWidget);
+      expect(
+        find.text('applications.stepOf · applications.nextStatus'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('applications.updates_other'), findsOneWidget);
+      expect(find.textContaining('APP-9011'), findsOneWidget);
+      expect(find.text('applications.withdrawnReason'), findsNothing);
+
+      // What was sent sits behind "Documents sent".
+      await tester.tap(find.text('applications.documentsSent'));
+      await tester.pumpAndSettle();
       expect(find.textContaining('my-cv.pdf'), findsOneWidget);
       expect(find.text('AWS Solutions Architect'), findsOneWidget);
       expect(find.text('I would love to join.'), findsOneWidget);
-      expect(find.text('applications.withdrawnReason'), findsNothing);
       expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('the ⋯ menu opens the job as saved when applying', (
+      tester,
+    ) async {
+      final adapter = FakeAdapter((_) => jsonBody(_detail()));
+      await pumpWithApi(
+        tester,
+        adapter,
+        const ApplicationDetailScreen(applicationId: _id),
+        size: _tall,
+      );
+
+      await tester.tap(find.byTooltip('applications.moreActions'));
+      await tester.pumpAndSettle();
+      expect(find.text('applications.cancel'), findsOneWidget);
+      await tester.tap(find.text('applications.viewJob'));
+      await tester.pumpAndSettle();
+      expect(find.text('applications.jobSnapshotDescription'), findsOneWidget);
+    });
+
+    testWidgets('an ended application shows no step progress', (tester) async {
+      final adapter = FakeAdapter((_) => jsonBody(_detail(status: 'rejected')));
+      await pumpWithApi(
+        tester,
+        adapter,
+        const ApplicationDetailScreen(applicationId: _id),
+        size: _tall,
+      );
+      expect(find.text('applications.next.rejected'), findsOneWidget);
+      expect(find.textContaining('applications.stepOf'), findsNothing);
     });
 
     testWidgets('shows the withdrawal reason of a withdrawn application', (
@@ -154,9 +198,23 @@ void main() {
         adapter.requests.single.path,
         '/api/v1/me/applications/$_id/history',
       );
-      expect(find.text('applications.status.submitted'), findsOneWidget);
-      expect(find.text('applications.status.under_review'), findsOneWidget);
-      expect(find.textContaining('applications.actor.company'), findsOneWidget);
+      expect(find.text('applications.history.submitted'), findsOneWidget);
+      expect(
+        find.text(
+          'applications.history.under_review · applications.stage.screening',
+        ),
+        findsOneWidget,
+      );
+      expect(find.textContaining('applications.by.company'), findsOneWidget);
+      // Newest first.
+      expect(
+        tester.getTopLeft(find.text('applications.history.submitted')).dy,
+        greaterThan(
+          tester
+              .getTopLeft(find.textContaining('applications.history.under'))
+              .dy,
+        ),
+      );
       expect(tester.takeException(), isNull);
     });
 
@@ -182,7 +240,7 @@ void main() {
       );
 
       expect(adapter.requests.length, 2);
-      expect(find.text('applications.status.withdrawn'), findsOneWidget);
+      expect(find.text('applications.history.withdrawn'), findsOneWidget);
     });
 
     testWidgets('shows an empty state when there is no history', (

@@ -398,6 +398,21 @@
       "withdrawn": "Withdrawn {{date}}",
       "applyAgain": "you can apply again while the job is open",
       "offer": "Offer received · respond to {{company}}"
+    },
+    "moreActions": "More actions",
+    "cancel": "Cancel",
+    "backShort": "Back",
+    "stepOf": "Step {{step}} of {{total}}",
+    "nextStatus": "Next: {{status}}",
+    "updates_one": "{{count}} update",
+    "updates_other": "{{count}} updates",
+    "documentsSent": "Documents sent",
+    "jobPosting": "Job posting",
+    "jobPostingSaved": "As saved when you applied",
+    "by": {
+      "candidate": "by you",
+      "company": "by Company",
+      "system": "by System"
     }
   },
   "loadingScreen": {
