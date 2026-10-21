@@ -1,0 +1,214 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../api/client.dart';
+import 'certificates_constants.dart';
+
+class CertificateLink {
+  const CertificateLink({
+    required this.id,
+    required this.name,
+    required this.url,
+    required this.version,
+    required this.suggested,
+    required this.sentCount,
+    this.issuer,
+    this.issuedDate,
+    this.expiryDate,
+  });
+
+  final String id;
+  final String name;
+  final String url;
+  final int version;
+  final bool suggested;
+  final int sentCount;
+  final String? issuer;
+  final String? issuedDate;
+  final String? expiryDate;
+
+  /// Expiry dates are YYYY-MM-DD, so comparing the strings compares the dates.
+  bool isExpired(DateTime now) =>
+      expiryDate != null &&
+      expiryDate!.compareTo(CertificateConstants.day(now.toUtc())) < 0;
+
+  factory CertificateLink.fromJson(Map<String, dynamic> json) =>
+      CertificateLink(
+        id: json['id'] as String? ?? '',
+        name: json['name'] as String? ?? '',
+        url: json['url'] as String? ?? '',
+        version: json['version'] as int? ?? 1,
+        suggested: json['suggested'] as bool? ?? false,
+        sentCount: json['sentCount'] as int? ?? 0,
+        issuer: json['issuer'] as String?,
+        issuedDate: json['issuedDate'] as String?,
+        expiryDate: json['expiryDate'] as String?,
+      );
+}
+
+/// Search and filter criteria of the certificate list (UC-S4-CERT-06).
+class CertificatesQuery {
+  const CertificatesQuery({this.search = '', this.suggested, this.validity});
+
+  final String search;
+  final bool? suggested;
+  final String? validity;
+
+  bool get isFiltered =>
+      search.isNotEmpty || suggested != null || validity != null;
+
+  CertificatesQuery copyWith({
+    String? search,
+    bool? suggested,
+    bool clearSuggested = false,
+    String? validity,
+    bool clearValidity = false,
+  }) => CertificatesQuery(
+    search: search ?? this.search,
+    suggested: clearSuggested ? null : suggested ?? this.suggested,
+    validity: clearValidity ? null : validity ?? this.validity,
+  );
+
+  /// The API rejects unknown parameters, so only set criteria are sent.
+  Map<String, dynamic> toQueryParameters({required int page}) {
+    final keyword = search.trim();
+    return {
+      'page': page,
+      'limit': CertificateConstants.pageSize,
+      if (keyword.isNotEmpty) 'search': keyword,
+      if (suggested != null) 'suggested': suggested.toString(),
+      if (validity != null) 'validity': validity,
+    };
+  }
+}
+
+class CertificatesQueryNotifier extends Notifier<CertificatesQuery> {
+  @override
+  CertificatesQuery build() => const CertificatesQuery();
+
+  // Replacing the query makes [certificatesProvider] reload from page 1.
+  void update(CertificatesQuery query) => state = query;
+
+  void clear() => state = const CertificatesQuery();
+}
+
+final certificatesQueryProvider =
+    NotifierProvider.autoDispose<CertificatesQueryNotifier, CertificatesQuery>(
+      CertificatesQueryNotifier.new,
+    );
+
+class CertificatesListState {
+  const CertificatesListState({
+    required this.items,
+    required this.page,
+    required this.totalPages,
+    required this.total,
+    required this.suggestedTotal,
+    this.loadingMore = false,
+    this.loadMoreFailed = false,
+  });
+
+  final List<CertificateLink> items;
+  final int page;
+  final int totalPages;
+  final int total;
+  final int suggestedTotal;
+  final bool loadingMore;
+  final bool loadMoreFailed;
+
+  bool get hasMore => page < totalPages;
+
+  CertificatesListState copyWith({
+    List<CertificateLink>? items,
+    int? page,
+    int? totalPages,
+    bool? loadingMore,
+    bool? loadMoreFailed,
+  }) => CertificatesListState(
+    items: items ?? this.items,
+    page: page ?? this.page,
+    totalPages: totalPages ?? this.totalPages,
+    total: total,
+    suggestedTotal: suggestedTotal,
+    loadingMore: loadingMore ?? this.loadingMore,
+    loadMoreFailed: loadMoreFailed ?? this.loadMoreFailed,
+  );
+}
+
+class CertificatesNotifier extends AsyncNotifier<CertificatesListState> {
+  @override
+  Future<CertificatesListState> build() async {
+    final first = await _fetch(ref.watch(certificatesQueryProvider), 1);
+    return CertificatesListState(
+      items: first.items,
+      page: first.page,
+      totalPages: first.totalPages,
+      total: first.total,
+      suggestedTotal: first.suggestedTotal,
+    );
+  }
+
+  Future<
+    ({
+      List<CertificateLink> items,
+      int page,
+      int totalPages,
+      int total,
+      int suggestedTotal,
+    })
+  >
+  _fetch(CertificatesQuery query, int page) async {
+    final response = await ref
+        .read(apiClientProvider)
+        .get<Map<String, dynamic>>(
+          CertificateConstants.listPath,
+          queryParameters: query.toQueryParameters(page: page),
+        );
+    final data = response.data ?? const {};
+    return (
+      items: ((data['items'] as List<dynamic>?) ?? const [])
+          .map((e) => CertificateLink.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      page: data['page'] as int? ?? page,
+      totalPages: data['totalPages'] as int? ?? 0,
+      total: data['total'] as int? ?? 0,
+      suggestedTotal: data['suggestedTotal'] as int? ?? 0,
+    );
+  }
+
+  /// Appends the next page; a failure keeps what is already shown.
+  Future<void> loadMore() async {
+    final current = state.value;
+    if (current == null || current.loadingMore || !current.hasMore) return;
+    state = AsyncData(
+      current.copyWith(loadingMore: true, loadMoreFailed: false),
+    );
+    try {
+      final next = await _fetch(
+        ref.read(certificatesQueryProvider),
+        current.page + 1,
+      );
+      final known = current.items.map((e) => e.id).toSet();
+      state = AsyncData(
+        current.copyWith(
+          items: [
+            ...current.items,
+            ...next.items.where((e) => !known.contains(e.id)),
+          ],
+          page: next.page,
+          totalPages: next.totalPages,
+          loadingMore: false,
+        ),
+      );
+    } catch (_) {
+      state = AsyncData(
+        current.copyWith(loadingMore: false, loadMoreFailed: true),
+      );
+    }
+  }
+}
+
+final certificatesProvider =
+    AsyncNotifierProvider.autoDispose<
+      CertificatesNotifier,
+      CertificatesListState
+    >(CertificatesNotifier.new);
