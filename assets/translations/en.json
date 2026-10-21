@@ -113,7 +113,18 @@
         "saveFailed": "Couldn't save the certificate. Nothing was added. Please try again.",
         "updateFailed": "Couldn't update this certificate. Nothing changed. Please try again."
       }
-    }
+    },
+    "filter": {
+      "title": "Filters",
+      "suggested": "Suggested on apply",
+      "suggestedYes": "Suggested",
+      "suggestedNo": "Not suggested",
+      "validity": "Validity",
+      "valid": "Valid",
+      "apply": "Apply",
+      "clear": "Clear filters"
+    },
+    "loadMore": "Could not load more certificates."
   },
   "actions": {
     "save": "Save",

@@ -113,7 +113,18 @@
         "saveFailed": "Không lưu được chứng chỉ. Chưa có gì được thêm. Vui lòng thử lại.",
         "updateFailed": "Không cập nhật được chứng chỉ. Chưa có gì thay đổi. Vui lòng thử lại."
       }
-    }
+    },
+    "filter": {
+      "title": "Bộ lọc",
+      "suggested": "Gợi ý khi ứng tuyển",
+      "suggestedYes": "Đang gợi ý",
+      "suggestedNo": "Không gợi ý",
+      "validity": "Hiệu lực",
+      "valid": "Còn hiệu lực",
+      "apply": "Áp dụng",
+      "clear": "Xóa bộ lọc"
+    },
+    "loadMore": "Không tải thêm được chứng chỉ."
   },
   "actions": {
     "save": "Lưu",

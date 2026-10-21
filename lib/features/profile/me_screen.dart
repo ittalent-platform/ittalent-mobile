@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../auth/auth_notifier.dart';
 import '../../components/layout/screen_scaffold.dart';
 import '../../components/ui/app_menu_group.dart';
 import '../../components/ui/app_menu_tile.dart';
+import '../../config/routes.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';
 
@@ -161,7 +163,7 @@ class MeScreen extends ConsumerWidget {
                   icon: LucideIcons.award,
                   title: 'Certificates',
                   badgeCount: 5,
-                  onTap: () {},
+                  onTap: () => context.push(AppRoutes.certificates),
                 ),
                 AppMenuTile(
                   key: const Key('me_menu_portfolio'),
