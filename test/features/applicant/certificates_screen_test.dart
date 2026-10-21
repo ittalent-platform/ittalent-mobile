@@ -12,14 +12,16 @@ Map<String, dynamic> _cert(
   String name, {
   String? expiryDate,
   bool suggested = false,
+  String? url,
+  int version = 1,
 }) => {
   'id': id,
   'name': name,
-  'url': 'https://cert.example/$id',
+  'url': url ?? 'https://www.cert.example/$id',
   'issuer': 'Amazon',
   'issuedDate': '2024-01-01',
   'expiryDate': expiryDate,
-  'version': 1,
+  'version': version,
   'suggested': suggested,
   'sentCount': 0,
 };
@@ -28,13 +30,14 @@ Map<String, dynamic> _page(
   List<Map<String, dynamic>> items, {
   int page = 1,
   int totalPages = 1,
+  int suggestedTotal = 0,
 }) => {
   'items': items,
   'page': page,
   'limit': 20,
   'total': items.length,
   'totalPages': totalPages,
-  'suggestedTotal': 0,
+  'suggestedTotal': suggestedTotal,
 };
 
 // Wide because untranslated keys render long in the test font.
@@ -110,8 +113,12 @@ void main() {
       expect(adapter.requests.single.path, '/api/v1/me/certificate-links');
       expect(find.text('AWS Solutions Architect'), findsOneWidget);
       expect(find.text('Scrum Master'), findsOneWidget);
-      expect(find.text('certificates.suggestOnApply'), findsOneWidget);
+      expect(find.text('cert.example'), findsNWidgets(2));
+      expect(find.text('certificates.suggestWhenApply'), findsNWidgets(2));
       expect(find.text('certificates.expired'), findsOneWidget);
+      expect(find.text('certificates.notHttps'), findsNothing);
+      final switches = tester.widgetList<Switch>(find.byType(Switch));
+      expect(switches.map((s) => s.value), [true, false]);
       expect(tester.takeException(), isNull);
     });
 
@@ -158,23 +165,115 @@ void main() {
       expect(find.text('Scrum'), findsNothing);
     });
 
-    testWidgets('applies the suggested and validity filters server-side', (
+    testWidgets('applies the suggested and validity pills server-side', (
       tester,
     ) async {
       final adapter = FakeAdapter((_) => jsonBody(_page([_cert('c1', 'X')])));
       await _pump(tester, adapter);
 
-      await tester.tap(find.byTooltip('certificates.filter.title'));
+      await tester.tap(find.byKey(const Key('certificates_filter_suggested')));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('certificates.filter.suggestedYes'));
-      await tester.tap(find.text('certificates.expired'));
+      await tester.tap(find.text('certificates.filter.yes').last);
       await tester.pumpAndSettle();
-      await tester.tap(find.text('certificates.filter.apply'));
+      await tester.tap(find.byKey(const Key('certificates_filter_validity')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('certificates.expired').last);
       await tester.pumpAndSettle();
 
-      final params = adapter.requests.last.queryParameters;
+      var params = adapter.requests.last.queryParameters;
       expect(params['suggested'], 'true');
       expect(params['validity'], 'expired');
+
+      await tester.tap(find.byKey(const Key('certificates_filter_suggested')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('certificates.filter.all').last);
+      await tester.pumpAndSettle();
+      params = adapter.requests.last.queryParameters;
+      expect(params.containsKey('suggested'), isFalse);
+      expect(params['validity'], 'expired');
+    });
+
+    testWidgets('tags an http link as not HTTPS', (tester) async {
+      await _pump(
+        tester,
+        FakeAdapter(
+          (_) => jsonBody(
+            _page([_cert('c1', 'IELTS', url: 'http://ielts.example/x')]),
+          ),
+        ),
+      );
+      expect(find.text('certificates.notHttps'), findsOneWidget);
+    });
+
+    testWidgets('the switch PATCHes suggested at once and Undo reverts it', (
+      tester,
+    ) async {
+      final adapter = FakeAdapter((options) {
+        if (options.method == 'PATCH') {
+          final body = options.data as Map<String, dynamic>;
+          return jsonBody(
+            _cert(
+              'c1',
+              'AWS',
+              suggested: body['suggested'] as bool,
+              version: (body['expectedVersion'] as int) + 1,
+            ),
+          );
+        }
+        return jsonBody(_page([_cert('c1', 'AWS')]));
+      });
+      await _pump(tester, adapter);
+
+      await tester.tap(find.byType(Switch));
+      await tester.pumpAndSettle();
+
+      final patch = adapter.requests.last;
+      expect(patch.method, 'PATCH');
+      expect(patch.path, '/api/v1/me/certificate-links/c1');
+      expect(patch.data, {'expectedVersion': 1, 'suggested': true});
+      expect(tester.widget<Switch>(find.byType(Switch)).value, isTrue);
+      expect(find.text('certificates.toast.suggested'), findsOneWidget);
+
+      await tester.tap(find.text('certificates.toast.undo'));
+      await tester.pumpAndSettle();
+      expect(adapter.requests.last.data, {
+        'expectedVersion': 2,
+        'suggested': false,
+      });
+      expect(tester.widget<Switch>(find.byType(Switch)).value, isFalse);
+    });
+
+    testWidgets('a 409 on the switch offers to load the latest', (
+      tester,
+    ) async {
+      final adapter = FakeAdapter(
+        (options) => options.method == 'PATCH'
+            ? jsonBody({'code': 'VERSION_CONFLICT'}, status: 409)
+            : jsonBody(_page([_cert('c1', 'AWS')])),
+      );
+      await _pump(tester, adapter);
+
+      await tester.tap(find.byType(Switch));
+      await tester.pumpAndSettle();
+      expect(tester.widget<Switch>(find.byType(Switch)).value, isFalse);
+      expect(find.text('certificates.conflict.title'), findsOneWidget);
+
+      final before = adapter.requests.length;
+      await tester.tap(find.text('certificates.conflict.loadLatest'));
+      await tester.pumpAndSettle();
+      expect(adapter.requests.length, before + 1);
+      expect(adapter.requests.last.method, 'GET');
+    });
+
+    testWidgets('the ⋯ menu shows the domain and version', (tester) async {
+      await _pump(
+        tester,
+        FakeAdapter((_) => jsonBody(_page([_cert('c1', 'AWS', version: 2)]))),
+      );
+      await tester.tap(find.byTooltip('certificates.moreFor'));
+      await tester.pumpAndSettle();
+      expect(find.text('certificates.openLink'), findsOneWidget);
+      expect(find.textContaining('cert.example · '), findsOneWidget);
     });
 
     testWidgets('rejects a blank keyword without a request', (tester) async {

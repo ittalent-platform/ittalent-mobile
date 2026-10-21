@@ -49,11 +49,11 @@
     },
     "empty": {
       "title": "Chưa có chứng chỉ",
-      "description": "Thêm liên kết tới các chứng chỉ bạn đã đạt. Bạn tự chọn gửi chứng chỉ nào khi ứng tuyển."
+      "description": "Thêm liên kết tới chứng chỉ để doanh nghiệp có thể kiểm tra khi bạn ứng tuyển."
     },
     "errors": {
       "loadTitle": "Không tải được chứng chỉ",
-      "loadDescription": "Kiểm tra kết nối rồi thử lại.",
+      "loadDescription": "Hãy thử lại sau ít phút.",
       "retry": "Thử lại",
       "switchFailed": "Không cập nhật được chứng chỉ. Chưa có gì thay đổi. Vui lòng thử lại.",
       "deleteFailed": "Không xoá được chứng chỉ. Chứng chỉ vẫn còn trong danh sách. Vui lòng thử lại."
@@ -64,11 +64,12 @@
       "signIn": "Đăng nhập"
     },
     "toast": {
-      "suggested": "Sẽ được gợi ý khi bạn ứng tuyển.",
+      "suggested": "Sẽ được gợi ý khi bạn ứng tuyển. Bạn có thể bỏ tích ở từng đơn.",
       "unsuggested": "Sẽ không được gợi ý khi bạn ứng tuyển.",
       "added": "Đã thêm {{name}}.",
       "saved": "Đã lưu {{name}}.",
-      "deleted": "Đã xoá {{name}}. Các bản đã gửi vẫn được giữ."
+      "deleted": "Đã xoá {{name}}. Các bản đã gửi vẫn được giữ.",
+      "undo": "Hoàn tác"
     },
     "delete": {
       "title": "Xoá chứng chỉ này?",
@@ -79,8 +80,8 @@
       "confirm": "Xoá"
     },
     "conflict": {
-      "title": "Chứng chỉ đã thay đổi ở nơi khác",
-      "description": "Chứng chỉ đã được sửa hoặc xoá ở tab khác. Tải bản mới nhất rồi thao tác lại.",
+      "title": "Chứng chỉ này đã được cập nhật",
+      "description": "Bạn đã lưu một phiên bản mới hơn trên thiết bị khác. Hãy tải bản đó rồi sửa lại.",
       "loadLatest": "Tải bản mới nhất"
     },
     "form": {
@@ -122,9 +123,22 @@
       "validity": "Hiệu lực",
       "valid": "Còn hiệu lực",
       "apply": "Áp dụng",
-      "clear": "Xóa bộ lọc"
+      "clear": "Xóa bộ lọc",
+      "all": "Tất cả",
+      "yes": "Có",
+      "no": "Không",
+      "suggestedLabel": "Gợi ý",
+      "pill": "{{label}}: {{value}}"
     },
-    "loadMore": "Không tải thêm được chứng chỉ."
+    "loadMore": "Không tải thêm được chứng chỉ.",
+    "back": "Tôi",
+    "suggestWhenApply": "Gợi ý khi tôi ứng tuyển",
+    "moreFor": "Thao tác khác cho {{name}}",
+    "linkFailed": "{{domain}} không phản hồi. Hãy kiểm tra hoặc sửa liên kết.",
+    "gone": {
+      "title": "Chứng chỉ này không còn nữa",
+      "description": "Có thể chứng chỉ đã bị xoá trên thiết bị khác."
+    }
   },
   "actions": {
     "save": "Lưu",
