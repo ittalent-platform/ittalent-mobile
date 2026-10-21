@@ -391,3 +391,36 @@ final applicationHistoryProvider = FutureProvider.autoDispose
       }
       return entries;
     });
+
+/// Writes on one own application. A successful change refreshes every view of it.
+class ApplicationActions {
+  ApplicationActions(this._ref);
+
+  final Ref _ref;
+
+  /// UC-S3-MYAPP-04. [expectedVersion] is the version the detail was loaded with;
+  /// a stale one comes back as an [ApiError] with code `WITHDRAWAL_CONFLICT`.
+  Future<void> withdraw({
+    required String id,
+    required int expectedVersion,
+    String? reason,
+  }) async {
+    final text = reason?.trim() ?? '';
+    await _ref
+        .read(apiClientProvider)
+        .patch<Map<String, dynamic>>(
+          ApplicationConstants.withdrawPath(id),
+          data: {
+            'expectedVersion': expectedVersion,
+            if (text.isNotEmpty) 'reason': text,
+          },
+        );
+    _ref.invalidate(applicationDetailProvider(id));
+    _ref.invalidate(applicationHistoryProvider(id));
+    _ref.invalidate(myApplicationsProvider);
+  }
+}
+
+final applicationActionsProvider = Provider<ApplicationActions>(
+  ApplicationActions.new,
+);

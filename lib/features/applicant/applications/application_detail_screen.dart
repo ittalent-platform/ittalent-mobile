@@ -18,6 +18,7 @@ import '../../../theme/app_colors.dart';
 import '../../../theme/app_typography.dart';
 import 'applications_constants.dart';
 import 'applications_providers.dart';
+import 'widgets/withdraw_application_sheet.dart';
 
 /// UC-S3-MYAPP-02: one own application, as it was submitted.
 class ApplicationDetailScreen extends ConsumerWidget {
@@ -71,6 +72,32 @@ class _Body extends StatelessWidget {
 
   final ApplicationDetail detail;
   final String applicationId;
+
+  Future<void> _withdraw(BuildContext context) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final withdrawn = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => WithdrawApplicationSheet(
+        applicationId: applicationId,
+        expectedVersion: detail.version,
+      ),
+    );
+    if (withdrawn == null) return;
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          withdrawn
+              ? tr(
+                  'applications.toast.withdrawnOne',
+                  namedArgs: {'id': applicationId},
+                )
+              : tr('applications.withdrawConflict'),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -222,6 +249,15 @@ class _Body extends StatelessWidget {
           ),
         ],
         const SizedBox(height: 16),
+        if (item.canWithdraw) ...[
+          AppButton(
+            text: tr('applications.withdraw'),
+            variant: AppButtonVariant.destructive,
+            isFullWidth: true,
+            onPressed: () => _withdraw(context),
+          ),
+          const SizedBox(height: 12),
+        ],
         AppButton(
           text: tr('applications.history.title'),
           variant: AppButtonVariant.outline,

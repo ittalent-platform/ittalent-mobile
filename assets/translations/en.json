@@ -358,7 +358,8 @@
       "rangeContradictory": "The start date must not be after the end date.",
       "filterUnsupported": "One of the filters in this link isn't supported.",
       "invalidTitle": "These search criteria aren't valid.",
-      "invalidHint": "Fix the highlighted filter or clear the filters. Nothing was searched."
+      "invalidHint": "Fix the highlighted filter or clear the filters. Nothing was searched.",
+      "reasonLength": "Enter {{min}}-{{max}} characters, or leave the reason empty."
     },
     "reapply": {
       "second": "2nd application",

@@ -351,7 +351,8 @@
       "rangeContradictory": "Ngày bắt đầu không được sau ngày kết thúc.",
       "filterUnsupported": "Một bộ lọc trong liên kết này không được hỗ trợ.",
       "invalidTitle": "Tiêu chí tìm kiếm không hợp lệ.",
-      "invalidHint": "Sửa bộ lọc đang báo lỗi hoặc xóa bộ lọc. Chưa có tìm kiếm nào được thực hiện."
+      "invalidHint": "Sửa bộ lọc đang báo lỗi hoặc xóa bộ lọc. Chưa có tìm kiếm nào được thực hiện.",
+      "reasonLength": "Nhập từ {{min}} đến {{max}} ký tự, hoặc để trống lý do."
     },
     "reapply": {
       "second": "Đơn thứ 2",
