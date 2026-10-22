@@ -66,18 +66,19 @@
     "toast": {
       "suggested": "Sẽ được gợi ý khi bạn ứng tuyển. Bạn có thể bỏ tích ở từng đơn.",
       "unsuggested": "Sẽ không được gợi ý khi bạn ứng tuyển.",
-      "added": "Đã thêm {{name}}.",
+      "added": "Đã thêm chứng chỉ",
       "saved": "Đã lưu {{name}}.",
       "deleted": "Đã xoá {{name}}. Các bản đã gửi vẫn được giữ.",
       "undo": "Hoàn tác"
     },
     "delete": {
-      "title": "Xoá chứng chỉ này?",
+      "title": "Xoá {{name}}?",
       "description": "<b>{{name}}</b> sẽ bị xoá khỏi danh sách và không được gợi ý cho đơn mới.",
-      "sentNote_one": "Đơn bạn đã gửi vẫn giữ bản sao. Doanh nghiệp vẫn xem được ở đó.",
-      "sentNote_other": "{{count}} đơn bạn đã gửi vẫn giữ bản sao. Doanh nghiệp vẫn xem được ở đó.",
+      "sentNote_one": "Chứng chỉ đã được gửi kèm <b>1 đơn ứng tuyển</b>. Doanh nghiệp vẫn giữ bản đã nhận. Chứng chỉ sẽ không còn được gợi ý khi bạn ứng tuyển.",
+      "sentNote_other": "Chứng chỉ đã được gửi kèm <b>{{count}} đơn ứng tuyển</b>. Doanh nghiệp vẫn giữ bản đã nhận. Chứng chỉ sẽ không còn được gợi ý khi bạn ứng tuyển.",
       "keep": "Giữ lại",
-      "confirm": "Xoá"
+      "confirm": "Xoá chứng chỉ",
+      "cantUndo": "Bạn không thể hoàn tác thao tác này."
     },
     "conflict": {
       "title": "Chứng chỉ này đã được cập nhật",
@@ -88,32 +89,38 @@
       "addTitle": "Thêm chứng chỉ",
       "editTitle": "Sửa chứng chỉ",
       "addDescription": "Chỉ mình bạn thấy. Thêm liên kết tới trang hiển thị chứng chỉ.",
-      "editDescription": "Phiên bản {{version}} · sửa lần cuối {{date}}.",
+      "editDescription": "Phiên bản {{version}}. Các đơn bạn đã gửi vẫn giữ bản sao lúc gửi.",
       "sentNote_one": "Đã gửi kèm 1 đơn. Đơn đó giữ phiên bản lúc gửi; thay đổi của bạn chỉ áp dụng cho đơn mới.",
       "sentNote_other": "Đã gửi kèm {{count}} đơn. Các đơn đó giữ phiên bản lúc gửi; thay đổi của bạn chỉ áp dụng cho đơn mới.",
       "name": "Tên chứng chỉ",
-      "namePlaceholder": "VD: AWS Certified Solutions Architect",
+      "namePlaceholder": "VD: AWS Certified Developer",
       "url": "Liên kết",
-      "urlHint": "Trang hiển thị chứng chỉ. ITTalent không mở hay kiểm tra trang này.",
+      "urlHint": "Nơi doanh nghiệp có thể kiểm tra chứng chỉ. Phải bắt đầu bằng https://",
       "issuer": "Đơn vị cấp",
       "optional": "không bắt buộc",
       "issued": "Ngày cấp",
       "expires": "Ngày hết hạn",
       "expiresHint": "Để trống nếu không hết hạn.",
       "suggest": "Gợi ý khi tôi ứng tuyển",
-      "suggestHint": "Được tích sẵn trong đơn mới. Bạn vẫn có thể bỏ tích mỗi lần.",
-      "add": "Thêm chứng chỉ",
+      "suggestHint": "Được tích sẵn trong đơn ứng tuyển. Bạn có thể bỏ tích mỗi lần.",
+      "add": "Lưu chứng chỉ",
       "adding": "Đang thêm…",
       "save": "Lưu thay đổi",
       "saving": "Đang lưu…",
       "errors": {
         "name": "Nhập tên chứng chỉ.",
-        "url": "Dùng liên kết web bắt đầu bằng https:// (hoặc http://).",
-        "dates": "Ngày hết hạn phải sau ngày cấp.",
+        "url": "Dùng liên kết an toàn bắt đầu bằng https://",
+        "dates": "Phải từ ngày cấp trở về sau.",
         "duplicate": "Bạn đã thêm liên kết này rồi.",
-        "saveFailed": "Không lưu được chứng chỉ. Chưa có gì được thêm. Vui lòng thử lại.",
-        "updateFailed": "Không cập nhật được chứng chỉ. Chưa có gì thay đổi. Vui lòng thử lại."
-      }
+        "saveFailed": "Không lưu được chứng chỉ. Chưa có gì thay đổi. Hãy thử lại.",
+        "updateFailed": "Không cập nhật được chứng chỉ. Chưa có gì thay đổi. Vui lòng thử lại.",
+        "summary_one": "Sửa 1 trường để lưu.",
+        "summary_other": "Sửa {{count}} trường để lưu."
+      },
+      "optionalHint": "Không bắt buộc",
+      "validity": "Hiệu lực",
+      "pickDate": "Chọn ngày",
+      "noExpiry": "Chứng chỉ này không hết hạn"
     },
     "filter": {
       "title": "Bộ lọc",
@@ -137,7 +144,8 @@
     "linkFailed": "{{domain}} không phản hồi. Hãy kiểm tra hoặc sửa liên kết.",
     "gone": {
       "title": "Chứng chỉ này không còn nữa",
-      "description": "Có thể chứng chỉ đã bị xoá trên thiết bị khác."
+      "description": "Có thể chứng chỉ đã bị xoá trên thiết bị khác.",
+      "back": "Quay lại danh sách chứng chỉ"
     }
   },
   "actions": {

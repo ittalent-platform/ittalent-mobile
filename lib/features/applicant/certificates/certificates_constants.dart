@@ -7,6 +7,13 @@ class CertificateConstants {
   static String itemPath(String id) => '$listPath/$id';
 
   static const int pageSize = 20;
+  static const int nameMaxLength = 200;
+  static const int issuerMaxLength = 200;
+  static const int urlMaxLength = 2048;
+  static const int idempotencyKeyBytes = 16;
+  static const String idempotencyHeader = 'Idempotency-Key';
+  static const String codeVersionConflict = 'VERSION_CONFLICT';
+  static const String codeDuplicateUrl = 'DUPLICATE_CERTIFICATE_URL';
   static const int searchMaxLength = 100;
   static const Duration searchDebounce = Duration(milliseconds: 400);
   static const double loadMoreThreshold = 240;

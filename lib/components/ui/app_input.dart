@@ -53,27 +53,33 @@ class AppInput extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               if (label != null)
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      label!,
-                      style: AppTypography.body(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: colors.foreground,
-                      ),
-                    ),
-                    if (isRequired)
-                      Text(
-                        ' *',
-                        style: AppTypography.body(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: colors.destructive,
+                Flexible(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          label!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTypography.body(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: colors.foreground,
+                          ),
                         ),
                       ),
-                  ],
+                      if (isRequired)
+                        Text(
+                          ' *',
+                          style: AppTypography.body(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: colors.destructive,
+                          ),
+                        ),
+                    ],
+                  ),
                 )
               else
                 const SizedBox.shrink(),

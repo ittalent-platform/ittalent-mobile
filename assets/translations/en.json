@@ -66,18 +66,19 @@
     "toast": {
       "suggested": "Suggested when you apply. You can untick it on each application.",
       "unsuggested": "Won't be suggested when you apply.",
-      "added": "{{name}} added.",
+      "added": "Certificate added",
       "saved": "{{name}} saved.",
       "deleted": "{{name}} deleted. Sent copies are kept.",
       "undo": "Undo"
     },
     "delete": {
-      "title": "Delete this certificate?",
+      "title": "Delete {{name}}?",
       "description": "<b>{{name}}</b> is removed from your list and won't be suggested on new applications.",
-      "sentNote_one": "The application you already sent keeps its copy. Companies can still see it there.",
-      "sentNote_other": "The {{count}} applications you already sent keep their copy. Companies can still see it there.",
+      "sentNote_one": "It was sent with <b>1 application</b>. Companies keep the copy they received. It will stop being suggested when you apply.",
+      "sentNote_other": "It was sent with <b>{{count}} applications</b>. Companies keep the copy they received. It will stop being suggested when you apply.",
       "keep": "Keep it",
-      "confirm": "Delete"
+      "confirm": "Delete certificate",
+      "cantUndo": "You can't undo this."
     },
     "conflict": {
       "title": "This certificate was updated",
@@ -88,32 +89,38 @@
       "addTitle": "Add certificate",
       "editTitle": "Edit certificate",
       "addDescription": "Private to you. Add a link to where the certificate can be seen.",
-      "editDescription": "Version {{version}} · last changed {{date}}.",
+      "editDescription": "Version {{version}}. Applications you already sent keep the copy they were sent with.",
       "sentNote_one": "Sent with 1 application. It keeps the version it was sent with; your changes apply to new applications only.",
       "sentNote_other": "Sent with {{count}} applications. They keep the version they were sent with; your changes apply to new applications only.",
       "name": "Certificate name",
-      "namePlaceholder": "e.g. AWS Certified Solutions Architect",
+      "namePlaceholder": "e.g. AWS Certified Developer",
       "url": "Link",
-      "urlHint": "A page that shows the certificate. ITTalent doesn't open or check it.",
+      "urlHint": "Where companies can check it. Must start with https://",
       "issuer": "Issuer",
       "optional": "optional",
-      "issued": "Issued",
-      "expires": "Expires",
+      "issued": "Issued on",
+      "expires": "Expires on",
       "expiresHint": "Leave empty if it doesn't expire.",
       "suggest": "Suggest it when I apply",
-      "suggestHint": "Pre-ticked on new applications. You can still untick it each time.",
-      "add": "Add certificate",
+      "suggestHint": "Pre-ticked on the apply form. You can untick it each time.",
+      "add": "Save certificate",
       "adding": "Adding…",
       "save": "Save changes",
       "saving": "Saving…",
       "errors": {
-        "name": "Name the certificate.",
-        "url": "Use a web link that starts with https:// (or http://).",
-        "dates": "The expiry date must be after the issued date.",
+        "name": "Enter a certificate name.",
+        "url": "Use a secure link that starts with https://",
+        "dates": "Must be on or after the issue date.",
         "duplicate": "You already added this link.",
-        "saveFailed": "Couldn't save the certificate. Nothing was added. Please try again.",
-        "updateFailed": "Couldn't update this certificate. Nothing changed. Please try again."
-      }
+        "saveFailed": "Couldn't save the certificate. Nothing was changed. Try again.",
+        "updateFailed": "Couldn't update this certificate. Nothing changed. Please try again.",
+        "summary_one": "Fix 1 field to save.",
+        "summary_other": "Fix {{count}} fields to save."
+      },
+      "optionalHint": "Optional",
+      "validity": "Validity",
+      "pickDate": "Select a date",
+      "noExpiry": "This certificate doesn't expire"
     },
     "filter": {
       "title": "Filters",
@@ -137,7 +144,8 @@
     "linkFailed": "{{domain}} didn't respond. Check the link or edit it.",
     "gone": {
       "title": "This certificate isn't available",
-      "description": "It may have been deleted on another device."
+      "description": "It may have been deleted on another device.",
+      "back": "Back to certificates"
     }
   },
   "actions": {
