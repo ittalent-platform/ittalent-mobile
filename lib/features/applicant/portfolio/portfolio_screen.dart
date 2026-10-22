@@ -200,12 +200,11 @@ class _PortfolioScreenState extends ConsumerState<PortfolioScreen> {
               ),
               data: (data) {
                 if (data.items.isEmpty) {
+                  // No Add button here: the + in the corner already adds.
                   return AppEmptyState(
                     icon: const Icon(LucideIcons.link),
                     title: tr('portfolio.empty.title'),
                     description: tr('portfolio.empty.description'),
-                    actionText: tr('portfolio.add'),
-                    onAction: _add,
                   );
                 }
                 return RefreshIndicator(
