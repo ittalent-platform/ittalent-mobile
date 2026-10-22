@@ -21,4 +21,6 @@ class AppRoutes {
   static String jobDetail(String jobId) => '/jobs/$jobId';
   static String applicationDetail(String applicationId) =>
       '/my-applications/$applicationId';
+  static String applicationHistory(String applicationId) =>
+      '/my-applications/$applicationId/history';
 }

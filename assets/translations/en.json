@@ -49,11 +49,11 @@
     },
     "empty": {
       "title": "No certificates yet",
-      "description": "Add links to certificates you've earned. You choose which ones to send when you apply."
+      "description": "Add a link to a certificate so companies can check it when you apply."
     },
     "errors": {
-      "loadTitle": "Your certificates didn't load",
-      "loadDescription": "Check your connection and try again.",
+      "loadTitle": "Couldn't load certificates",
+      "loadDescription": "Try again in a moment.",
       "retry": "Try again",
       "switchFailed": "Couldn't update this certificate. Nothing changed. Please try again.",
       "deleteFailed": "Couldn't delete the certificate. It's still in your list. Please try again."
@@ -64,11 +64,12 @@
       "signIn": "Sign in"
     },
     "toast": {
-      "suggested": "Will be suggested when you apply.",
+      "suggested": "Suggested when you apply. You can untick it on each application.",
       "unsuggested": "Won't be suggested when you apply.",
       "added": "{{name}} added.",
       "saved": "{{name}} saved.",
-      "deleted": "{{name}} deleted. Sent copies are kept."
+      "deleted": "{{name}} deleted. Sent copies are kept.",
+      "undo": "Undo"
     },
     "delete": {
       "title": "Delete this certificate?",
@@ -79,8 +80,8 @@
       "confirm": "Delete"
     },
     "conflict": {
-      "title": "This certificate changed somewhere else",
-      "description": "It was edited or deleted in another tab. Load the latest version, then make your change again.",
+      "title": "This certificate was updated",
+      "description": "You saved a newer version on another device. Load it, then edit again.",
       "loadLatest": "Load latest"
     },
     "form": {
@@ -113,6 +114,30 @@
         "saveFailed": "Couldn't save the certificate. Nothing was added. Please try again.",
         "updateFailed": "Couldn't update this certificate. Nothing changed. Please try again."
       }
+    },
+    "filter": {
+      "title": "Filters",
+      "suggested": "Suggested on apply",
+      "suggestedYes": "Suggested",
+      "suggestedNo": "Not suggested",
+      "validity": "Validity",
+      "valid": "Valid",
+      "apply": "Apply",
+      "clear": "Clear filters",
+      "all": "All",
+      "yes": "Yes",
+      "no": "No",
+      "suggestedLabel": "Suggested",
+      "pill": "{{label}}: {{value}}"
+    },
+    "loadMore": "Could not load more certificates.",
+    "back": "Me",
+    "suggestWhenApply": "Suggest when I apply",
+    "moreFor": "More actions for {{name}}",
+    "linkFailed": "{{domain}} didn't respond. Check the link or edit it.",
+    "gone": {
+      "title": "This certificate isn't available",
+      "description": "It may have been deleted on another device."
     }
   },
   "actions": {
@@ -364,7 +389,8 @@
       "rangeContradictory": "The start date must not be after the end date.",
       "filterUnsupported": "One of the filters in this link isn't supported.",
       "invalidTitle": "These search criteria aren't valid.",
-      "invalidHint": "Fix the highlighted filter or clear the filters. Nothing was searched."
+      "invalidHint": "Fix the highlighted filter or clear the filters. Nothing was searched.",
+      "reasonLength": "Enter {{min}}-{{max}} characters, or leave the reason empty."
     },
     "reapply": {
       "second": "2nd application",
@@ -398,7 +424,25 @@
       "withdrawn": "Withdrawn {{date}}",
       "applyAgain": "you can apply again while the job is open",
       "offer": "Offer received · respond to {{company}}"
-    }
+    },
+    "moreActions": "More actions",
+    "cancel": "Cancel",
+    "backShort": "Back",
+    "stepOf": "Step {{step}} of {{total}}",
+    "nextStatus": "Next: {{status}}",
+    "updates_one": "{{count}} update",
+    "updates_other": "{{count}} updates",
+    "documentsSent": "Documents sent",
+    "jobPosting": "Job posting",
+    "jobPostingSaved": "As saved when you applied",
+    "by": {
+      "candidate": "by you",
+      "company": "by Company",
+      "system": "by System"
+    },
+    "withdrawEllipsis": "Withdraw application…",
+    "withdrawSheetBody": "{{company}} will see it as withdrawn. You can apply again while the job is open.",
+    "alreadyDecided": "This application was already {{status}}, so it can’t be withdrawn."
   },
   "loadingScreen": {
     "message": "Loading your session and app state."

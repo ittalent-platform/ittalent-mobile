@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ittalent_mobile/auth/auth_dto.dart';
 import 'package:ittalent_mobile/auth/auth_notifier.dart';
 import 'package:ittalent_mobile/auth/auth_state.dart';
+import 'package:ittalent_mobile/features/applicant/certificates/certificates_providers.dart';
 import 'package:ittalent_mobile/features/profile/me_screen.dart';
 import 'package:ittalent_mobile/theme/app_theme.dart';
 
@@ -24,9 +25,12 @@ class MockMeAuthNotifier extends AuthNotifier {
 }
 
 void main() {
-  Widget createWidget({required MockMeAuthNotifier notifier}) {
+  Widget createWidget({required MockMeAuthNotifier notifier, int certs = 1}) {
     return ProviderScope(
-      overrides: [authNotifierProvider.overrideWith(() => notifier)],
+      overrides: [
+        authNotifierProvider.overrideWith(() => notifier),
+        certificateCountProvider.overrideWith((ref) async => certs),
+      ],
       child: MaterialApp(theme: AppTheme.light, home: const MeScreen()),
     );
   }
@@ -78,9 +82,7 @@ void main() {
       expect(find.text('dev.lead@example.com'), findsOneWidget);
     });
 
-    testWidgets('renders all menu groups and tiles with badges', (
-      tester,
-    ) async {
+    testWidgets('renders all menu groups and tiles', (tester) async {
       final notifier = MockMeAuthNotifier(AuthState.initial());
 
       await tester.pumpWidget(createWidget(notifier: notifier));
@@ -96,17 +98,16 @@ void main() {
       expect(find.text('Profile'), findsOneWidget);
       expect(find.byKey(const Key('me_menu_documents')), findsOneWidget);
       expect(find.text('Documents'), findsOneWidget);
-      expect(find.text('4'), findsOneWidget);
       expect(find.byKey(const Key('me_menu_certificates')), findsOneWidget);
       expect(find.text('Certificates'), findsOneWidget);
-      expect(find.text('5'), findsOneWidget);
+      // The only badge is the real certificate count; the rest had none.
+      expect(find.text('1'), findsOneWidget);
       expect(find.byKey(const Key('me_menu_portfolio')), findsOneWidget);
       expect(find.text('Portfolio'), findsOneWidget);
 
       // JOB SEARCH items
       expect(find.byKey(const Key('me_menu_saved_jobs')), findsOneWidget);
       expect(find.text('Saved jobs'), findsOneWidget);
-      expect(find.text('6'), findsOneWidget);
       expect(find.byKey(const Key('me_menu_my_reports')), findsOneWidget);
       expect(find.text('My reports'), findsOneWidget);
 
