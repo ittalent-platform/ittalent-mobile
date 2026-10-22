@@ -13,6 +13,7 @@ import '../features/applicant/applications/application_detail_screen.dart';
 import '../features/applicant/applications/application_history_screen.dart';
 import '../features/applicant/applications/applications_screen.dart';
 import '../features/applicant/certificates/certificates_screen.dart';
+import '../features/applicant/portfolio/portfolio_screen.dart';
 import '../features/auth/forgot_password/forgot_password_screen.dart';
 import '../features/auth/forgot_password/reset_link_sent_screen.dart';
 import '../features/auth/login/login_screen.dart';
@@ -83,6 +84,10 @@ final routerProvider = Provider<GoRouter>((ref) {
     refreshListenable: notifier,
     redirect: notifier.redirect,
     routes: [
+      GoRoute(
+        path: AppRoutes.portfolio,
+        builder: (context, state) => const PortfolioScreen(),
+      ),
       GoRoute(
         path: AppRoutes.certificates,
         builder: (context, state) => const CertificatesScreen(),

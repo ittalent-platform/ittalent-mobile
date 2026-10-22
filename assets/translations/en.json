@@ -2686,6 +2686,60 @@
       "rangeContradictory": "From date must be earlier than or equal to to date",
       "filterUnsupported": "Some applied filters are unrecognized"
     }
+  },
+  "portfolio": {
+    "title": "Portfolio",
+    "add": "Add portfolio link",
+    "openLink": "Open link",
+    "empty": {
+      "title": "No portfolio links yet",
+      "description": "Add a link to your work so companies can see it when you apply."
+    },
+    "errors": {
+      "loadTitle": "Couldn't load your portfolio",
+      "loadDescription": "Try again in a moment.",
+      "retry": "Try again",
+      "deleteFailed": "Couldn't delete the link. It's still in your list. Please try again.",
+      "loadMore": "Could not load more links."
+    },
+    "form": {
+      "addTitle": "Add portfolio link",
+      "addDescription": "Private to you. Add a link to where your work can be seen.",
+      "title": "Title",
+      "titlePlaceholder": "e.g. My portfolio site",
+      "url": "Link",
+      "urlHint": "Where companies can see your work. Must start with https://",
+      "description": "Description",
+      "optional": "optional",
+      "add": "Save link",
+      "errors": {
+        "title": "Enter a title.",
+        "url": "Use a secure link that starts with https://",
+        "duplicate": "You already added this link.",
+        "saveFailed": "Couldn't save the link. Nothing was changed. Try again.",
+        "summary_one": "Fix 1 field to save.",
+        "summary_other": "Fix {{count}} fields to save."
+      },
+      "optionalHint": "Optional",
+      "saving": "Saving…"
+    },
+    "delete": {
+      "title": "Delete {{name}}?",
+      "description": "You can't undo this. The page it points to is not affected.",
+      "keep": "Keep it",
+      "confirm": "Delete link"
+    },
+    "toast": {
+      "added": "Link added",
+      "deleted": "{{name}} deleted.",
+      "alreadyGone": "That link was already removed."
+    },
+    "back": "Me",
+    "version": "Version {{version}}",
+    "moreFor": "More actions for {{name}}",
+    "deleteMenu": "Delete…",
+    "notHttps": "Not HTTPS",
+    "linkFailed": "{{name}} didn't respond. Check the link."
   }
 }
 

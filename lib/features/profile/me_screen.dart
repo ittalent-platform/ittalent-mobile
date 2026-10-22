@@ -171,7 +171,7 @@ class MeScreen extends ConsumerWidget {
                   icon: LucideIcons.link,
                   title: 'Portfolio',
                   showDivider: false,
-                  onTap: () {},
+                  onTap: () => context.push(AppRoutes.portfolio),
                 ),
               ],
             ),

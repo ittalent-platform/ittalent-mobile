@@ -2665,6 +2665,60 @@
       "rangeContradictory": "Ngày bắt đầu phải trước hoặc cùng ngày với ngày kết thúc",
       "filterUnsupported": "Một số bộ lọc không hợp lệ"
     }
+  },
+  "portfolio": {
+    "title": "Portfolio",
+    "add": "Thêm liên kết portfolio",
+    "openLink": "Mở liên kết",
+    "empty": {
+      "title": "Chưa có liên kết portfolio",
+      "description": "Thêm liên kết tới sản phẩm của bạn để doanh nghiệp xem khi bạn ứng tuyển."
+    },
+    "errors": {
+      "loadTitle": "Không tải được portfolio",
+      "loadDescription": "Hãy thử lại sau ít phút.",
+      "retry": "Thử lại",
+      "deleteFailed": "Không xóa được liên kết. Liên kết vẫn còn trong danh sách. Vui lòng thử lại.",
+      "loadMore": "Không tải thêm được liên kết."
+    },
+    "form": {
+      "addTitle": "Thêm liên kết portfolio",
+      "addDescription": "Chỉ mình bạn thấy. Thêm liên kết đến nơi xem sản phẩm của bạn.",
+      "title": "Tiêu đề",
+      "titlePlaceholder": "VD: Website portfolio của tôi",
+      "url": "Liên kết",
+      "urlHint": "Nơi doanh nghiệp xem được sản phẩm của bạn. Phải bắt đầu bằng https://",
+      "description": "Mô tả",
+      "optional": "không bắt buộc",
+      "add": "Lưu liên kết",
+      "errors": {
+        "title": "Nhập tiêu đề.",
+        "url": "Dùng liên kết an toàn bắt đầu bằng https://",
+        "duplicate": "Bạn đã thêm liên kết này rồi.",
+        "saveFailed": "Không lưu được liên kết. Chưa có gì thay đổi. Hãy thử lại.",
+        "summary_one": "Sửa 1 trường để lưu.",
+        "summary_other": "Sửa {{count}} trường để lưu."
+      },
+      "optionalHint": "Không bắt buộc",
+      "saving": "Đang lưu…"
+    },
+    "delete": {
+      "title": "Xoá {{name}}?",
+      "description": "Bạn không thể hoàn tác thao tác này. Trang mà liên kết trỏ tới không bị ảnh hưởng.",
+      "keep": "Giữ lại",
+      "confirm": "Xoá liên kết"
+    },
+    "toast": {
+      "added": "Đã thêm liên kết",
+      "deleted": "Đã xóa {{name}}.",
+      "alreadyGone": "Liên kết đó đã bị xóa trước đó."
+    },
+    "back": "Tôi",
+    "version": "Phiên bản {{version}}",
+    "moreFor": "Thao tác khác cho {{name}}",
+    "deleteMenu": "Xoá…",
+    "notHttps": "Không phải HTTPS",
+    "linkFailed": "{{name}} không phản hồi. Hãy kiểm tra liên kết."
   }
 }
 
