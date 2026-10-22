@@ -1,8 +1,9 @@
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/material.dart' show Size;
+import 'package:flutter/material.dart' show BoxDecoration, Container, Size;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ittalent_mobile/features/applicant/applications/application_detail_screen.dart';
 import 'package:ittalent_mobile/features/applicant/applications/application_history_screen.dart';
+import 'package:ittalent_mobile/features/applicant/applications/widgets/offer_notice.dart';
 
 import '../../helpers/fake_api.dart';
 
@@ -113,6 +114,45 @@ void main() {
       );
       expect(find.text('applications.next.rejected'), findsOneWidget);
       expect(find.textContaining('applications.stepOf'), findsNothing);
+    });
+
+    testWidgets('an offer explains the company follows up by email', (
+      tester,
+    ) async {
+      final adapter = FakeAdapter((_) => jsonBody(_detail(status: 'offered')));
+      await pumpWithApi(
+        tester,
+        adapter,
+        const ApplicationDetailScreen(applicationId: _id),
+        size: _tall,
+      );
+      expect(find.byType(OfferNotice), findsOneWidget);
+      expect(find.text('applications.next.offered'), findsOneWidget);
+    });
+
+    testWidgets('a hired application fills every progress segment', (
+      tester,
+    ) async {
+      final adapter = FakeAdapter((_) => jsonBody(_detail(status: 'hired')));
+      await pumpWithApi(
+        tester,
+        adapter,
+        const ApplicationDetailScreen(applicationId: _id),
+        size: _tall,
+      );
+      final segments = tester
+          .widgetList<Container>(
+            find.byWidgetPredicate(
+              (w) =>
+                  w is Container &&
+                  w.constraints?.maxHeight == 4 &&
+                  w.decoration is BoxDecoration,
+            ),
+          )
+          .map((c) => (c.decoration! as BoxDecoration).color)
+          .toList();
+      expect(segments, hasLength(5));
+      expect(segments.toSet(), hasLength(1));
     });
 
     testWidgets('shows the withdrawal reason of a withdrawn application', (
