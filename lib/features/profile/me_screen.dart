@@ -10,6 +10,7 @@ import '../../components/ui/app_menu_tile.dart';
 import '../../config/routes.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';
+import '../applicant/certificates/certificates_providers.dart';
 
 class MeScreen extends ConsumerWidget {
   const MeScreen({super.key});
@@ -19,6 +20,7 @@ class MeScreen extends ConsumerWidget {
     final colors = context.colors;
     final authState = ref.watch(authNotifierProvider);
     final user = authState.user;
+    final certificateCount = ref.watch(certificateCountProvider).value ?? 0;
 
     final String fullName;
     if (user != null &&
@@ -155,14 +157,13 @@ class MeScreen extends ConsumerWidget {
                   key: const Key('me_menu_documents'),
                   icon: LucideIcons.fileText,
                   title: 'Documents',
-                  badgeCount: 4,
                   onTap: () {},
                 ),
                 AppMenuTile(
                   key: const Key('me_menu_certificates'),
                   icon: LucideIcons.award,
                   title: 'Certificates',
-                  badgeCount: 5,
+                  badgeCount: certificateCount > 0 ? certificateCount : null,
                   onTap: () => context.push(AppRoutes.certificates),
                 ),
                 AppMenuTile(
@@ -183,7 +184,6 @@ class MeScreen extends ConsumerWidget {
                   key: const Key('me_menu_saved_jobs'),
                   icon: LucideIcons.heart,
                   title: 'Saved jobs',
-                  badgeCount: 6,
                   onTap: () {},
                 ),
                 AppMenuTile(

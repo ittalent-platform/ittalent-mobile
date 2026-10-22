@@ -267,3 +267,16 @@ final certificatesProvider =
       CertificatesNotifier,
       CertificatesListState
     >(CertificatesNotifier.new);
+
+/// How many certificates the candidate has, for the badge on the Me tab. Ignores
+/// the list's search and filters; refresh it with `ref.invalidate` after the
+/// number changes.
+final certificateCountProvider = FutureProvider.autoDispose<int>((ref) async {
+  final response = await ref
+      .read(apiClientProvider)
+      .get<Map<String, dynamic>>(
+        CertificateConstants.listPath,
+        queryParameters: const CertificatesQuery().toQueryParameters(page: 1),
+      );
+  return response.data?['total'] as int? ?? 0;
+});
