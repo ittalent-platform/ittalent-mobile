@@ -1,15 +1,14 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../components/ui/app_badge.dart';
 import '../../../../components/ui/app_card.dart';
 import '../../../../theme/app_colors.dart';
-import '../../../../theme/app_radius.dart';
 import '../../../../theme/app_typography.dart';
 import '../applications_constants.dart';
 import '../applications_providers.dart';
 import 'company_avatar.dart';
+import 'offer_notice.dart';
 
 class ApplicationCard extends StatelessWidget {
   const ApplicationCard({super.key, required this.item, this.onTap});
@@ -108,31 +107,10 @@ class ApplicationCard extends StatelessWidget {
           ],
           if (item.status == ApplicationConstants.statusOffered) ...[
             const SizedBox(height: 10),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              decoration: BoxDecoration(
-                color: colors.statusPeachBg,
-                borderRadius: AppRadius.inputRadius,
-              ),
-              child: Row(
-                children: [
-                  Icon(LucideIcons.clock, size: 14, color: colors.primary),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      tr(
-                        'applications.card.offer',
-                        namedArgs: {'company': item.companyName},
-                      ),
-                      style: AppTypography.body(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: colors.primary,
-                      ),
-                    ),
-                  ),
-                ],
+            OfferNotice(
+              text: tr(
+                'applications.card.offer',
+                namedArgs: {'company': item.companyName},
               ),
             ),
           ],

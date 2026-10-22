@@ -20,6 +20,7 @@ import 'applications_providers.dart';
 import 'widgets/application_skeletons.dart';
 import 'widgets/back_link.dart';
 import 'widgets/company_avatar.dart';
+import 'widgets/offer_notice.dart';
 import 'widgets/withdraw_application_sheet.dart';
 
 /// UC-S3-MYAPP-02: one own application, as it was submitted.
@@ -342,6 +343,10 @@ class _Body extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         _StatusCard(detail: detail, locale: locale),
+        if (item.status == ApplicationConstants.statusOffered) ...[
+          const SizedBox(height: 12),
+          OfferNotice(text: tr('applications.next.offered')),
+        ],
         const SizedBox(height: 12),
         AppCard(
           padding: EdgeInsets.zero,
@@ -510,8 +515,9 @@ class _StatusCard extends StatelessWidget {
                     child: Container(
                       height: 4,
                       decoration: BoxDecoration(
-                        // Done steps solid, the current one lighter.
-                        color: i < step - 1
+                        // Done steps solid, the current one lighter; the
+                        // last step (Hired) is done, so the bar is full.
+                        color: i < step - 1 || step == steps.length
                             ? tone
                             : i == step - 1
                             ? tone.withValues(alpha: 0.4)
