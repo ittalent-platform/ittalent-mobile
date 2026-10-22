@@ -275,7 +275,12 @@ class _ApplicationsScreenState extends ConsumerState<ApplicationsScreen> {
                         const SizedBox(height: 12),
                     itemBuilder: (context, index) => index == data.items.length
                         ? _footer(data)
-                        : ApplicationCard(item: data.items[index]),
+                        : ApplicationCard(
+                            item: data.items[index],
+                            onTap: () => context.push(
+                              AppRoutes.applicationDetail(data.items[index].id),
+                            ),
+                          ),
                   ),
                 );
               },

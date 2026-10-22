@@ -1,6 +1,9 @@
 import 'package:easy_localization/easy_localization.dart';
 
+import 'package:flutter/painting.dart';
+
 import '../../../components/ui/app_badge.dart';
+import '../../../theme/app_colors.dart';
 
 class ApplicationConstants {
   const ApplicationConstants._();
@@ -24,6 +27,19 @@ class ApplicationConstants {
     statusWithdrawn,
     statusPositionFilled,
   ];
+
+  /// The forward path shown as "Step n of 5"; other statuses end the process.
+  static const List<String> progressSteps = [
+    statusSubmitted,
+    statusUnderReview,
+    statusInterviewing,
+    statusOffered,
+    statusHired,
+  ];
+
+  /// Short reference shown to people, as on the web ("APP-9011").
+  static String displayId(String id) =>
+      'APP-${(id.length > 4 ? id.substring(id.length - 4) : id).toUpperCase()}';
 
   /// "Submitted" presets of the filter sheet, keyed like `applications.range.*`.
   static const String within7Days = '7d';
@@ -67,15 +83,32 @@ class ApplicationConstants {
   static String shortDate(DateTime value, String locale) =>
       DateFormat('d MMM', locale).format(value.toLocal());
 
+  /// Date and time as in the design ("10 Sep 2026, 14:00").
+  static String dateTime(DateTime value, String locale) =>
+      DateFormat('d MMM y, HH:mm', locale).format(value.toLocal());
+
   static const String sortSubmittedAt = 'submittedAt';
   static const String orderDescending = 'desc';
   static const String orderAscending = 'asc';
 
   static const String listPath = '/api/v1/me/applications';
+  static String detailPath(String id) => '$listPath/$id';
+  static String historyPath(String id) => '$listPath/$id/history';
+  static const int historyPageSize = 100;
+  static String withdrawPath(String id) => '$listPath/$id/withdraw';
+  static const int reasonMinLength = 5;
+  static const int reasonMaxLength = 500;
+  static const String conflictCode = 'WITHDRAWAL_CONFLICT';
+  // The API answers 400 when the status no longer allows a withdrawal.
+  static const int notAllowedStatus = 400;
   static const int pageSize = 20;
   static const int searchMaxLength = 100;
   static const Duration searchDebounce = Duration(milliseconds: 400);
   static const double loadMoreThreshold = 240;
+
+  /// Calendar day (YYYY-MM-DD) of a timestamp, in the device's time zone.
+  static String day(DateTime value) =>
+      value.toLocal().toIso8601String().substring(0, 10);
 
   static BadgeTone badgeToneForStatus(String status) {
     switch (status) {
@@ -99,4 +132,24 @@ class ApplicationConstants {
   /// Translation key of the status word; unknown statuses fall back to the raw value.
   static String statusKey(String status) =>
       statuses.contains(status) ? 'applications.status.$status' : status;
+
+  /// Solid colour of a status (timeline dots, progress), from its badge tone.
+  static Color toneColor(String status, AppColors colors) {
+    switch (badgeToneForStatus(status)) {
+      case BadgeTone.success:
+        return colors.statusSuccessFg;
+      case BadgeTone.warning:
+        return colors.statusWarningFg;
+      case BadgeTone.info:
+        return colors.statusInfoFg;
+      case BadgeTone.blocked:
+        return colors.statusBlockedFg;
+      case BadgeTone.error:
+        return colors.statusErrorFg;
+      case BadgeTone.peach:
+        return colors.statusPeachFg;
+      case BadgeTone.neutral:
+        return colors.statusNeutralFg;
+    }
+  }
 }
