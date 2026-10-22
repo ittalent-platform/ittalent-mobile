@@ -2,10 +2,10 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ittalent_mobile/components/common/company_avatar.dart';
 import 'package:ittalent_mobile/features/applicant/applications/applications_constants.dart';
 import 'package:ittalent_mobile/features/applicant/applications/applications_providers.dart';
 import 'package:ittalent_mobile/features/applicant/applications/applications_screen.dart';
-import 'package:ittalent_mobile/features/applicant/applications/widgets/company_avatar.dart';
 
 import '../../helpers/fake_api.dart';
 

@@ -2719,6 +2719,46 @@
     "deleteMenu": "Xoá…",
     "notHttps": "Không phải HTTPS",
     "linkFailed": "{{name}} không phản hồi. Hãy kiểm tra liên kết."
+  },
+  "jobs": {
+    "count_one": "{{count}} việc làm",
+    "count_other": "{{count}} việc làm",
+    "end_one": "Bạn đã xem hết {{count}} việc làm.",
+    "end_other": "Bạn đã xem hết {{count}} việc làm.",
+    "empty": {
+      "title": "Hiện chưa có việc làm nào đang mở",
+      "description": "Hãy quay lại sau để xem các vị trí mới."
+    },
+    "loadError": {
+      "title": "Không tải được việc làm",
+      "description": "Kiểm tra kết nối và thử lại."
+    },
+    "card": {
+      "new": "Mới",
+      "posted": "Đăng {{when}}"
+    },
+    "ago": {
+      "today": "hôm nay",
+      "days_one": "{{count}} ngày trước",
+      "days_other": "{{count}} ngày trước",
+      "weeks_one": "{{count}} tuần trước",
+      "weeks_other": "{{count}} tuần trước",
+      "months_one": "{{count}} tháng trước",
+      "months_other": "{{count}} tháng trước"
+    },
+    "salary": {
+      "negotiable": "Thỏa thuận",
+      "perMonth": "/ tháng",
+      "from": "Từ {{amount}}",
+      "upTo": "Tối đa {{amount}}"
+    },
+    "level": {
+      "intern": "Thực tập sinh",
+      "junior": "Junior",
+      "mid": "Mid",
+      "senior": "Senior",
+      "lead": "Trưởng nhóm"
+    }
   }
 }
 
