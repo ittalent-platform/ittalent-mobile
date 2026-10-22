@@ -94,7 +94,10 @@ class ApplicationCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              Flexible(
+              // The title takes the free width so the badge sits at the
+              // right edge, as in the design; a long label ellipsizes.
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 140),
                 child: AppBadge(
                   label: tr(ApplicationConstants.statusKey(item.status)),
                   tone: ApplicationConstants.badgeToneForStatus(item.status),
