@@ -135,7 +135,9 @@
       "yes": "Có",
       "no": "Không",
       "suggestedLabel": "Gợi ý",
-      "pill": "{{label}}: {{value}}"
+      "pill": "{{label}}: {{value}}",
+      "sheetTitle": "Lọc chứng chỉ",
+      "reset": "Đặt lại"
     },
     "loadMore": "Không tải thêm được chứng chỉ.",
     "back": "Tôi",

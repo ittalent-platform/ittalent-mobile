@@ -135,7 +135,9 @@
       "yes": "Yes",
       "no": "No",
       "suggestedLabel": "Suggested",
-      "pill": "{{label}}: {{value}}"
+      "pill": "{{label}}: {{value}}",
+      "sheetTitle": "Filter certificates",
+      "reset": "Reset"
     },
     "loadMore": "Could not load more certificates.",
     "back": "Me",

@@ -165,32 +165,41 @@ void main() {
       expect(find.text('Scrum'), findsNothing);
     });
 
-    testWidgets('applies the suggested and validity pills server-side', (
+    testWidgets('applies the suggested and validity filters server-side', (
       tester,
     ) async {
       final adapter = FakeAdapter((_) => jsonBody(_page([_cert('c1', 'X')])));
       await _pump(tester, adapter);
 
+      // Either pill opens the one filter sheet, like My applications.
       await tester.tap(find.byKey(const Key('certificates_filter_suggested')));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('certificates.filter.yes').last);
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('certificates_filter_validity')));
-      await tester.pumpAndSettle();
+      expect(find.text('certificates.filter.sheetTitle'), findsOneWidget);
+      await tester.tap(find.text('certificates.filter.suggestedYes'));
       await tester.tap(find.text('certificates.expired').last);
+      await tester.tap(find.text('certificates.filter.apply'));
       await tester.pumpAndSettle();
 
       var params = adapter.requests.last.queryParameters;
       expect(params['suggested'], 'true');
       expect(params['validity'], 'expired');
 
-      await tester.tap(find.byKey(const Key('certificates_filter_suggested')));
+      await tester.tap(find.byKey(const Key('certificates_filter_validity')));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('certificates.filter.all').last);
+      await tester.tap(find.text('certificates.filter.all').first);
+      await tester.tap(find.text('certificates.filter.apply'));
       await tester.pumpAndSettle();
       params = adapter.requests.last.queryParameters;
       expect(params.containsKey('suggested'), isFalse);
       expect(params['validity'], 'expired');
+
+      await tester.tap(find.byKey(const Key('certificates_filter_validity')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('certificates.filter.reset'));
+      await tester.tap(find.text('certificates.filter.apply'));
+      await tester.pumpAndSettle();
+      params = adapter.requests.last.queryParameters;
+      expect(params.containsKey('validity'), isFalse);
     });
 
     testWidgets('tags an http link as not HTTPS', (tester) async {

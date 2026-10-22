@@ -11,6 +11,7 @@ import '../../../components/common/app_empty_state.dart';
 import '../../../components/layout/screen_scaffold.dart';
 import '../../../components/ui/app_button.dart';
 import '../../../components/ui/app_card.dart';
+import '../../../components/ui/app_filter_pill.dart';
 import '../../../components/ui/app_input.dart';
 import '../../../components/ui/app_skeleton.dart';
 import '../../../config/routes.dart';
@@ -217,12 +218,12 @@ class _ApplicationsScreenState extends ConsumerState<ApplicationsScreen> {
             spacing: 8,
             runSpacing: 8,
             children: [
-              _FilterPill(
+              AppFilterPill(
                 label: _statusLabel(query),
                 active: query.statuses.isNotEmpty,
                 onTap: _openFilters,
               ),
-              _FilterPill(
+              AppFilterPill(
                 label: _submittedLabel(query),
                 active: query.submittedFrom != null,
                 onTap: _openFilters,
@@ -281,57 +282,6 @@ class _ApplicationsScreenState extends ConsumerState<ApplicationsScreen> {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// "Status: All" / "Submitted: Any time" dropdown pill; tinted when it filters.
-class _FilterPill extends StatelessWidget {
-  const _FilterPill({
-    required this.label,
-    required this.active,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool active;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-    final fg = active ? colors.primary : colors.foreground;
-    return Material(
-      color: active ? colors.statusPeachBg : colors.card,
-      shape: StadiumBorder(
-        side: BorderSide(color: active ? colors.primary : colors.border),
-      ),
-      child: InkWell(
-        customBorder: const StadiumBorder(),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Flexible(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTypography.body(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: fg,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 4),
-              Icon(LucideIcons.chevronDown, size: 16, color: fg),
-            ],
-          ),
-        ),
       ),
     );
   }
