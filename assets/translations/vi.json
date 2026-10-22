@@ -128,9 +128,7 @@
       "yes": "Có",
       "no": "Không",
       "suggestedLabel": "Gợi ý",
-      "pill": "{{label}}: {{value}}",
-      "sheetTitle": "Lọc chứng chỉ",
-      "reset": "Đặt lại"
+      "pill": "{{label}}: {{value}}"
     },
     "loadMore": "Không tải thêm được chứng chỉ.",
     "back": "Tôi",

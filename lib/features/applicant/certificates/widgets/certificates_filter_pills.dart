@@ -1,7 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../components/ui/app_button.dart';
 import '../../../../components/ui/app_filter_pill.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_typography.dart';
@@ -11,8 +10,10 @@ import '../certificates_providers.dart';
 /// Radio value for "no filter".
 const String _all = '';
 
-/// "Suggested: All" and "Validity: All" pills under the search field; both
-/// open the same filter sheet, like the My applications list.
+enum CertificateFilter { suggested, validity }
+
+/// "Suggested: All" and "Validity: All" pills under the search field. Each
+/// opens a sheet with only its own options; picking one applies it.
 class CertificatesFilterPills extends StatelessWidget {
   const CertificatesFilterPills({
     super.key,
@@ -23,12 +24,11 @@ class CertificatesFilterPills extends StatelessWidget {
   final CertificatesQuery query;
   final ValueChanged<CertificatesQuery> onChanged;
 
-  Future<void> _open(BuildContext context) async {
+  Future<void> _open(BuildContext context, CertificateFilter filter) async {
     final result = await showModalBottomSheet<CertificatesQuery>(
       context: context,
-      isScrollControlled: true,
       showDragHandle: true,
-      builder: (_) => CertificatesFilterSheet(initial: query),
+      builder: (_) => CertificatesFilterSheet(filter: filter, initial: query),
     );
     if (result != null) onChanged(result);
   }
@@ -53,7 +53,7 @@ class CertificatesFilterPills extends StatelessWidget {
                 : tr('certificates.filter.${suggested ? 'yes' : 'no'}'),
           ),
           active: suggested != null,
-          onTap: () => _open(context),
+          onTap: () => _open(context, CertificateFilter.suggested),
         ),
         AppFilterPill(
           key: const Key('certificates_filter_validity'),
@@ -64,130 +64,99 @@ class CertificatesFilterPills extends StatelessWidget {
                 : tr(CertificateConstants.validityKey(query.validity!)),
           ),
           active: query.validity != null,
-          onTap: () => _open(context),
+          onTap: () => _open(context, CertificateFilter.validity),
         ),
       ],
     );
   }
 }
 
-/// "Filter certificates" sheet: suggested and validity in one place. Pops
-/// with the new query when applied.
-class CertificatesFilterSheet extends StatefulWidget {
-  const CertificatesFilterSheet({super.key, required this.initial});
+/// One filter's options as a radio list. Picking an option pops with the new
+/// query; "All" clears that filter.
+class CertificatesFilterSheet extends StatelessWidget {
+  const CertificatesFilterSheet({
+    super.key,
+    required this.filter,
+    required this.initial,
+  });
 
+  final CertificateFilter filter;
   final CertificatesQuery initial;
 
-  @override
-  State<CertificatesFilterSheet> createState() =>
-      _CertificatesFilterSheetState();
-}
-
-class _CertificatesFilterSheetState extends State<CertificatesFilterSheet> {
-  late String _suggested = widget.initial.suggested?.toString() ?? _all;
-  late String _validity = widget.initial.validity ?? _all;
-
-  CertificatesQuery _result() => widget.initial.copyWith(
-    suggested: _suggested == _all ? null : _suggested == 'true',
-    clearSuggested: _suggested == _all,
-    validity: _validity == _all ? null : _validity,
-    clearValidity: _validity == _all,
-  );
+  CertificatesQuery _result(String value) => switch (filter) {
+    CertificateFilter.suggested =>
+      value == _all
+          ? initial.copyWith(clearSuggested: true)
+          : initial.copyWith(suggested: value == 'true'),
+    CertificateFilter.validity =>
+      value == _all
+          ? initial.copyWith(clearValidity: true)
+          : initial.copyWith(validity: value),
+  };
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-
-    Widget caption(String key) => Padding(
-      padding: const EdgeInsets.only(top: 16, bottom: 4),
-      child: Text(
-        tr(key).toUpperCase(),
-        style: AppTypography.body(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 0.6,
-          color: colors.mutedForeground,
-        ),
+    final (title, value, options) = switch (filter) {
+      CertificateFilter.suggested => (
+        'certificates.filter.suggested',
+        initial.suggested?.toString() ?? _all,
+        {
+          _all: tr('certificates.filter.all'),
+          'true': tr('certificates.filter.suggestedYes'),
+          'false': tr('certificates.filter.suggestedNo'),
+        },
       ),
-    );
-
-    Widget radios(
-      String value,
-      Map<String, String> options,
-      ValueChanged<String> onChanged,
-    ) => RadioGroup<String>(
-      groupValue: value,
-      onChanged: (v) => setState(() => onChanged(v!)),
-      child: Column(
-        children: [
-          for (final e in options.entries) ...[
-            RadioListTile<String>(
-              value: e.key,
-              contentPadding: EdgeInsets.zero,
-              visualDensity: VisualDensity.compact,
-              activeColor: colors.primary,
-              title: Text(
-                e.value,
-                style: AppTypography.body(
-                  fontSize: 15,
-                  color: colors.foreground,
-                ),
-              ),
-            ),
-            Divider(height: 1, color: colors.border),
-          ],
-        ],
+      CertificateFilter.validity => (
+        'certificates.filter.validity',
+        initial.validity ?? _all,
+        {
+          _all: tr('certificates.filter.all'),
+          for (final v in CertificateConstants.validities)
+            v: tr(CertificateConstants.validityKey(v)),
+        },
       ),
-    );
+    };
 
     return SafeArea(
-      child: SingleChildScrollView(
+      child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              tr('certificates.filter.sheetTitle'),
+              tr(title),
               style: AppTypography.display(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
                 color: colors.foreground,
               ),
             ),
-            caption('certificates.filter.suggested'),
-            radios(_suggested, {
-              _all: tr('certificates.filter.all'),
-              'true': tr('certificates.filter.suggestedYes'),
-              'false': tr('certificates.filter.suggestedNo'),
-            }, (v) => _suggested = v),
-            caption('certificates.filter.validity'),
-            radios(_validity, {
-              _all: tr('certificates.filter.all'),
-              for (final v in CertificateConstants.validities)
-                v: tr(CertificateConstants.validityKey(v)),
-            }, (v) => _validity = v),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                Expanded(
-                  child: AppButton(
-                    text: tr('certificates.filter.reset'),
-                    variant: AppButtonVariant.outline,
-                    onPressed: () => setState(() {
-                      _suggested = _all;
-                      _validity = _all;
-                    }),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  flex: 2,
-                  child: AppButton(
-                    text: tr('certificates.filter.apply'),
-                    onPressed: () => Navigator.of(context).pop(_result()),
-                  ),
-                ),
-              ],
+            const SizedBox(height: 8),
+            RadioGroup<String>(
+              groupValue: value,
+              onChanged: (v) => Navigator.of(context).pop(_result(v!)),
+              child: Column(
+                children: [
+                  for (final e in options.entries) ...[
+                    RadioListTile<String>(
+                      value: e.key,
+                      contentPadding: EdgeInsets.zero,
+                      visualDensity: VisualDensity.compact,
+                      activeColor: colors.primary,
+                      title: Text(
+                        e.value,
+                        style: AppTypography.body(
+                          fontSize: 15,
+                          color: colors.foreground,
+                        ),
+                      ),
+                    ),
+                    Divider(height: 1, color: colors.border),
+                  ],
+                ],
+              ),
             ),
           ],
         ),
