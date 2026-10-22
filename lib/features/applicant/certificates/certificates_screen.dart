@@ -356,12 +356,11 @@ class _CertificatesScreenState extends ConsumerState<CertificatesScreen> {
                           actionText: tr('certificates.filter.clear'),
                           onAction: _clearAll,
                         )
+                      // No Add button here: the + in the corner already adds.
                       : AppEmptyState(
                           icon: const Icon(LucideIcons.award),
                           title: tr('certificates.empty.title'),
                           description: tr('certificates.empty.description'),
-                          actionText: tr('certificates.add'),
-                          onAction: _openForm,
                         );
                 }
                 return RefreshIndicator(
