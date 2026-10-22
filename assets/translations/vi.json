@@ -383,7 +383,8 @@
       "rangeContradictory": "Ngày bắt đầu không được sau ngày kết thúc.",
       "filterUnsupported": "Một bộ lọc trong liên kết này không được hỗ trợ.",
       "invalidTitle": "Tiêu chí tìm kiếm không hợp lệ.",
-      "invalidHint": "Sửa bộ lọc đang báo lỗi hoặc xóa bộ lọc. Chưa có tìm kiếm nào được thực hiện."
+      "invalidHint": "Sửa bộ lọc đang báo lỗi hoặc xóa bộ lọc. Chưa có tìm kiếm nào được thực hiện.",
+      "reasonLength": "Nhập từ {{min}} đến {{max}} ký tự, hoặc để trống lý do."
     },
     "reapply": {
       "second": "Đơn thứ 2",
@@ -433,7 +434,10 @@
       "candidate": "bởi bạn",
       "company": "bởi công ty",
       "system": "bởi hệ thống"
-    }
+    },
+    "withdrawEllipsis": "Rút đơn ứng tuyển…",
+    "withdrawSheetBody": "{{company}} sẽ thấy đơn này đã được rút. Bạn có thể ứng tuyển lại khi tin tuyển dụng còn mở.",
+    "alreadyDecided": "Đơn này đã chuyển sang trạng thái {{status}} nên không thể rút."
   },
   "loadingScreen": {
     "message": "Đang tải phiên đăng nhập và dữ liệu ứng dụng."

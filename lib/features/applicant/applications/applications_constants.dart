@@ -95,6 +95,12 @@ class ApplicationConstants {
   static String detailPath(String id) => '$listPath/$id';
   static String historyPath(String id) => '$listPath/$id/history';
   static const int historyPageSize = 100;
+  static String withdrawPath(String id) => '$listPath/$id/withdraw';
+  static const int reasonMinLength = 5;
+  static const int reasonMaxLength = 500;
+  static const String conflictCode = 'WITHDRAWAL_CONFLICT';
+  // The API answers 400 when the status no longer allows a withdrawal.
+  static const int notAllowedStatus = 400;
   static const int pageSize = 20;
   static const int searchMaxLength = 100;
   static const Duration searchDebounce = Duration(milliseconds: 400);

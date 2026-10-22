@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../api/api_error.dart';
 import '../../../components/common/app_empty_state.dart';
 import '../../../components/common/app_error_state.dart';
+import '../../../components/common/app_toast.dart';
 import '../../../components/layout/screen_scaffold.dart';
 import '../../../components/ui/app_button.dart';
 import '../../../components/ui/app_card.dart';
@@ -20,6 +21,7 @@ import 'widgets/application_skeletons.dart';
 import 'widgets/back_link.dart';
 import 'widgets/company_avatar.dart';
 import 'widgets/offer_notice.dart';
+import 'widgets/withdraw_application_sheet.dart';
 
 /// UC-S3-MYAPP-02: one own application, as it was submitted.
 class ApplicationDetailScreen extends ConsumerWidget {
@@ -41,7 +43,7 @@ class ApplicationDetailScreen extends ConsumerWidget {
             IconButton(
               tooltip: tr('applications.moreActions'),
               icon: const Icon(LucideIcons.ellipsisVertical, size: 20),
-              onPressed: () => _showActions(context, loaded),
+              onPressed: () => _showActions(context, loaded, applicationId),
             ),
         ],
       ),
@@ -69,13 +71,29 @@ class ApplicationDetailScreen extends ConsumerWidget {
   }
 }
 
-/// The ⋯ menu: actions that are not part of the page itself.
+enum _Action { viewJob, withdraw }
+
+/// The ⋯ menu: actions that are not part of the page itself. Withdraw is
+/// offered only while the server allows it (BR-APP-004).
 Future<void> _showActions(
   BuildContext context,
   ApplicationDetail detail,
+  String applicationId,
 ) async {
   final colors = context.colors;
-  final viewJob = await showModalBottomSheet<bool>(
+  Widget item(_Action action, IconData icon, String label, Color color) =>
+      Builder(
+        builder: (sheet) => ListTile(
+          contentPadding: EdgeInsets.zero,
+          leading: Icon(icon, color: color),
+          title: Text(
+            label,
+            style: AppTypography.body(fontSize: 16, color: color),
+          ),
+          onTap: () => Navigator.of(sheet).pop(action),
+        ),
+      );
+  final action = await showModalBottomSheet<_Action>(
     context: context,
     showDragHandle: true,
     builder: (sheet) => SafeArea(
@@ -84,19 +102,21 @@ Future<void> _showActions(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: Icon(LucideIcons.externalLink, color: colors.foreground),
-              title: Text(
-                tr('applications.viewJob'),
-                style: AppTypography.body(
-                  fontSize: 16,
-                  color: colors.foreground,
-                ),
-              ),
-              onTap: () => Navigator.of(sheet).pop(true),
+            item(
+              _Action.viewJob,
+              LucideIcons.externalLink,
+              tr('applications.viewJob'),
+              colors.foreground,
             ),
-            Divider(height: 1, color: colors.border),
+            if (detail.summary.canWithdraw) ...[
+              Divider(height: 1, color: colors.border),
+              item(
+                _Action.withdraw,
+                LucideIcons.undo2,
+                tr('applications.withdrawEllipsis'),
+                colors.destructive,
+              ),
+            ],
             const SizedBox(height: 16),
             AppButton(
               text: tr('applications.cancel'),
@@ -109,7 +129,41 @@ Future<void> _showActions(
       ),
     ),
   );
-  if (viewJob == true && context.mounted) _showJob(context, detail);
+  if (!context.mounted) return;
+  switch (action) {
+    case _Action.viewJob:
+      _showJob(context, detail);
+    case _Action.withdraw:
+      await _withdraw(context, detail, applicationId);
+    case null:
+      break;
+  }
+}
+
+Future<void> _withdraw(
+  BuildContext context,
+  ApplicationDetail detail,
+  String applicationId,
+) async {
+  final messenger = ScaffoldMessenger.of(context);
+  final withdrawn = await showModalBottomSheet<bool>(
+    context: context,
+    isScrollControlled: true,
+    showDragHandle: true,
+    builder: (_) => WithdrawApplicationSheet(
+      applicationId: applicationId,
+      companyName: detail.summary.companyName,
+      expectedVersion: detail.version,
+    ),
+  );
+  if (withdrawn != true) return;
+  showAppToast(
+    messenger,
+    tr(
+      'applications.toast.withdrawnOne',
+      namedArgs: {'id': ApplicationConstants.displayId(applicationId)},
+    ),
+  );
 }
 
 Future<void> _showSheet(
