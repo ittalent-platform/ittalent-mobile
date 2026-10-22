@@ -418,7 +418,22 @@
       "offer": "Đã nhận offer · hãy phản hồi {{company}}"
     },
     "subtitle_one": "{{count}} đơn ứng tuyển",
-    "acrossCompanies_one": "tại {{count}} công ty"
+    "acrossCompanies_one": "tại {{count}} công ty",
+    "moreActions": "Thao tác khác",
+    "cancel": "Hủy",
+    "backShort": "Quay lại",
+    "stepOf": "Bước {{step}}/{{total}}",
+    "nextStatus": "Tiếp theo: {{status}}",
+    "updates_one": "{{count}} cập nhật",
+    "updates_other": "{{count}} cập nhật",
+    "documentsSent": "Tài liệu đã gửi",
+    "jobPosting": "Tin tuyển dụng",
+    "jobPostingSaved": "Bản lưu lúc bạn ứng tuyển",
+    "by": {
+      "candidate": "bởi bạn",
+      "company": "bởi công ty",
+      "system": "bởi hệ thống"
+    }
   },
   "loadingScreen": {
     "message": "Đang tải phiên đăng nhập và dữ liệu ứng dụng."
