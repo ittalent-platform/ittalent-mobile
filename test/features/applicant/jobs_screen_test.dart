@@ -222,7 +222,7 @@ void main() {
 
     test('a deadline shows its year in another year or far ahead', () {
       String date(DateTime day, DateTime now) =>
-          JobFormat.shortDate(day, 'en', now);
+          JobFormat.shortDate(day, 'en_US', now);
       final now = DateTime(2026, 10, 23);
       expect(date(DateTime(2026, 10, 25), now), '25 Oct');
       expect(date(DateTime(2027, 1, 5), now), '5 Jan 2027');
