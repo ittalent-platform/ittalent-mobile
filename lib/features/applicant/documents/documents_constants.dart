@@ -1,7 +1,10 @@
 class DocumentConstants {
   const DocumentConstants._();
   static const path = '/api/v1/documents';
-  static const maxBytes = 5 * 1048576;
+  static const bytesPerKiB = 1024;
+  static const bytesPerMiB = bytesPerKiB * bytesPerKiB;
+  static const errorResponseMaxBytes = 64 * bytesPerKiB;
+  static const maxBytes = 5 * bytesPerMiB;
   static const pageSize = 20;
   static const searchLimit = 100;
   static const debounce = Duration(milliseconds: 300);
@@ -16,3 +19,5 @@ class DocumentConstants {
     'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   };
 }
+
+enum DocumentValidationFailure { empty, size, format, read }

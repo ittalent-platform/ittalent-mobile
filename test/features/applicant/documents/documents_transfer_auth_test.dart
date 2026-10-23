@@ -15,7 +15,7 @@ import 'documents_upload_data.dart';
 import 'documents_repository_test.dart' show StreamingAdapter;
 
 void main() {
-  for (final multipart in [true]) {
+  for (final multipart in [false, true]) {
     test(
       '401 refresh preserves ${multipart ? 'multipart body' : 'binary options'}, callbacks, cancellation, query; retries once',
       () async {
@@ -63,6 +63,12 @@ void main() {
             cancelToken: cancel,
           );
           expect(bodies.every((b) => b.isNotEmpty), true);
+        } else {
+          final result = await repo.download(
+            DocumentDto.fromJson(documentJson()),
+            cancelToken: cancel,
+          );
+          expect(result.bytes, [0, 255, 1]);
         }
         expect(attempts, 2);
         expect(tokens.accessToken, 'new');

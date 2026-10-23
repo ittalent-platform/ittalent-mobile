@@ -407,9 +407,9 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen>
     ),
   );
 
-  String _size(int bytes) => bytes >= 1048576
-      ? '${(bytes / 1048576).toStringAsFixed(1)} MiB'
-      : '${(bytes / 1024).toStringAsFixed(1)} KiB';
+  String _size(int bytes) => bytes >= DocumentConstants.bytesPerMiB
+      ? '${(bytes / DocumentConstants.bytesPerMiB).toStringAsFixed(1)} MiB'
+      : '${(bytes / DocumentConstants.bytesPerKiB).toStringAsFixed(1)} KiB';
 
   Widget _card(DocumentDto item) {
     final colors = context.colors;
