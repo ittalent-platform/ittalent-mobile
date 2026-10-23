@@ -1843,10 +1843,14 @@
   },
   "documents": {
     "mobile": {
+      "all": "All",
       "retry": "Try again",
       "back": "Back to Me",
       "refresh": "Refresh",
+      "loadMore": "Load more",
+      "emptyType": "No files of this type yet",
       "cl": "CL",
+      "empty": "This file is empty. Choose another file.",
       "invalid": "The request or file was rejected. Check the file and try again.",
       "unauthorized": "Your session has expired. Sign in again.",
       "forbidden": "Only applicant accounts can access these documents.",

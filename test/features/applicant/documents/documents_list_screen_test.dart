@@ -9,6 +9,7 @@ import 'package:ittalent_mobile/api/api_error.dart';
 import 'package:ittalent_mobile/app/router.dart';
 import 'package:ittalent_mobile/config/routes.dart';
 import 'package:ittalent_mobile/features/applicant/documents/document_model.dart';
+import 'package:ittalent_mobile/features/applicant/documents/documents_providers.dart';
 import 'package:ittalent_mobile/features/applicant/documents/documents_screen.dart';
 
 import 'documents_test_data.dart';
@@ -57,6 +58,11 @@ void main() {
               image.dispose();
             });
           }
+          await tester.tap(find.byType(TextField));
+          tester.view.viewInsets = FakeViewPadding(bottom: 300);
+          await tester.pumpAndSettle();
+          expect(tester.takeException(), isNull);
+          tester.view.resetViewInsets();
         },
       );
     }
@@ -66,13 +72,29 @@ void main() {
     (tester) async {
       final pending = Completer<DocumentsPage>();
       final repo = RepoDouble()..listPending = pending;
-      await pumpDocuments(tester, repo);
+      final c = await pumpDocuments(tester, repo);
       expect(find.byType(LinearProgressIndicator), findsNothing);
       expect(find.text('No documents yet'), findsNothing);
       repo.listPending = null;
       pending.complete(DocumentsPage.fromJson(pageJson([])));
       await tester.pumpAndSettle();
       expect(find.text('No documents yet'), findsOneWidget);
+      await tester.ensureVisible(find.byKey(const Key('filter_cv')));
+      await tester.tap(find.byKey(const Key('filter_cv')));
+      await tester.pumpAndSettle();
+      expect(find.text('No files of this type yet'), findsOneWidget);
+      final before = repo.lists;
+      await tester.enterText(find.byType(TextField), '  Nguyễn  ');
+      await tester.pump(const Duration(milliseconds: 299));
+      expect(repo.lists, before);
+      await tester.pump(const Duration(milliseconds: 1));
+      await tester.pumpAndSettle();
+      expect(c.read(documentsQueryProvider).search, 'Nguyễn');
+      expect(find.text('No matching documents'), findsOneWidget);
+      await tester.enterText(find.byType(TextField), 'a' * 130);
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pumpAndSettle();
+      expect(c.read(documentsQueryProvider).search.length, 100);
     },
   );
   testWidgets('list error retry, load more and refresh retain functionality', (
@@ -84,8 +106,12 @@ void main() {
     expect(find.text('Could not load documents'), findsOneWidget);
     repo.listError = null;
     repo.items = [DocumentDto.fromJson(documentJson())];
+    repo.more = true;
     await tester.tap(find.text('Try again'));
     await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('documents_more')));
+    await tester.pumpAndSettle();
+    expect(find.text('Nguyễn Văn An.pdf'), findsNWidgets(2));
     final before = repo.lists;
     await tester.tap(find.byTooltip('Refresh'));
     await tester.pumpAndSettle();

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../theme/app_colors.dart';
 import '../../theme/app_radius.dart';
@@ -22,6 +23,7 @@ class AppInput extends StatelessWidget {
     this.readOnly = false,
     this.onTap,
     this.maxLines = 1,
+    this.inputFormatters,
   });
 
   final TextEditingController? controller;
@@ -39,6 +41,7 @@ class AppInput extends StatelessWidget {
   final bool readOnly;
   final VoidCallback? onTap;
   final int maxLines;
+  final List<TextInputFormatter>? inputFormatters;
 
   @override
   Widget build(BuildContext context) {
@@ -90,6 +93,7 @@ class AppInput extends StatelessWidget {
         ],
         TextField(
           controller: controller,
+          inputFormatters: inputFormatters,
           obscureText: obscureText,
           keyboardType: keyboardType,
           onChanged: onChanged,

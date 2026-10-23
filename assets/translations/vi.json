@@ -1828,10 +1828,14 @@
   },
   "documents": {
     "mobile": {
+      "all": "Tất cả",
       "retry": "Thử lại",
       "back": "Quay lại Tôi",
       "refresh": "Làm mới",
+      "loadMore": "Tải thêm",
+      "emptyType": "Chưa có tài liệu thuộc loại này",
       "cl": "TXV",
+      "empty": "Tệp trống. Hãy chọn tệp khác.",
       "invalid": "Yêu cầu hoặc tệp không hợp lệ. Kiểm tra rồi thử lại.",
       "unauthorized": "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
       "forbidden": "Chỉ tài khoản ứng viên có thể truy cập tài liệu.",
