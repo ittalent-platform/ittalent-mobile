@@ -29,7 +29,7 @@ lib/
 ├── app/                         # app.dart (MaterialApp), router.dart (go_router, shell, tabs)
 ├── auth/                        # auth_notifier.dart, auth_state.dart, token_storage.dart
 ├── components/
-│   ├── ui/                      # Atomic primitives (AppButton, AppCard, AppBadge, AppInput, AppSkeleton)
+│   ├── ui/                      # Atomic primitives (AppButton, AppCard, AppBadge, AppTag, AppInput, AppSkeleton)
 │   ├── common/                  # Reusable composites (AppEmptyState, AppErrorState, AppStatusPanel)
 │   └── layout/                  # ScreenScaffold (Safe area, screen padding)
 ├── config/                      # env.dart, routes.dart
@@ -79,6 +79,7 @@ Before building custom widgets, always reuse existing primitives:
 | Action Button (Ember, Outline, Ghost, Destructive) | `AppButton` (`components/ui/app_button.dart`) |
 | Surface Card (16px border-first) | `AppCard` (`components/ui/app_card.dart`) |
 | Status Badge (Tint pairs) | `AppBadge` (`components/ui/app_badge.dart`) |
+| Plain Tag (type, level) | `AppTag` (`components/ui/app_tag.dart`) |
 | Form Input / Text Field | `AppInput` (`components/ui/app_input.dart`) |
 | Loading Placeholder | `AppSkeleton` (`components/ui/app_skeleton.dart`) |
 | Empty List / Empty View | `AppEmptyState` (`components/common/app_empty_state.dart`) |

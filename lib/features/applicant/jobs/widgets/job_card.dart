@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../../components/common/company_avatar.dart';
 import '../../../../components/ui/app_badge.dart';
 import '../../../../components/ui/app_card.dart';
+import '../../../../components/ui/app_tag.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_typography.dart';
 import '../jobs_format.dart';
@@ -26,7 +27,7 @@ class JobCard extends StatelessWidget {
     final now = DateTime.now();
     final salary = JobFormat.salaryAmount(job);
     final posted = JobFormat.postedAgo(job.createdAt, now);
-    final applyBy = JobFormat.applyBy(job.expiresAt, locale);
+    final applyBy = JobFormat.applyBy(job.expiresAt, locale, now);
     final meta = [
       if (job.companyName.isNotEmpty) job.companyName,
       ?job.location,
@@ -125,7 +126,7 @@ class JobCard extends StatelessWidget {
             Wrap(
               spacing: 6,
               runSpacing: 6,
-              children: [for (final tag in tags) JobTag(label: tag)],
+              children: [for (final tag in tags) AppTag(label: tag)],
             ),
           ],
           if (footer.isNotEmpty) ...[
@@ -139,35 +140,6 @@ class JobCard extends StatelessWidget {
             ),
           ],
         ],
-      ),
-    );
-  }
-}
-
-/// Small filled tag ("Full-time", "Senior").
-class JobTag extends StatelessWidget {
-  const JobTag({super.key, required this.label});
-
-  final String label;
-
-  static const double radius = 8;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: colors.muted,
-        borderRadius: BorderRadius.circular(radius),
-      ),
-      child: Text(
-        label,
-        style: AppTypography.body(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: colors.foreground,
-        ),
       ),
     );
   }

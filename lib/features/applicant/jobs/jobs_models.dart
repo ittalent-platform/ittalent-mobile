@@ -82,6 +82,16 @@ class JobPosting {
       createdAt != null &&
       now.difference(createdAt!) <
           const Duration(days: JobConstants.newBadgeDays);
+
+  /// Newest first. A job without a date goes last, and jobs of the same moment
+  /// keep one fixed order (by id), so a list never reshuffles between reads.
+  static int newestFirst(JobPosting a, JobPosting b) {
+    final byDate = _millis(b).compareTo(_millis(a));
+    return byDate != 0 ? byDate : a.id.compareTo(b.id);
+  }
+
+  static int _millis(JobPosting job) =>
+      job.createdAt?.millisecondsSinceEpoch ?? 0;
 }
 
 /// One page of `GET /job-postings`.

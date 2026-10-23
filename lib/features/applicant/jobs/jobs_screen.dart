@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-import '../../../api/api_error.dart';
 import '../../../components/common/app_empty_state.dart';
 import '../../../components/layout/screen_scaffold.dart';
 import '../../../theme/app_colors.dart';
@@ -105,12 +104,10 @@ class JobsScreen extends ConsumerWidget {
             child: jobs.when(
               skipLoadingOnReload: false,
               loading: _skeleton,
-              error: (error, _) => AppEmptyState(
+              error: (_, _) => AppEmptyState(
                 icon: const Icon(LucideIcons.triangleAlert),
                 title: tr('jobs.loadError.title'),
-                description: error is ApiError
-                    ? error.message
-                    : tr('jobs.loadError.description'),
+                description: tr('jobs.loadError.description'),
                 actionText: tr('errorState.retry'),
                 onAction: () => ref.invalidate(publicJobsProvider),
               ),

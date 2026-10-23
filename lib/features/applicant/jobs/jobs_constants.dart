@@ -9,8 +9,16 @@ class JobConstants {
   /// the counts, search and filters work on the whole market as on the web.
   static const int fetchPageSize = 100;
 
+  /// Pages are requested a few at a time, not all at once, and never beyond
+  /// [maxPages] (2,000 jobs): a guard against an endless or runaway listing.
+  static const int fetchConcurrency = 4;
+  static const int maxPages = 20;
+
   /// A posting younger than this many days wears the "New" badge.
   static const int newBadgeDays = 5;
+
+  /// A deadline further ahead than this (or in another year) shows its year.
+  static const int yearShownAfterDays = 180;
 
   static const int daysPerWeek = 7;
   static const int daysPerMonth = 30;

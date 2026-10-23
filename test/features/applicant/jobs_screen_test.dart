@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -5,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ittalent_mobile/api/client.dart';
 import 'package:ittalent_mobile/components/ui/app_badge.dart';
+import 'package:ittalent_mobile/features/applicant/jobs/jobs_constants.dart';
 import 'package:ittalent_mobile/features/applicant/jobs/jobs_format.dart';
 import 'package:ittalent_mobile/features/applicant/jobs/jobs_models.dart';
 import 'package:ittalent_mobile/features/applicant/jobs/jobs_providers.dart';
@@ -76,6 +79,35 @@ JobPosting _posting({
   ),
 );
 
+/// Serves each page of the list after a short wait, and notes which pages were
+/// asked for and how many requests were in flight together.
+class _CountingAdapter implements HttpClientAdapter {
+  _CountingAdapter(this.pageBody);
+
+  final Map<String, dynamic> Function(int page) pageBody;
+  final List<int> pages = [];
+  int mostAtOnce = 0;
+  int _inFlight = 0;
+
+  @override
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<Uint8List>? requestStream,
+    Future<void>? cancelFuture,
+  ) async {
+    final page = options.queryParameters['page'] as int;
+    pages.add(page);
+    _inFlight++;
+    if (_inFlight > mostAtOnce) mostAtOnce = _inFlight;
+    await Future<void>.delayed(const Duration(milliseconds: 5));
+    _inFlight--;
+    return jsonBody(pageBody(page));
+  }
+
+  @override
+  void close({bool force = false}) {}
+}
+
 Future<ProviderContainer> _pump(
   WidgetTester tester,
   FakeAdapter adapter, {
@@ -113,6 +145,21 @@ void main() {
       expect(_posting(min: null, max: null).hasSalary, isFalse);
       expect(_posting(min: 0, max: 0).hasSalary, isFalse);
       expect(_posting(negotiable: true).hasSalary, isFalse);
+    });
+
+    test('newest first, undated last, same moment in a fixed order', () {
+      final jobs = [
+        JobPosting.fromJson(_job('b', 'B', createdAt: _daysAgo(2))),
+        JobPosting.fromJson({..._job('z', 'Undated'), 'createdAt': null}),
+        JobPosting.fromJson(_job('c', 'C', createdAt: _daysAgo(1))),
+        JobPosting.fromJson(
+          _job('a', 'A', createdAt: '2026-01-01T00:00:00.000Z'),
+        ),
+        JobPosting.fromJson(
+          _job('d', 'D', createdAt: '2026-01-01T00:00:00.000Z'),
+        ),
+      ]..sort(JobPosting.newestFirst);
+      expect(jobs.map((j) => j.id), ['c', 'b', 'a', 'd', 'z']);
     });
 
     test('open until the deadline; new for a few days', () {
@@ -173,6 +220,17 @@ void main() {
       expect(JobFormat.postedAgo(null, now), isNull);
     });
 
+    test('a deadline shows its year in another year or far ahead', () {
+      String date(DateTime day, DateTime now) =>
+          JobFormat.shortDate(day, 'en', now);
+      final now = DateTime(2026, 10, 23);
+      expect(date(DateTime(2026, 10, 25), now), '25 Oct');
+      expect(date(DateTime(2027, 1, 5), now), '5 Jan 2027');
+      expect(date(DateTime(2027, 4, 11), now), '11 Apr 2027');
+      expect(date(DateTime(2026, 12, 31), DateTime(2026, 3, 1)), '31 Dec 2026');
+      expect(date(DateTime(2026, 6, 1), DateTime(2026, 3, 1)), '1 Jun');
+    });
+
     test('known types and levels are translated, others shown as they are', () {
       expect(
         JobFormat.employmentLabel('Full-time'),
@@ -185,22 +243,7 @@ void main() {
   });
 
   group('publicJobsProvider', () {
-    test('reads every page once and keeps each open job once', () async {
-      final adapter = FakeAdapter((options) {
-        final page = options.queryParameters['page'] as int;
-        return jsonBody(
-          page == 1
-              ? _page([
-                  _job('j1', 'First job'),
-                  _job('j2', 'Closed job', expiresAt: _daysAgo(1)),
-                ], totalPages: 2)
-              : _page(
-                  [_job('j1', 'First job'), _job('j3', 'Third job')],
-                  page: 2,
-                  totalPages: 2,
-                ),
-        );
-      });
+    ProviderContainer containerFor(HttpClientAdapter adapter) {
       final dio = Dio(BaseOptions(baseUrl: 'http://test'))
         ..httpClientAdapter = adapter;
       final container = ProviderContainer(
@@ -208,14 +251,81 @@ void main() {
       );
       addTearDown(container.dispose);
       // Keeps the auto-disposed provider alive while it loads.
-      container.listen(publicJobsProvider, (previous, next) {});
+      container.listen(
+        publicJobsProvider,
+        (previous, next) {},
+        onError: (error, stackTrace) {},
+      );
+      return container;
+    }
+
+    test(
+      'reads every page once, keeps each open job once, newest first',
+      () async {
+        final adapter = FakeAdapter((options) {
+          final page = options.queryParameters['page'] as int;
+          return jsonBody(
+            page == 1
+                ? _page([
+                    _job('j1', 'First job', createdAt: _daysAgo(2)),
+                    _job('j2', 'Closed job', expiresAt: _daysAgo(1)),
+                  ], totalPages: 2)
+                : _page(
+                    [
+                      _job('j1', 'First job', createdAt: _daysAgo(2)),
+                      _job('j3', 'Third job', createdAt: _daysAgo(1)),
+                    ],
+                    page: 2,
+                    totalPages: 2,
+                  ),
+          );
+        });
+        final container = containerFor(adapter);
+
+        final jobs = await container.read(publicJobsProvider.future);
+
+        expect(jobs.map((j) => j.id), ['j3', 'j1']);
+        expect(adapter.requests.length, 2);
+        expect(adapter.requests.first.path, '/api/v1/job-postings');
+        expect(adapter.requests.first.queryParameters['limit'], 100);
+      },
+    );
+
+    test('reads a few pages at a time and never beyond the cap', () async {
+      final adapter = _CountingAdapter(
+        (page) => _page(
+          [_job('p$page', 'Job $page', createdAt: _daysAgo(page))],
+          page: page,
+          totalPages: 25,
+        ),
+      );
+      final container = containerFor(adapter);
 
       final jobs = await container.read(publicJobsProvider.future);
 
-      expect(jobs.map((j) => j.id), ['j1', 'j3']);
-      expect(adapter.requests.length, 2);
-      expect(adapter.requests.first.path, '/api/v1/job-postings');
-      expect(adapter.requests.first.queryParameters['limit'], 100);
+      expect(adapter.pages.length, JobConstants.maxPages);
+      expect(adapter.pages, containsAll([1, JobConstants.maxPages]));
+      expect(adapter.pages, isNot(contains(JobConstants.maxPages + 1)));
+      expect(
+        adapter.mostAtOnce,
+        lessThanOrEqualTo(JobConstants.fetchConcurrency),
+      );
+      expect(adapter.mostAtOnce, greaterThan(1));
+      expect(jobs.first.id, 'p1');
+      expect(jobs.length, JobConstants.maxPages);
+    });
+
+    test('fails at once, without retrying behind the scenes', () async {
+      final adapter = FakeAdapter(
+        (_) => jsonBody({'message': 'Boom'}, status: 500),
+      );
+      final container = containerFor(adapter);
+
+      await expectLater(
+        container.read(publicJobsProvider.future),
+        throwsA(anything),
+      );
+      expect(adapter.requests.length, 1);
     });
   });
 
@@ -279,7 +389,9 @@ void main() {
       await _pump(tester, adapter);
 
       expect(find.text('jobs.loadError.title'), findsOneWidget);
-      expect(find.text('Boom'), findsOneWidget);
+      expect(find.text('jobs.loadError.description'), findsOneWidget);
+      expect(find.text('Boom'), findsNothing);
+      expect(adapter.requests.length, 1);
 
       fail = false;
       await tester.tap(find.text('errorState.retry'));

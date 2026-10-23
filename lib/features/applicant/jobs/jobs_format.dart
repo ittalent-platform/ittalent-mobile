@@ -68,16 +68,24 @@ class JobFormat {
   }
 
   /// Short calendar date as in the design ("25 Oct"), in the device time zone.
-  static String shortDate(DateTime value, String locale) =>
-      DateFormat('d MMM', locale).format(value.toLocal());
+  /// A date in another year, or more than about six months from [now], also
+  /// shows its year ("11 Apr 2027"), so a deadline is never ambiguous.
+  static String shortDate(DateTime value, String locale, DateTime now) {
+    final local = value.toLocal();
+    final today = now.toLocal();
+    final showYear =
+        local.year != today.year ||
+        local.difference(today).inDays.abs() > JobConstants.yearShownAfterDays;
+    return DateFormat(showYear ? 'd MMM y' : 'd MMM', locale).format(local);
+  }
 
   /// "Apply by 25 Oct"; null when the job has no deadline.
-  static String? applyBy(DateTime? expiresAt, String locale) =>
+  static String? applyBy(DateTime? expiresAt, String locale, DateTime now) =>
       expiresAt == null
       ? null
       : tr(
           'home.latest.applyBy',
-          namedArgs: {'date': shortDate(expiresAt, locale)},
+          namedArgs: {'date': shortDate(expiresAt, locale, now)},
         );
 
   static String employmentLabel(String value) =>
