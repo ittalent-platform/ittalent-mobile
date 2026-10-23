@@ -1,0 +1,1 @@
+Test-only font fixtures from Google Fonts, matching google_fonts 9.0.0 checksums. Used by the Documents widget tests through a local HTTP test double; never fetched during tests. SIL Open Font License: see the two OFL files. Source: https://github.com/google/fonts/tree/main/ofl/instrumentsans and https://github.com/google/fonts/tree/main/ofl/spacegrotesk.
