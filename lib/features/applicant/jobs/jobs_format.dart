@@ -58,8 +58,9 @@ class JobFormat {
     if (createdAt == null) return null;
     final days = now.difference(createdAt).inDays;
     if (days <= 0) return tr('jobs.ago.today');
-    if (days < JobConstants.daysPerWeek)
+    if (days < JobConstants.daysPerWeek) {
       return countText('jobs.ago.days', days);
+    }
     if (days < JobConstants.daysPerMonth) {
       return countText('jobs.ago.weeks', days ~/ JobConstants.daysPerWeek);
     }
