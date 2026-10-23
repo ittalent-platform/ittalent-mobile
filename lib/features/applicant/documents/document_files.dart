@@ -1,3 +1,5 @@
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 
 import 'documents_constants.dart';
@@ -47,3 +49,43 @@ class SelectedDocument {
     }
   }
 }
+
+class DocumentFiles {
+  Future<SelectedDocument?> pick() async {
+    final PlatformFile? file;
+    try {
+      file = await FilePicker.pickFile(
+        type: FileType.custom,
+        allowedExtensions: DocumentConstants.mimeTypes.keys.toList(),
+      );
+    } on PlatformException catch (error) {
+      throw DocumentFileException.fromPlatform(error);
+    }
+    if (file == null) return null;
+    final selectedFile = file;
+    final int? size;
+    try {
+      size = await file.length();
+    } on PlatformException catch (error) {
+      throw DocumentFileException.fromPlatform(error);
+    } catch (_) {
+      throw const DocumentFileException(DocumentFileFailure.io);
+    }
+    if (size == null) throw const DocumentValidation('read');
+    return SelectedDocument(
+      name: file.name,
+      size: size,
+      readBytes: () async {
+        try {
+          return await selectedFile.readAsBytes();
+        } on PlatformException catch (error) {
+          throw DocumentFileException.fromPlatform(error);
+        } catch (_) {
+          throw const DocumentFileException(DocumentFileFailure.io);
+        }
+      },
+    );
+  }
+}
+
+final documentFilesProvider = Provider<DocumentFiles>((ref) => DocumentFiles());
