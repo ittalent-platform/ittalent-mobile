@@ -1827,6 +1827,18 @@
     }
   },
   "documents": {
+    "mobile": {
+      "retry": "Thử lại",
+      "back": "Quay lại Tôi",
+      "refresh": "Làm mới",
+      "cl": "TXV",
+      "invalid": "Yêu cầu hoặc tệp không hợp lệ. Kiểm tra rồi thử lại.",
+      "unauthorized": "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
+      "forbidden": "Chỉ tài khoản ứng viên có thể truy cập tài liệu.",
+      "notFound": "Tài liệu không còn tồn tại. Hãy làm mới danh sách.",
+      "storage": "Kho tài liệu tạm thời không khả dụng. Vui lòng thử lại sau.",
+      "network": "Không kết nối được. Kiểm tra kết nối rồi thử lại."
+    },
     "title": "Tài liệu của tôi",
     "subtitle": "Tải lên CV và thư xin việc. Tệp được nền tảng lưu trữ an toàn.",
     "dropTitle": "Kéo và thả tài liệu vào đây",

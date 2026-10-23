@@ -1842,6 +1842,18 @@
     }
   },
   "documents": {
+    "mobile": {
+      "retry": "Try again",
+      "back": "Back to Me",
+      "refresh": "Refresh",
+      "cl": "CL",
+      "invalid": "The request or file was rejected. Check the file and try again.",
+      "unauthorized": "Your session has expired. Sign in again.",
+      "forbidden": "Only applicant accounts can access these documents.",
+      "notFound": "This document is no longer available. Refresh the list.",
+      "storage": "Document storage is unavailable. Try again later.",
+      "network": "Could not connect. Check your connection and try again."
+    },
     "title": "My documents",
     "subtitle": "Upload CVs and cover letters. Files are stored securely by the platform.",
     "dropTitle": "Drag and drop a document here",
