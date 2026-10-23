@@ -23,6 +23,7 @@ import '../features/auth/verify_email/check_email_screen.dart';
 import '../features/auth/verify_email/verify_email_screen.dart';
 import '../features/auth/welcome/welcome_screen.dart';
 import '../features/profile/me_screen.dart';
+import '../features/applicant/documents/documents_screen.dart';
 import '../theme/app_colors.dart';
 
 class RouterNotifier extends ChangeNotifier {
@@ -84,6 +85,10 @@ final routerProvider = Provider<GoRouter>((ref) {
     refreshListenable: notifier,
     redirect: notifier.redirect,
     routes: [
+      GoRoute(
+        path: AppRoutes.documents,
+        builder: (context, state) => const DocumentsScreen(),
+      ),
       GoRoute(
         path: AppRoutes.portfolio,
         builder: (context, state) => const PortfolioScreen(),
