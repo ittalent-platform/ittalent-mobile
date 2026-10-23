@@ -21,3 +21,5 @@ class DocumentConstants {
 }
 
 enum DocumentValidationFailure { empty, size, format, read }
+
+enum DocumentDownloadPhase { checking, choosing, downloading, saving }
