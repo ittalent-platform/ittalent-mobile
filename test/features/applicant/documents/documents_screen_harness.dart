@@ -14,6 +14,7 @@ import 'package:ittalent_mobile/auth/auth_notifier.dart';
 import 'package:ittalent_mobile/auth/auth_state.dart';
 import 'package:ittalent_mobile/config/routes.dart';
 import 'package:ittalent_mobile/features/applicant/certificates/certificates_providers.dart';
+import 'package:ittalent_mobile/features/applicant/documents/document_files.dart';
 import 'package:ittalent_mobile/features/applicant/documents/document_model.dart';
 import 'package:ittalent_mobile/features/applicant/documents/documents_repository.dart';
 import 'package:ittalent_mobile/features/applicant/documents/documents_screen.dart';
@@ -33,10 +34,22 @@ class LocaleLoader extends AssetLoader {
       );
 }
 
+class FilesDouble extends DocumentFiles {
+  SelectedDocument? selection;
+  int picks = 0;
+  @override
+  Future<SelectedDocument?> pick() async {
+    picks++;
+    return selection;
+  }
+}
+
 class RepoDouble extends DocumentsRepository {
   RepoDouble() : super(ApiClient(dio: Dio()));
   int uploads = 0, lists = 0;
+  DocumentType? lastType;
   Object? uploadError, listError;
+  Completer<DocumentDto>? uploadPending;
   Completer<DocumentsPage>? listPending;
   List<DocumentDto> items = [];
   bool more = false;
@@ -62,6 +75,25 @@ class RepoDouble extends DocumentsRepository {
       totalPages: more ? 2 : 1,
     );
   }
+
+  @override
+  Future<DocumentDto> upload(
+    SelectedDocument file,
+    DocumentType type, {
+    ProgressCallback? onProgress,
+    CancelToken? cancelToken,
+  }) async {
+    file.validate();
+    uploads++;
+    lastType = type;
+    onProgress?.call(4, 10);
+    if (uploadError != null) throw uploadError!;
+    final item = uploadPending == null
+        ? DocumentDto.fromJson(documentJson(type: type.value))
+        : await uploadPending!.future;
+    items = [item, ...items];
+    return item;
+  }
 }
 
 class TestAuth extends AuthNotifier {
@@ -73,7 +105,8 @@ class TestAuth extends AuthNotifier {
 
 Future<ProviderContainer> pumpDocuments(
   WidgetTester tester,
-  RepoDouble repo, {
+  RepoDouble repo,
+  FilesDouble files, {
   Size size = const Size(390, 844),
   String locale = 'en',
   bool router = false,
@@ -88,6 +121,7 @@ Future<ProviderContainer> pumpDocuments(
   final c = ProviderContainer(
     overrides: [
       documentsRepositoryProvider.overrideWithValue(repo),
+      documentFilesProvider.overrideWithValue(files),
       certificateCountProvider.overrideWith((ref) async => 0),
       authNotifierProvider.overrideWith(
         () => TestAuth(
