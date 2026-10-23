@@ -39,7 +39,10 @@ String documentError(
       DocumentFileFailure.permissionDenied =>
         'documents.permissions.resourceDenied',
       DocumentFileFailure.unsupported => 'documents.permissions.unsupported',
-      DocumentFileFailure.io => 'documents.mobile.read',
+      DocumentFileFailure.io =>
+        fallback == 'documents.downloadFailedMessage'
+            ? 'documents.permissions.saveFailed'
+            : 'documents.mobile.read',
     });
   }
   if (error is ApiError) {
@@ -66,6 +69,9 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen>
     with WidgetsBindingObserver {
   final _search = TextEditingController();
   final _uploadCancel = CancelToken();
+  final Map<String, CancelToken> _downloads = {};
+  final Map<String, double?> _downloadProgress = {};
+  final Map<String, DocumentDownloadPhase> _downloadPhase = {};
   bool _destinationBusy = false;
   DocumentAccessOperation? _blockedOperation;
   DocumentAccessDecision? _blockedDecision;
@@ -110,6 +116,9 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen>
     _debounce?.cancel();
     _search.dispose();
     _uploadCancel.cancel();
+    for (final token in _downloads.values) {
+      token.cancel();
+    }
     super.dispose();
   }
 
@@ -353,6 +362,101 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen>
     }
   }
 
+  Future<void> _download(DocumentDto item) async {
+    if (_downloads.containsKey(item.id) || _destinationBusy) return;
+    _destinationBusy = true;
+    var ownsDialog = true;
+    final cancel = CancelToken();
+    setState(() {
+      _downloads[item.id] = cancel;
+      _downloadProgress[item.id] = null;
+      _downloadPhase[item.id] = DocumentDownloadPhase.checking;
+    });
+    DocumentDestination? destination;
+    try {
+      final files = ref.read(documentFilesProvider);
+      if (!await _authorize(
+        DocumentAccessOperation.downloadWrite,
+        () => _download(item),
+      )) {
+        return;
+      }
+      if (!mounted) return;
+      setState(() {
+        _downloadPhase[item.id] = DocumentDownloadPhase.choosing;
+      });
+      try {
+        destination = await files.prepareDownload(
+          documentFileName(null, item.fileName),
+          item.mimeType,
+        );
+      } finally {
+        _destinationBusy = false;
+        ownsDialog = false;
+      }
+      if (!mounted) return;
+      if (destination == null) {
+        _toast(tr('documents.permissions.saveCancelled'));
+        return;
+      }
+      setState(
+        () => _downloadPhase[item.id] = DocumentDownloadPhase.downloading,
+      );
+      final file = await ref
+          .read(documentsRepositoryProvider)
+          .download(
+            item,
+            cancelToken: cancel,
+            onProgress: (count, total) {
+              if (mounted) {
+                setState(
+                  () => _downloadProgress[item.id] = total > 0
+                      ? (count / total).clamp(0, 1)
+                      : null,
+                );
+              }
+            },
+          );
+      if (!mounted) return;
+      setState(() => _downloadPhase[item.id] = DocumentDownloadPhase.saving);
+      final location = await destination.write(file);
+      if (!mounted || location == null) return;
+      // Web fallback can only acknowledge the browser handoff, not disk completion.
+      _toast(
+        tr(
+          location.scheme == 'blob' || location.scheme == 'data'
+              ? 'documents.mobile.browserSave'
+              : 'documents.mobile.saved',
+          namedArgs: {'location': location.toString()},
+        ),
+      );
+    } catch (error) {
+      if (mounted) {
+        _toast(
+          documentError(error, fallback: 'documents.downloadFailedMessage'),
+          error: true,
+          retry: () => _download(item),
+        );
+      }
+    } finally {
+      if (ownsDialog) _destinationBusy = false;
+      if (destination != null) {
+        try {
+          await destination.abort();
+        } catch (_) {
+          // Preserve the original transfer or write error.
+        }
+      }
+      if (mounted) {
+        setState(() {
+          _downloads.remove(item.id);
+          _downloadProgress.remove(item.id);
+          _downloadPhase.remove(item.id);
+        });
+      }
+    }
+  }
+
   Widget _uploadCard() => AppCard(
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -414,6 +518,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen>
   Widget _card(DocumentDto item) {
     final colors = context.colors;
     final cv = item.type == DocumentType.cv;
+    final downloading = _downloads.containsKey(item.id);
     return AppCard(
       child: Column(
         children: [
@@ -479,8 +584,50 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen>
                   ],
                 ),
               ),
+              PopupMenuButton<String>(
+                key: Key('menu_${item.id}'),
+                enabled: !downloading,
+                tooltip: tr(
+                  'documents.mobile.actions',
+                  namedArgs: {'name': item.fileName},
+                ),
+                constraints: const BoxConstraints(minWidth: 180, maxWidth: 280),
+                icon: const Icon(LucideIcons.ellipsisVertical),
+                onSelected: (_) => _download(item),
+                itemBuilder: (_) => [
+                  PopupMenuItem(
+                    height: 48,
+                    value: 'download',
+                    child: Text(
+                      tr(
+                        'documents.download',
+                        namedArgs: {'name': item.fileName},
+                      ),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
+          if (downloading)
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Column(
+                children: [
+                  Text(
+                    tr(
+                      'documents.permissions.${_downloadPhase[item.id]?.name ?? DocumentDownloadPhase.downloading.name}',
+                    ),
+                  ),
+                  LinearProgressIndicator(
+                    value: _downloadProgress[item.id],
+                    color: colors.primary,
+                  ),
+                ],
+              ),
+            ),
         ],
       ),
     );

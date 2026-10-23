@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ittalent_mobile/api/client.dart';
@@ -37,12 +38,45 @@ class LocaleLoader extends AssetLoader {
 
 class FilesDouble extends DocumentFiles {
   SelectedDocument? selection;
-  int picks = 0;
+  int picks = 0, saves = 0, prepares = 0, aborts = 0;
+  bool cancelDestination = false;
+  Completer<DocumentDestination?>? destinationPending;
+  Uri? location = Uri.parse('file:///Downloads/Nguyen.pdf');
+  Object? saveError;
+  DownloadedDocument? saved;
   @override
   Future<SelectedDocument?> pick() async {
     picks++;
     return selection;
   }
+
+  @override
+  Future<Uri?> save(DownloadedDocument file) async {
+    saves++;
+    saved = file;
+    if (saveError != null) throw saveError!;
+    return location;
+  }
+
+  @override
+  Future<DocumentDestination?> prepareDownload(
+    String name,
+    String mimeType,
+  ) async {
+    prepares++;
+    if (destinationPending != null) return destinationPending!.future;
+    if (cancelDestination) return null;
+    return _FilesDestination(this);
+  }
+}
+
+class _FilesDestination implements DocumentDestination {
+  _FilesDestination(this.files);
+  final FilesDouble files;
+  @override
+  Future<Uri?> write(DownloadedDocument file) => files.save(file);
+  @override
+  Future<void> abort() async => files.aborts++;
 }
 
 class PolicyDouble extends DocumentAccessPolicy {
@@ -82,10 +116,11 @@ class PolicyDouble extends DocumentAccessPolicy {
 
 class RepoDouble extends DocumentsRepository {
   RepoDouble() : super(ApiClient(dio: Dio()));
-  int uploads = 0, lists = 0;
+  int uploads = 0, downloads = 0, lists = 0;
   DocumentType? lastType;
-  Object? uploadError, listError;
+  Object? uploadError, downloadError, listError;
   Completer<DocumentDto>? uploadPending;
+  Completer<DownloadedDocument>? downloadPending;
   Completer<DocumentsPage>? listPending;
   List<DocumentDto> items = [];
   bool more = false;
@@ -129,6 +164,24 @@ class RepoDouble extends DocumentsRepository {
         : await uploadPending!.future;
     items = [item, ...items];
     return item;
+  }
+
+  @override
+  Future<DownloadedDocument> download(
+    DocumentDto item, {
+    CancelToken? cancelToken,
+    ProgressCallback? onProgress,
+  }) async {
+    downloads++;
+    onProgress?.call(2, -1);
+    if (downloadError != null) throw downloadError!;
+    return downloadPending == null
+        ? DownloadedDocument(
+            Uint8List.fromList([1, 2, 255]),
+            item.fileName,
+            item.mimeType,
+          )
+        : downloadPending!.future;
   }
 }
 
