@@ -58,4 +58,60 @@ void main() {
       );
     },
   );
+
+  test('Android destination channel selects before bytes and aborts only selected URI', () async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    addTearDown(() => debugDefaultTargetPlatformOverride = null);
+    final calls = <String>[];
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+          const MethodChannel('com.example.ittalent_mobile/documents'),
+          (call) async {
+            calls.add(call.method);
+            if (call.method == 'createDestination') {
+              expect(call.arguments, {
+                'name': 'Tiếng Việt.pdf',
+                'mimeType': 'application/pdf',
+              });
+              return 'handle-one';
+            }
+            if (call.method == 'writeDestination') {
+              final args = call.arguments as Map<Object?, Object?>;
+              expect(args['handle'], 'handle-one');
+              expect(args['bytes'], [0, 255, 1]);
+              return 'content://documents/one';
+            }
+            expect(call.arguments, {'handle': 'handle-one'});
+            return null;
+          },
+        );
+    addTearDown(
+      () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(
+            const MethodChannel('com.example.ittalent_mobile/documents'),
+            null,
+          ),
+    );
+    final destination = await DocumentFiles().prepareDownload(
+      'Tiếng Việt.pdf',
+      'application/pdf',
+    );
+    expect(calls, ['createDestination']);
+    expect(
+      await destination!.write(
+        DownloadedDocument(
+          Uint8List.fromList([0, 255, 1]),
+          'Tiếng Việt.pdf',
+          'application/pdf',
+        ),
+      ),
+      Uri.parse('content://documents/one'),
+    );
+    await destination.abort();
+    expect(calls, [
+      'createDestination',
+      'writeDestination',
+      'abortDestination',
+    ]);
+  });
 }
