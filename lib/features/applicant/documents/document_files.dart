@@ -1,6 +1,7 @@
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'documents_constants.dart';
 
@@ -53,6 +54,56 @@ class SelectedDocument {
   }
 }
 
+class DownloadedDocument {
+  const DownloadedDocument(this.bytes, this.name, this.mimeType);
+  final Uint8List bytes;
+  final String name, mimeType;
+}
+
+abstract class DocumentDestination {
+  Future<Uri?> write(DownloadedDocument file);
+  Future<void> abort();
+}
+
+class _DeferredDestination implements DocumentDestination {
+  @override
+  Future<Uri?> write(DownloadedDocument file) => FilePicker.saveFile(
+    fileName: file.name,
+    bytes: file.bytes,
+    mimeType: file.mimeType,
+  );
+
+  @override
+  Future<void> abort() async {}
+}
+
+class _AndroidDestination implements DocumentDestination {
+  _AndroidDestination(this._handle);
+  final String _handle;
+  static const _channel = MethodChannel(
+    'com.example.ittalent_mobile/documents',
+  );
+
+  @override
+  Future<Uri?> write(DownloadedDocument file) async {
+    try {
+      final value = await _channel.invokeMethod<String>('writeDestination', {
+        'handle': _handle,
+        'bytes': file.bytes,
+      });
+      return value == null ? null : Uri.tryParse(value);
+    } on PlatformException catch (error) {
+      throw DocumentFileException.fromPlatform(error);
+    }
+  }
+
+  @override
+  Future<void> abort() async =>
+      _channel.invokeMethod<void>('abortDestination', {'handle': _handle});
+}
+
+/// The OS owns location selection, duplicate-name confirmation, and cancellation.
+/// A non-null URI means that writing has completed, not just that a path was picked.
 class DocumentFiles {
   Future<SelectedDocument?> pick() async {
     final PlatformFile? file;
@@ -91,20 +142,37 @@ class DocumentFiles {
       },
     );
   }
+
+  Future<Uri?> save(DownloadedDocument file) => FilePicker.saveFile(
+    fileName: file.name,
+    bytes: file.bytes,
+    mimeType: file.mimeType,
+  );
+
+  /// On Android, ACTION_CREATE_DOCUMENT returns a writable URI before GET.
+  /// Other supported targets use their save UI after bytes are available.
+  Future<DocumentDestination?> prepareDownload(
+    String name,
+    String mimeType,
+  ) async {
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+      const channel = MethodChannel('com.example.ittalent_mobile/documents');
+      final String? handle;
+      try {
+        handle = await channel.invokeMethod<String>('createDestination', {
+          'name': name,
+          'mimeType': mimeType,
+        });
+      } on PlatformException catch (error) {
+        throw DocumentFileException.fromPlatform(error);
+      }
+      return handle == null ? null : _AndroidDestination(handle);
+    }
+    return _DeferredDestination();
+  }
 }
 
 final documentFilesProvider = Provider<DocumentFiles>((ref) => DocumentFiles());
-
-class DownloadedDocument {
-  const DownloadedDocument(this.bytes, this.name, this.mimeType);
-  final Uint8List bytes;
-  final String name, mimeType;
-}
-
-abstract class DocumentDestination {
-  Future<Uri?> write(DownloadedDocument file);
-  Future<void> abort();
-}
 
 String documentFileName(String? disposition, String fallback) {
   String? name;
