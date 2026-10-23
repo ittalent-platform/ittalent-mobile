@@ -15,6 +15,7 @@ import 'package:ittalent_mobile/auth/auth_state.dart';
 import 'package:ittalent_mobile/config/routes.dart';
 import 'package:ittalent_mobile/features/applicant/certificates/certificates_providers.dart';
 import 'package:ittalent_mobile/features/applicant/documents/document_files.dart';
+import 'package:ittalent_mobile/features/applicant/documents/document_access_policy.dart';
 import 'package:ittalent_mobile/features/applicant/documents/document_model.dart';
 import 'package:ittalent_mobile/features/applicant/documents/documents_repository.dart';
 import 'package:ittalent_mobile/features/applicant/documents/documents_screen.dart';
@@ -41,6 +42,41 @@ class FilesDouble extends DocumentFiles {
   Future<SelectedDocument?> pick() async {
     picks++;
     return selection;
+  }
+}
+
+class PolicyDouble extends DocumentAccessPolicy {
+  DocumentAccessDecision upload = const DocumentAccessDecision(
+    DocumentAccessStatus.notRequired,
+  );
+  DocumentAccessDecision download = const DocumentAccessDecision(
+    DocumentAccessStatus.notRequired,
+  );
+  DocumentAccessDecision? requestResult;
+  bool settingsOpened = true;
+  Completer<DocumentAccessDecision>? checkPending;
+  int checks = 0, requests = 0, settings = 0;
+  @override
+  Future<DocumentAccessDecision> check(
+    DocumentAccessOperation operation,
+  ) async {
+    checks++;
+    if (checkPending != null) return checkPending!.future;
+    return operation == DocumentAccessOperation.uploadRead ? upload : download;
+  }
+
+  @override
+  Future<DocumentAccessDecision> request(
+    DocumentAccessOperation operation,
+  ) async {
+    requests++;
+    return requestResult ?? await check(operation);
+  }
+
+  @override
+  Future<bool> openSettings() async {
+    settings++;
+    return settingsOpened;
   }
 }
 
@@ -111,6 +147,7 @@ Future<ProviderContainer> pumpDocuments(
   String locale = 'en',
   bool router = false,
   bool authenticated = true,
+  PolicyDouble? policy,
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
@@ -122,6 +159,8 @@ Future<ProviderContainer> pumpDocuments(
     overrides: [
       documentsRepositoryProvider.overrideWithValue(repo),
       documentFilesProvider.overrideWithValue(files),
+      if (policy != null)
+        documentAccessPolicyProvider.overrideWithValue(policy),
       certificateCountProvider.overrideWith((ref) async => 0),
       authNotifierProvider.overrideWith(
         () => TestAuth(

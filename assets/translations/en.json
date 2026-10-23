@@ -1869,9 +1869,17 @@
       "network": "Could not connect. Check your connection and try again."
     },
     "permissions": {
+      "title": "File access",
+      "close": "Close",
+      "openSettings": "Open Settings",
+      "settingsFailed": "Could not open Settings. Open this app's settings manually.",
+      "uploadDenied": "File access has not been granted. Upload is currently unavailable.",
+      "permanentlyDenied": "File access is blocked. You can enable it in Settings to use this feature.",
+      "restricted": "File access is restricted by this device or its administrator.",
       "unsupported": "File access is not supported on this device.",
       "pickCancelled": "File selection cancelled.",
-      "resourceDenied": "Access to the selected file was denied. Choose it again."
+      "resourceDenied": "Access to the selected file was denied. Choose it again.",
+      "ready": "File access is available. Tap again to continue."
     },
     "title": "My documents",
     "subtitle": "Upload CVs and cover letters. Files are stored securely by the platform.",
