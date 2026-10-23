@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ittalent_mobile/api/api_error.dart';
 import 'package:ittalent_mobile/features/applicant/documents/document_model.dart';
 import 'package:ittalent_mobile/features/applicant/documents/document_files.dart';
+import 'package:ittalent_mobile/features/applicant/documents/document_access_policy.dart';
 import 'package:ittalent_mobile/features/applicant/documents/documents_providers.dart';
 
 import 'documents_test_data.dart';
@@ -112,7 +113,7 @@ void main() {
           DocumentFileFailure.permissionDenied,
         );
       final files = FilesDouble()..selection = selected('pdf');
-      await pumpDocuments(tester, repo, files);
+      await pumpDocuments(tester, repo, files, policy: PolicyDouble());
       await tester.pumpAndSettle();
       await choose(tester, 'cv');
       await tester.pumpAndSettle();
@@ -146,6 +147,76 @@ void main() {
       await tester.pumpAndSettle();
       expect(c.read(documentsQueryProvider).type, DocumentType.coverLetter);
       expect(find.text('Nguyễn Văn An.pdf'), findsNothing);
+    },
+  );
+  testWidgets('denied upload blocks picker and POST; user retry can grant', (
+    tester,
+  ) async {
+    final repo = RepoDouble();
+    final files = FilesDouble()..selection = selected('pdf');
+    final policy = PolicyDouble()
+      ..upload = const DocumentAccessDecision(DocumentAccessStatus.denied)
+      ..requestResult = const DocumentAccessDecision(
+        DocumentAccessStatus.denied,
+      );
+    await pumpDocuments(tester, repo, files, policy: policy);
+    await tester.pumpAndSettle();
+    await choose(tester, 'cv');
+    expect(files.picks, 0);
+    expect(repo.uploads, 0);
+    expect(policy.requests, 1);
+    expect(
+      find.text(
+        'File access has not been granted. Upload is currently unavailable.',
+      ),
+      findsWidgets,
+    );
+    policy.requestResult = const DocumentAccessDecision(
+      DocumentAccessStatus.granted,
+    );
+    await tester.tap(find.byKey(const Key('documents_permission_retry')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('pick_cv')));
+    await tester.pumpAndSettle();
+    expect(policy.requests, 2);
+    expect(files.picks, 1);
+    expect(repo.uploads, 1);
+  });
+  testWidgets(
+    'Settings return rechecks grant without auto upload; revocation on next tap',
+    (tester) async {
+      final repo = RepoDouble()..items = [DocumentDto.fromJson(documentJson())];
+      final files = FilesDouble()..selection = selected('pdf');
+      final policy = PolicyDouble()
+        ..upload = const DocumentAccessDecision(
+          DocumentAccessStatus.permanentlyDenied,
+          settingsCanHelp: true,
+        );
+      await pumpDocuments(tester, repo, files, policy: policy);
+      await tester.pumpAndSettle();
+      await choose(tester, 'cv');
+      await tester.tap(find.byKey(const Key('documents_permission_settings')));
+      await tester.pumpAndSettle();
+      expect(policy.settings, 1);
+      policy.upload = const DocumentAccessDecision(
+        DocumentAccessStatus.granted,
+      );
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pumpAndSettle();
+      expect(repo.uploads, 0);
+      expect(files.picks, 0);
+      await choose(tester, 'cv');
+      await tester.pumpAndSettle();
+      expect(repo.uploads, 1);
+      policy.upload = const DocumentAccessDecision(DocumentAccessStatus.denied);
+      policy.requestResult = const DocumentAccessDecision(
+        DocumentAccessStatus.denied,
+      );
+      await choose(tester, 'cv');
+      expect(repo.uploads, 1);
+      expect(files.picks, 1);
+      expect(policy.requests, 1);
     },
   );
 }

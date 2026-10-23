@@ -23,6 +23,7 @@ import '../../../theme/app_colors.dart';
 import '../../../theme/app_radius.dart';
 import '../../../theme/app_typography.dart';
 import 'document_files.dart';
+import 'document_access_policy.dart';
 import 'document_model.dart';
 import 'documents_constants.dart';
 import 'documents_providers.dart';
@@ -61,10 +62,13 @@ class DocumentsScreen extends ConsumerStatefulWidget {
   ConsumerState<DocumentsScreen> createState() => _DocumentsScreenState();
 }
 
-class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
+class _DocumentsScreenState extends ConsumerState<DocumentsScreen>
+    with WidgetsBindingObserver {
   final _search = TextEditingController();
   final _uploadCancel = CancelToken();
   bool _destinationBusy = false;
+  DocumentAccessOperation? _blockedOperation;
+  DocumentAccessDecision? _blockedDecision;
   Timer? _debounce;
   SelectedDocument? _selected;
   DocumentType? _uploadType;
@@ -74,12 +78,124 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
   double? _progress;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && _blockedOperation != null) {
+      final operation = _blockedOperation!;
+      ref
+          .read(documentAccessPolicyProvider)
+          .check(operation)
+          .then((decision) {
+            if (!mounted) return;
+            setState(() {
+              _blockedDecision = decision;
+              if (decision.allowed) _blockedOperation = null;
+            });
+            if (decision.allowed) _toast(tr('documents.permissions.ready'));
+          })
+          .catchError((Object _) {
+            // Keep the previous state; a failed status check cannot grant access.
+          });
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _debounce?.cancel();
     _search.dispose();
     _uploadCancel.cancel();
     super.dispose();
   }
+
+  Future<bool> _authorize(
+    DocumentAccessOperation operation,
+    VoidCallback retry,
+  ) async {
+    final policy = ref.read(documentAccessPolicyProvider);
+    var decision = await policy.check(operation);
+    if (!mounted) return false;
+    if (decision.status == DocumentAccessStatus.denied) {
+      decision = await policy.request(operation);
+      if (!mounted) return false;
+    }
+    if (decision.allowed) {
+      setState(() {
+        _blockedOperation = null;
+        _blockedDecision = null;
+      });
+      return true;
+    }
+    setState(() {
+      _blockedOperation = operation;
+      _blockedDecision = decision;
+    });
+    final key = _permissionKey(decision.status, operation);
+    final canRetry = decision.status == DocumentAccessStatus.denied;
+    final canSettings =
+        decision.settingsCanHelp &&
+        (decision.status == DocumentAccessStatus.permanentlyDenied ||
+            decision.status == DocumentAccessStatus.restricted);
+    if (!mounted) return false;
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(tr('documents.permissions.title')),
+        content: Text(tr('documents.permissions.$key')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(tr('documents.permissions.close')),
+          ),
+          if (canRetry)
+            TextButton(
+              key: const Key('documents_permission_retry'),
+              onPressed: () {
+                Navigator.pop(dialogContext);
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted) retry();
+                });
+              },
+              child: Text(tr('documents.mobile.retry')),
+            ),
+          if (canSettings)
+            TextButton(
+              key: const Key('documents_permission_settings'),
+              onPressed: () async {
+                Navigator.pop(dialogContext);
+                final opened = await policy.openSettings();
+                if (mounted && !opened) {
+                  _toast(
+                    tr('documents.permissions.settingsFailed'),
+                    error: true,
+                  );
+                }
+              },
+              child: Text(tr('documents.permissions.openSettings')),
+            ),
+        ],
+      ),
+    );
+    return false;
+  }
+
+  String _permissionKey(
+    DocumentAccessStatus status,
+    DocumentAccessOperation operation,
+  ) => switch (status) {
+    DocumentAccessStatus.denied =>
+      operation == DocumentAccessOperation.uploadRead
+          ? 'uploadDenied'
+          : 'downloadDenied',
+    DocumentAccessStatus.permanentlyDenied => 'permanentlyDenied',
+    DocumentAccessStatus.restricted => 'restricted',
+    _ => 'unsupported',
+  };
 
   void _toast(String message, {bool error = false, VoidCallback? retry}) {
     showAppToast(
@@ -156,6 +272,9 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
       _destinationBusy = true;
       SelectedDocument? file;
       try {
+        if (!await _authorize(DocumentAccessOperation.uploadRead, _choose)) {
+          return;
+        }
         file = await ref.read(documentFilesProvider).pick();
       } finally {
         _destinationBusy = false;
@@ -221,6 +340,9 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
       _progress = null;
     });
     try {
+      if (!await _authorize(DocumentAccessOperation.uploadRead, _retryUpload)) {
+        return;
+      }
       if (!mounted) return;
       _destinationBusy = false;
       ownsDialog = false;
@@ -481,6 +603,20 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const SizedBox(height: 12),
+          if (_blockedDecision != null &&
+              !_blockedDecision!.allowed &&
+              _blockedOperation != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: AppCard(
+                child: Text(
+                  tr(
+                    'documents.permissions.${_permissionKey(_blockedDecision!.status, _blockedOperation!)}',
+                  ),
+                  style: AppTypography.body(color: context.colors.destructive),
+                ),
+              ),
+            ),
           AppInput(
             controller: _search,
             inputFormatters: [
