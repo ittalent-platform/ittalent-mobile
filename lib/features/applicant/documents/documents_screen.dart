@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -10,6 +11,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../api/api_error.dart';
 import '../../../components/common/app_empty_state.dart';
 import '../../../components/common/app_error_state.dart';
+import '../../../components/common/app_toast.dart';
 import '../../../components/layout/screen_scaffold.dart';
 import '../../../components/ui/app_badge.dart';
 import '../../../components/ui/app_button.dart';
@@ -20,11 +22,25 @@ import '../../../config/routes.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_radius.dart';
 import '../../../theme/app_typography.dart';
+import 'document_files.dart';
 import 'document_model.dart';
 import 'documents_constants.dart';
 import 'documents_providers.dart';
+import 'documents_repository.dart';
 
-String documentError(Object error, {String fallback = 'documents.loadError'}) {
+String documentError(
+  Object error, {
+  String fallback = 'documents.uploadFailedMessage',
+}) {
+  if (error is DocumentValidation) return tr('documents.mobile.${error.key}');
+  if (error is DocumentFileException) {
+    return tr(switch (error.failure) {
+      DocumentFileFailure.permissionDenied =>
+        'documents.permissions.resourceDenied',
+      DocumentFileFailure.unsupported => 'documents.permissions.unsupported',
+      DocumentFileFailure.io => 'documents.mobile.read',
+    });
+  }
   if (error is ApiError) {
     final key = switch (error.statusCode) {
       400 => 'invalid',
@@ -47,17 +63,227 @@ class DocumentsScreen extends ConsumerStatefulWidget {
 
 class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
   final _search = TextEditingController();
+  final _uploadCancel = CancelToken();
+  bool _destinationBusy = false;
   Timer? _debounce;
+  SelectedDocument? _selected;
+  DocumentType? _uploadType;
+  Object? _uploadError;
+  bool _busy = false;
+  bool _uploading = false;
+  double? _progress;
+
   @override
   void dispose() {
     _debounce?.cancel();
     _search.dispose();
+    _uploadCancel.cancel();
     super.dispose();
+  }
+
+  void _toast(String message, {bool error = false, VoidCallback? retry}) {
+    showAppToast(
+      ScaffoldMessenger.of(context),
+      message,
+      error: error,
+      action: retry == null
+          ? null
+          : SnackBarAction(
+              label: tr('documents.mobile.retry'),
+              onPressed: retry,
+            ),
+    );
   }
 
   void _setQuery(DocumentType? type, String search) => ref
       .read(documentsQueryProvider.notifier)
       .update(DocumentsQuery(type: type, search: search.trim()));
+
+  Future<void> _choose() async {
+    if (_busy || _destinationBusy) return;
+    setState(() => _busy = true);
+    try {
+      FocusScope.of(context).unfocus();
+      final type = await showModalBottomSheet<DocumentType>(
+        context: context,
+        backgroundColor: context.colors.card,
+        isScrollControlled: true,
+        builder: (sheetContext) => SafeArea(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    tr('documents.mobile.sheetTitle'),
+                    style: AppTypography.display(fontSize: 22),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(tr('documents.mobile.helper')),
+                  const SizedBox(height: 16),
+                  for (final type in DocumentType.values)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: AppButton(
+                        key: Key('pick_${type.value}'),
+                        size: AppButtonSize.lg,
+                        text: tr(
+                          type == DocumentType.cv
+                              ? 'documents.mobile.uploadCv'
+                              : 'documents.mobile.uploadCover',
+                        ),
+                        icon: const Icon(LucideIcons.fileUp),
+                        variant: AppButtonVariant.outline,
+                        onPressed: () => Navigator.pop(sheetContext, type),
+                      ),
+                    ),
+                  AppButton(
+                    size: AppButtonSize.lg,
+                    text: tr('documents.mobile.cancel'),
+                    variant: AppButtonVariant.ghost,
+                    onPressed: () => Navigator.pop(sheetContext),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+      if (type == null || !mounted) return;
+      if (_destinationBusy) return;
+      _destinationBusy = true;
+      SelectedDocument? file;
+      try {
+        file = await ref.read(documentFilesProvider).pick();
+      } finally {
+        _destinationBusy = false;
+      }
+      if (!mounted) return;
+      if (file == null) {
+        _toast(tr('documents.permissions.pickCancelled'));
+        return;
+      }
+      setState(() {
+        _selected = file;
+        _uploadType = type;
+        _uploadError = null;
+        _progress = null;
+      });
+      await _send();
+    } catch (error) {
+      if (mounted) setState(() => _uploadError = error);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _send() async {
+    setState(() => _uploading = true);
+    try {
+      await ref
+          .read(documentsRepositoryProvider)
+          .upload(
+            _selected!,
+            _uploadType!,
+            cancelToken: _uploadCancel,
+            onProgress: (sent, total) {
+              if (mounted) {
+                setState(
+                  () =>
+                      _progress = total > 0 ? (sent / total).clamp(0, 1) : null,
+                );
+              }
+            },
+          );
+      if (!mounted) return;
+      ref.invalidate(documentsProvider);
+      setState(() {
+        _selected = null;
+        _uploadError = null;
+      });
+      _toast(tr('documents.uploadedTitle'));
+    } catch (error) {
+      if (mounted) setState(() => _uploadError = error);
+    } finally {
+      if (mounted) setState(() => _uploading = false);
+    }
+  }
+
+  Future<void> _retryUpload() async {
+    if (_busy || _destinationBusy) return;
+    _destinationBusy = true;
+    var ownsDialog = true;
+    setState(() {
+      _busy = true;
+      _uploadError = null;
+      _progress = null;
+    });
+    try {
+      if (!mounted) return;
+      _destinationBusy = false;
+      ownsDialog = false;
+      await _send();
+    } finally {
+      if (ownsDialog) _destinationBusy = false;
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Widget _uploadCard() => AppCard(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          _selected?.name ?? tr('documents.uploadFailedTitle'),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: AppTypography.body(fontWeight: FontWeight.w600),
+        ),
+        if (_selected != null) Text(_size(_selected!.size)),
+        const SizedBox(height: 8),
+        if (_uploading && _selected != null) ...[
+          Text(tr('documents.uploading')),
+          const SizedBox(height: 8),
+          LinearProgressIndicator(
+            value: _progress,
+            color: context.colors.primary,
+          ),
+        ],
+        if (_uploadError != null) ...[
+          Semantics(
+            liveRegion: true,
+            child: Text(
+              documentError(_uploadError!),
+              style: AppTypography.body(color: context.colors.destructive),
+            ),
+          ),
+          Wrap(
+            spacing: 8,
+            children: [
+              if (_selected != null &&
+                  _uploadError is! DocumentValidation &&
+                  !(_uploadError is DocumentFileException &&
+                      (_uploadError as DocumentFileException).failure ==
+                          DocumentFileFailure.permissionDenied))
+                AppButton(
+                  size: AppButtonSize.lg,
+                  text: tr('documents.mobile.retry'),
+                  onPressed: _busy ? null : _retryUpload,
+                ),
+              AppButton(
+                size: AppButtonSize.lg,
+                text: tr('documents.mobile.chooseAgain'),
+                variant: AppButtonVariant.outline,
+                onPressed: _busy ? null : _choose,
+              ),
+            ],
+          ),
+        ],
+      ],
+    ),
+  );
 
   String _size(int bytes) => bytes >= 1048576
       ? '${(bytes / 1048576).toStringAsFixed(1)} MiB'
@@ -241,6 +467,16 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
           ),
         ],
       ),
+      floatingActionButton: FloatingActionButton(
+        key: const Key('documents_upload'),
+        shape: const CircleBorder(),
+        elevation: 0,
+        tooltip: tr('documents.mobile.upload'),
+        backgroundColor: context.colors.primary,
+        foregroundColor: context.colors.primaryForeground,
+        onPressed: _busy ? null : _choose,
+        child: const Icon(LucideIcons.plus),
+      ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -310,7 +546,22 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
                 keyboardDismissBehavior:
                     ScrollViewKeyboardDismissBehavior.onDrag,
                 padding: const EdgeInsets.only(bottom: 100),
-                children: [_content(async, query)],
+                children: [
+                  if (_selected != null || _uploadError != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _uploadCard(),
+                    ),
+                  _content(async, query),
+                  const SizedBox(height: 12),
+                  Text(
+                    tr('documents.mobile.helper'),
+                    style: AppTypography.body(
+                      fontSize: 12,
+                      color: context.colors.mutedForeground,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),

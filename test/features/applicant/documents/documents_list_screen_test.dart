@@ -33,7 +33,13 @@ void main() {
                 ),
               ),
             ];
-          await pumpDocuments(tester, repo, size: size, locale: lang);
+          await pumpDocuments(
+            tester,
+            repo,
+            FilesDouble(),
+            size: size,
+            locale: lang,
+          );
           await tester.pumpAndSettle();
           expect(
             find.text(lang == 'en' ? 'My documents' : 'Tài liệu của tôi'),
@@ -63,6 +69,12 @@ void main() {
           await tester.pumpAndSettle();
           expect(tester.takeException(), isNull);
           tester.view.resetViewInsets();
+          await tester.tap(find.byKey(const Key('documents_upload')));
+          await tester.pumpAndSettle();
+          expect(find.byKey(const Key('pick_cover_letter')), findsOneWidget);
+          expect(tester.takeException(), isNull);
+          await tester.tap(find.text(lang == 'en' ? 'Cancel' : 'Hủy'));
+          await tester.pumpAndSettle();
         },
       );
     }
@@ -72,7 +84,7 @@ void main() {
     (tester) async {
       final pending = Completer<DocumentsPage>();
       final repo = RepoDouble()..listPending = pending;
-      final c = await pumpDocuments(tester, repo);
+      final c = await pumpDocuments(tester, repo, FilesDouble());
       expect(find.byType(LinearProgressIndicator), findsNothing);
       expect(find.text('No documents yet'), findsNothing);
       repo.listPending = null;
@@ -101,7 +113,7 @@ void main() {
     tester,
   ) async {
     final repo = RepoDouble()..listError = const ApiError(message: 'network');
-    await pumpDocuments(tester, repo);
+    await pumpDocuments(tester, repo, FilesDouble());
     await tester.pumpAndSettle();
     expect(find.text('Could not load documents'), findsOneWidget);
     repo.listError = null;
@@ -120,7 +132,12 @@ void main() {
   testWidgets('Documents menu navigates from Me and back; guest is guarded', (
     tester,
   ) async {
-    final c = await pumpDocuments(tester, RepoDouble(), router: true);
+    final c = await pumpDocuments(
+      tester,
+      RepoDouble(),
+      FilesDouble(),
+      router: true,
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('me_menu_documents')));
     await tester.pumpAndSettle();
@@ -136,6 +153,7 @@ void main() {
     final c = await pumpDocuments(
       tester,
       RepoDouble(),
+      FilesDouble(),
       router: true,
       authenticated: false,
     );
