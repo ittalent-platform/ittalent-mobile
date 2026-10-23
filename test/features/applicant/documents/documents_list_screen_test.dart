@@ -46,6 +46,7 @@ void main() {
             findsOneWidget,
           );
           expect(tester.takeException(), isNull);
+          expect(find.textContaining(' · 342.0 KiB · '), findsOneWidget);
           await tester.pumpAndSettle();
           const captureDir = String.fromEnvironment('DOCUMENTS_CAPTURE_DIR');
           if (captureDir.isNotEmpty) {
