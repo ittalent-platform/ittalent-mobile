@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
@@ -34,7 +35,7 @@ class DocumentsRepository {
       rethrow;
     } catch (_) {
       // The selected provider may revoke access, remove the file, or go offline.
-      throw const DocumentValidation('read');
+      throw const DocumentValidation(DocumentValidationFailure.read);
     }
     // Validate again after reading: cloud-backed picker metadata may be stale.
     SelectedDocument(
@@ -48,7 +49,7 @@ class DocumentsRepository {
           signature.length,
           (i) => bytes[i] == signature[i],
         ).every((match) => match)) {
-      throw const DocumentValidation('format');
+      throw const DocumentValidation(DocumentValidationFailure.format);
     }
     FormData createBody() => FormData.fromMap({
       'type': type.value,
@@ -77,6 +78,61 @@ class DocumentsRepository {
       }
       return DocumentDto.fromJson(response.data!);
     } on DioException catch (e) {
+      throw ApiError.fromDio(e);
+    }
+  }
+
+  Future<DownloadedDocument> download(
+    DocumentDto item, {
+    CancelToken? cancelToken,
+    ProgressCallback? onProgress,
+  }) async {
+    try {
+      final response = await client.dio.get<List<int>>(
+        '${DocumentConstants.path}/${Uri.encodeComponent(item.id)}/download',
+        cancelToken: cancelToken,
+        onReceiveProgress: onProgress,
+        options: Options(
+          responseType: ResponseType.bytes,
+          headers: {'Accept': DocumentConstants.mimeTypes.values.join(', ')},
+        ),
+      );
+      final mime =
+          response.headers
+              .value(Headers.contentTypeHeader)
+              ?.split(';')
+              .first
+              .trim() ??
+          item.mimeType;
+      final bytes = response.data;
+      final length = int.tryParse(
+        response.headers.value(Headers.contentLengthHeader) ?? '',
+      );
+      if (response.statusCode != 200 ||
+          bytes == null ||
+          bytes.isEmpty ||
+          !DocumentConstants.mimeTypes.containsValue(mime) ||
+          (length != null && length != bytes.length)) {
+        throw const ApiError(message: 'Invalid document response');
+      }
+      return DownloadedDocument(
+        Uint8List.fromList(bytes),
+        documentFileName(
+          response.headers.value('content-disposition'),
+          item.fileName,
+        ),
+        mime,
+      );
+    } on DioException catch (e) {
+      final data = e.response?.data;
+      if (data is List<int> &&
+          data.length < DocumentConstants.errorResponseMaxBytes) {
+        try {
+          e.response?.data = jsonDecode(utf8.decode(data));
+        } on FormatException {
+          /* Non-JSON server error. */
+        }
+      }
       throw ApiError.fromDio(e);
     }
   }
