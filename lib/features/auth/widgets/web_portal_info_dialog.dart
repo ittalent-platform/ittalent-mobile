@@ -99,25 +99,19 @@ class WebPortalInfoDialog extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 24),
-            Row(
-              children: [
-                Expanded(
-                  child: AppButton(
-                    text: 'Dismiss',
-                    variant: AppButtonVariant.outline,
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: AppButton(
-                    text: 'Go to Web',
-                    icon: const Icon(LucideIcons.externalLink, size: 16),
-                    variant: AppButtonVariant.primary,
-                    onPressed: () => _handleGoToWeb(context),
-                  ),
-                ),
-              ],
+            AppButton(
+              text: 'Go to Web',
+              icon: const Icon(LucideIcons.externalLink, size: 16),
+              variant: AppButtonVariant.primary,
+              isFullWidth: true,
+              onPressed: () => _handleGoToWeb(context),
+            ),
+            const SizedBox(height: 10),
+            AppButton(
+              text: 'Dismiss',
+              variant: AppButtonVariant.outline,
+              isFullWidth: true,
+              onPressed: () => Navigator.of(context).pop(),
             ),
           ],
         ),
