@@ -13,6 +13,7 @@ import '../widgets/auth_brand_header.dart';
 import '../widgets/auth_divider.dart';
 import '../widgets/auth_error_banner.dart';
 import '../widgets/auth_footer_note.dart';
+import '../widgets/web_portal_info_dialog.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -36,7 +37,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     super.dispose();
   }
 
-  void _handleSubmit() {
+  Future<void> _handleSubmit() async {
     setState(() {
       _identifierError = null;
       _passwordError = null;
@@ -59,7 +60,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     if (hasError) return;
 
-    ref.read(authNotifierProvider.notifier).login(identifier, password);
+    final result = await ref
+        .read(authNotifierProvider.notifier)
+        .login(identifier, password);
+
+    if (!mounted) return;
+
+    if (result.isWebRoleNotSupported) {
+      _passwordController.clear();
+      await showDialog<void>(
+        context: context,
+        barrierDismissible: true,
+        builder: (context) => WebPortalInfoDialog(role: result.role),
+      );
+    }
   }
 
   @override
