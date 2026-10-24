@@ -49,12 +49,13 @@ class WebPortalInfoDialog extends StatelessWidget {
     return Dialog(
       backgroundColor: colors.card,
       elevation: 0,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24),
       shape: RoundedRectangleBorder(
         borderRadius: AppRadius.cardRadius,
         side: BorderSide(color: colors.border, width: 1),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(24.0),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -62,11 +63,11 @@ class WebPortalInfoDialog extends StatelessWidget {
             Row(
               children: [
                 Container(
-                  width: 48,
-                  height: 48,
+                  width: 36,
+                  height: 36,
                   decoration: BoxDecoration(
                     color: colors.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(10),
                     border: Border.all(
                       color: colors.primary.withValues(alpha: 0.2),
                     ),
@@ -74,44 +75,52 @@ class WebPortalInfoDialog extends StatelessWidget {
                   child: Icon(
                     LucideIcons.globe,
                     color: colors.primary,
-                    size: 24,
+                    size: 18,
                   ),
                 ),
                 const Spacer(),
                 AppBadge(label: _formatRoleLabel(role), tone: BadgeTone.peach),
               ],
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 14),
             Text(
               'Web Portal Required',
               style: AppTypography.display(
-                fontSize: 18,
+                fontSize: 17,
                 fontWeight: FontWeight.w700,
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 6),
             Text(
-              'This mobile app is exclusively for job applicants. Recruiter and Administrator accounts must manage job postings, interviews, and candidates via the ITTalent web portal.',
+              'This mobile app is for job applicants only. Recruiter and Admin accounts must log in via the web portal.',
               style: AppTypography.body(
-                fontSize: 14,
+                fontSize: 13,
                 color: colors.mutedForeground,
-                height: 1.5,
+                height: 1.45,
               ),
             ),
-            const SizedBox(height: 24),
-            AppButton(
-              text: 'Go to Web',
-              icon: const Icon(LucideIcons.externalLink, size: 16),
-              variant: AppButtonVariant.primary,
-              isFullWidth: true,
-              onPressed: () => _handleGoToWeb(context),
-            ),
-            const SizedBox(height: 10),
-            AppButton(
-              text: 'Dismiss',
-              variant: AppButtonVariant.outline,
-              isFullWidth: true,
-              onPressed: () => Navigator.of(context).pop(),
+            const SizedBox(height: 18),
+            Row(
+              children: [
+                Expanded(
+                  child: AppButton(
+                    text: 'Dismiss',
+                    variant: AppButtonVariant.outline,
+                    size: AppButtonSize.sm,
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: AppButton(
+                    text: 'Open Web',
+                    icon: const Icon(LucideIcons.externalLink, size: 14),
+                    variant: AppButtonVariant.primary,
+                    size: AppButtonSize.sm,
+                    onPressed: () => _handleGoToWeb(context),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
