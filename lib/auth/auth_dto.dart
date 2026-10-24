@@ -214,3 +214,30 @@ class ResetPasswordTokenResponse {
     );
   }
 }
+
+enum LoginResultStatus {
+  success,
+  invalidCredentials,
+  webRoleNotSupported,
+  error,
+}
+
+class LoginResult {
+  const LoginResult({required this.status, this.errorMessage, this.role});
+
+  final LoginResultStatus status;
+  final String? errorMessage;
+  final String? role;
+
+  bool get isSuccess => status == LoginResultStatus.success;
+  bool get isWebRoleNotSupported =>
+      status == LoginResultStatus.webRoleNotSupported;
+}
+
+bool isAllowedMobileApplicantRole(String? role) {
+  if (role == null) return false;
+  final normalized = role.trim().toLowerCase();
+  return normalized == 'user' ||
+      normalized == 'applicant' ||
+      normalized == 'candidate';
+}
