@@ -26,6 +26,9 @@ class JobCard extends StatelessWidget {
     final locale = Localizations.localeOf(context).toString();
     final now = DateTime.now();
     final salary = JobFormat.salaryAmount(job);
+    // "Negotiable" only for a job that says so; no salary at all hides the line.
+    final salaryText =
+        salary ?? (job.salaryNegotiable ? tr('jobs.salary.negotiable') : null);
     final posted = JobFormat.postedAgo(job.createdAt, now);
     final applyBy = JobFormat.applyBy(job.expiresAt, locale, now);
     final meta = [
@@ -98,31 +101,33 @@ class JobCard extends StatelessWidget {
               ],
             ],
           ),
-          const SizedBox(height: 12),
-          Text.rich(
-            TextSpan(
-              children: [
-                TextSpan(
-                  text: salary ?? tr('jobs.salary.negotiable'),
-                  style: AppTypography.body(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: colors.foreground,
-                  ),
-                ),
-                if (salary != null)
+          if (salaryText != null) ...[
+            const SizedBox(height: 12),
+            Text.rich(
+              TextSpan(
+                children: [
                   TextSpan(
-                    text: ' ${tr('jobs.salary.perMonth')}',
+                    text: salaryText,
                     style: AppTypography.body(
-                      fontSize: 14,
-                      color: colors.mutedForeground,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: colors.foreground,
                     ),
                   ),
-              ],
+                  if (salary != null)
+                    TextSpan(
+                      text: ' ${tr('jobs.salary.perMonth')}',
+                      style: AppTypography.body(
+                        fontSize: 14,
+                        color: colors.mutedForeground,
+                      ),
+                    ),
+                ],
+              ),
             ),
-          ),
+          ],
           if (tags.isNotEmpty) ...[
-            const SizedBox(height: 10),
+            SizedBox(height: salaryText == null ? 12 : 10),
             Wrap(
               spacing: 6,
               runSpacing: 6,

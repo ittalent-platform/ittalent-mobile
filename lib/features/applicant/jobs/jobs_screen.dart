@@ -48,8 +48,9 @@ class JobsScreen extends ConsumerWidget {
     itemBuilder: (context, index) => const JobCardSkeleton(),
   );
 
-  Widget _list(BuildContext context, WidgetRef ref, List<JobPosting> jobs) {
+  Widget _list(BuildContext context, WidgetRef ref, PublicJobs data) {
     final colors = context.colors;
+    final jobs = data.jobs;
     final mutedStyle = AppTypography.body(
       fontSize: 13,
       color: colors.mutedForeground,
@@ -78,7 +79,16 @@ class JobsScreen extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: Center(
                 child: Text(
-                  JobFormat.countText('jobs.end', jobs.length),
+                  data.isPartial
+                      ? tr(
+                          'jobs.endPartial',
+                          namedArgs: {
+                            'count': '${jobs.length}',
+                            'total': '${data.total}',
+                          },
+                        )
+                      : JobFormat.countText('jobs.end', jobs.length),
+                  textAlign: TextAlign.center,
                   style: mutedStyle,
                 ),
               ),
@@ -111,7 +121,7 @@ class JobsScreen extends ConsumerWidget {
                 actionText: tr('errorState.retry'),
                 onAction: () => ref.invalidate(publicJobsProvider),
               ),
-              data: (data) => data.isEmpty
+              data: (data) => data.jobs.isEmpty
                   ? AppEmptyState(
                       icon: const Icon(LucideIcons.briefcase),
                       title: tr('jobs.empty.title'),

@@ -8,12 +8,13 @@ import 'jobs_models.dart';
 
 /// Every open public job, newest first (the order of the API is not relied
 /// on). The first page says how many more there are; those are read a few at a
-/// time, up to `JobConstants.maxPages`. A job that moved between pages while
-/// they were read is kept once.
+/// time, up to `JobConstants.maxPages`, and [PublicJobs.isPartial] tells when
+/// that cap left some out. A job that moved between pages while they were read
+/// is kept once.
 ///
 /// A failure is shown at once, with a retry button: Riverpod's automatic retry
 /// is off, or the skeleton would stay for a minute before the error appears.
-final publicJobsProvider = FutureProvider.autoDispose<List<JobPosting>>(
+final publicJobsProvider = FutureProvider.autoDispose<PublicJobs>(
   retry: (_, _) => null,
   (ref) async {
     final client = ref.watch(apiClientProvider);
@@ -48,7 +49,11 @@ final publicJobsProvider = FutureProvider.autoDispose<List<JobPosting>>(
       for (final page in pages)
         for (final job in page.items)
           if (job.isOpen(now) && seen.add(job.id)) job,
-    ];
-    return jobs..sort(JobPosting.newestFirst);
+    ]..sort(JobPosting.newestFirst);
+    return PublicJobs(
+      jobs: jobs,
+      total: first.total,
+      isPartial: first.totalPages > JobConstants.maxPages,
+    );
   },
 );

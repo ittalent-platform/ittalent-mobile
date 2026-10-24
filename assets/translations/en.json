@@ -2746,6 +2746,7 @@
     "count_other": "{{count}} jobs",
     "end_one": "You've seen all {{count}} job.",
     "end_other": "You've seen all {{count}} jobs.",
+    "endPartial": "Showing the newest {{count}} of {{total}} jobs.",
     "empty": {
       "title": "No open jobs right now",
       "description": "Check back soon for new roles."

@@ -2725,6 +2725,7 @@
     "count_other": "{{count}} việc làm",
     "end_one": "Bạn đã xem hết {{count}} việc làm.",
     "end_other": "Bạn đã xem hết {{count}} việc làm.",
+    "endPartial": "Đang hiển thị {{count}} việc làm mới nhất trong tổng số {{total}}.",
     "empty": {
       "title": "Hiện chưa có việc làm nào đang mở",
       "description": "Hãy quay lại sau để xem các vị trí mới."

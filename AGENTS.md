@@ -39,7 +39,7 @@ lib/
 │   ├── <feature>_providers.dart # Riverpod query providers (TanStack Query equivalent)
 │   └── widgets/                 # Feature-specific subwidgets
 ├── theme/                       # app_colors.dart, app_radius.dart, app_typography.dart, app_theme.dart
-└── utils/                       # formatters.dart
+└── utils/                       # double_brace_asset_loader.dart (translations); wording/format helpers live in their feature (e.g. applicant/jobs/jobs_format.dart)
 test/                            # Unit & widget tests mirroring features
 assets/translations/             # en.json, vi.json (1:1 matching ittalent-web locales)
 ```
