@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../api/client.dart';
 import 'jobs_constants.dart';
 import 'jobs_models.dart';
+import 'jobs_query.dart';
 
 /// Every open public job, newest first (the order of the API is not relied
 /// on). The first page says how many more there are; those are read a few at a
@@ -57,3 +58,42 @@ final publicJobsProvider = FutureProvider.autoDispose<PublicJobs>(
     );
   },
 );
+
+class JobsQueryNotifier extends Notifier<JobsQuery> {
+  @override
+  JobsQuery build() => const JobsQuery();
+
+  void update(JobsQuery query) => state = query;
+
+  /// Drops every filter and keeps the sort order, as on the web.
+  void clear() => state = JobsQuery(sort: state.sort);
+}
+
+final jobsQueryProvider =
+    NotifierProvider.autoDispose<JobsQueryNotifier, JobsQuery>(
+      JobsQueryNotifier.new,
+    );
+
+/// Keywords searched in this session, newest first, without repeats.
+class RecentJobSearchesNotifier extends Notifier<List<String>> {
+  @override
+  List<String> build() => const [];
+
+  void add(String keyword) {
+    final text = keyword.trim();
+    if (text.isEmpty) return;
+    state = [
+      text,
+      ...state.where((e) => e.toLowerCase() != text.toLowerCase()),
+    ].take(JobConstants.recentSearchLimit).toList();
+  }
+
+  void remove(String keyword) => state = [...state.where((e) => e != keyword)];
+
+  void clear() => state = const [];
+}
+
+final recentJobSearchesProvider =
+    NotifierProvider<RecentJobSearchesNotifier, List<String>>(
+      RecentJobSearchesNotifier.new,
+    );

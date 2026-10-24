@@ -2780,6 +2780,25 @@
       "mid": "Mid",
       "senior": "Senior",
       "lead": "Lead"
+    },
+    "matches_one": "{{count}} job matches",
+    "matches_other": "{{count}} jobs match",
+    "sort": {
+      "newest": "Newest",
+      "oldest": "Oldest",
+      "salaryHigh": "Highest salary",
+      "salaryLow": "Lowest salary"
+    },
+    "search": {
+      "for": "Search “{{text}}”",
+      "recent": "Recent searches",
+      "clearRecent": "Clear",
+      "invalid": "Use letters, numbers, spaces and - . ' only.",
+      "tooLong": "Use {{max}} characters or fewer."
+    },
+    "noMatch": {
+      "title": "No jobs match",
+      "description": "Try a different keyword."
     }
   }
 }

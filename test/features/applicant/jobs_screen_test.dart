@@ -14,55 +14,7 @@ import 'package:ittalent_mobile/features/applicant/jobs/jobs_providers.dart';
 import 'package:ittalent_mobile/features/applicant/jobs/jobs_screen.dart';
 
 import '../../helpers/fake_api.dart';
-
-String _daysAgo(int days) =>
-    DateTime.now().subtract(Duration(days: days)).toUtc().toIso8601String();
-
-String _daysAhead(int days) =>
-    DateTime.now().add(Duration(days: days)).toUtc().toIso8601String();
-
-Map<String, dynamic> _job(
-  String id,
-  String title, {
-  String company = 'Nimbus Pay',
-  String? location = 'Ha Noi',
-  String? type = 'Full-time',
-  String? level = 'Senior',
-  num? min = 45000000,
-  num? max = 60000000,
-  bool negotiable = false,
-  String currency = 'VND',
-  String? createdAt,
-  String? expiresAt,
-}) => {
-  'id': id,
-  'enterpriseId': 'e-$company',
-  'enterprise': {'id': 'e-$company', 'name': company, 'logoUrl': null},
-  'title': title,
-  'location': location,
-  'employmentType': type,
-  'level': level,
-  'salaryMin': min,
-  'salaryMax': max,
-  'salaryNegotiable': negotiable,
-  'currency': currency,
-  'openings': 2,
-  'createdAt': createdAt ?? _daysAgo(3),
-  'expiresAt': expiresAt ?? _daysAhead(20),
-};
-
-Map<String, dynamic> _page(
-  List<Map<String, dynamic>> items, {
-  int page = 1,
-  int totalPages = 1,
-  int? total,
-}) => {
-  'items': items,
-  'page': page,
-  'limit': 100,
-  'total': total ?? items.length,
-  'totalPages': totalPages,
-};
+import '../../helpers/jobs_fixtures.dart';
 
 JobPosting _posting({
   num? min = 45000000,
@@ -70,7 +22,7 @@ JobPosting _posting({
   bool negotiable = false,
   String currency = 'VND',
 }) => JobPosting.fromJson(
-  _job(
+  jobJson(
     'j1',
     'Backend Engineer',
     min: min,
@@ -123,7 +75,7 @@ void main() {
   group('JobPosting', () {
     test('parses the public job, with the company from its summary', () {
       final job = JobPosting.fromJson(
-        _job('j1', 'Senior Backend Engineer (Go)', company: 'Nimbus Pay'),
+        jobJson('j1', 'Senior Backend Engineer (Go)', company: 'Nimbus Pay'),
       );
       expect(job.id, 'j1');
       expect(job.title, 'Senior Backend Engineer (Go)');
@@ -137,7 +89,7 @@ void main() {
     });
 
     test('blank text counts as missing', () {
-      final job = JobPosting.fromJson(_job('j1', 'Title', location: '  '));
+      final job = JobPosting.fromJson(jobJson('j1', 'Title', location: '  '));
       expect(job.location, isNull);
     });
 
@@ -150,14 +102,14 @@ void main() {
 
     test('newest first, undated last, same moment in a fixed order', () {
       final jobs = [
-        JobPosting.fromJson(_job('b', 'B', createdAt: _daysAgo(2))),
-        JobPosting.fromJson({..._job('z', 'Undated'), 'createdAt': null}),
-        JobPosting.fromJson(_job('c', 'C', createdAt: _daysAgo(1))),
+        JobPosting.fromJson(jobJson('b', 'B', createdAt: daysAgo(2))),
+        JobPosting.fromJson({...jobJson('z', 'Undated'), 'createdAt': null}),
+        JobPosting.fromJson(jobJson('c', 'C', createdAt: daysAgo(1))),
         JobPosting.fromJson(
-          _job('a', 'A', createdAt: '2026-01-01T00:00:00.000Z'),
+          jobJson('a', 'A', createdAt: '2026-01-01T00:00:00.000Z'),
         ),
         JobPosting.fromJson(
-          _job('d', 'D', createdAt: '2026-01-01T00:00:00.000Z'),
+          jobJson('d', 'D', createdAt: '2026-01-01T00:00:00.000Z'),
         ),
       ]..sort(JobPosting.newestFirst);
       expect(jobs.map((j) => j.id), ['c', 'b', 'a', 'd', 'z']);
@@ -165,12 +117,12 @@ void main() {
 
     test('open until the deadline; new for a few days', () {
       final now = DateTime.now();
-      final open = JobPosting.fromJson(_job('j1', 'Open job'));
+      final open = JobPosting.fromJson(jobJson('j1', 'Open job'));
       final past = JobPosting.fromJson(
-        _job('j2', 'Past job', expiresAt: _daysAgo(1)),
+        jobJson('j2', 'Past job', expiresAt: daysAgo(1)),
       );
       final old = JobPosting.fromJson(
-        _job('j3', 'Old job', createdAt: _daysAgo(9)),
+        jobJson('j3', 'Old job', createdAt: daysAgo(9)),
       );
       expect(open.isOpen(now), isTrue);
       expect(past.isOpen(now), isFalse);
@@ -267,14 +219,14 @@ void main() {
           final page = options.queryParameters['page'] as int;
           return jsonBody(
             page == 1
-                ? _page([
-                    _job('j1', 'First job', createdAt: _daysAgo(2)),
-                    _job('j2', 'Closed job', expiresAt: _daysAgo(1)),
+                ? jobsPage([
+                    jobJson('j1', 'First job', createdAt: daysAgo(2)),
+                    jobJson('j2', 'Closed job', expiresAt: daysAgo(1)),
                   ], totalPages: 2)
-                : _page(
+                : jobsPage(
                     [
-                      _job('j1', 'First job', createdAt: _daysAgo(2)),
-                      _job('j3', 'Third job', createdAt: _daysAgo(1)),
+                      jobJson('j1', 'First job', createdAt: daysAgo(2)),
+                      jobJson('j3', 'Third job', createdAt: daysAgo(1)),
                     ],
                     page: 2,
                     totalPages: 2,
@@ -295,8 +247,8 @@ void main() {
 
     test('reads a few pages at a time and never beyond the cap', () async {
       final adapter = _CountingAdapter(
-        (page) => _page(
-          [_job('p$page', 'Job $page', createdAt: _daysAgo(page))],
+        (page) => jobsPage(
+          [jobJson('p$page', 'Job $page', createdAt: daysAgo(page))],
           page: page,
           totalPages: 25,
           total: 2400,
@@ -324,8 +276,8 @@ void main() {
 
     test('is complete when the market fits exactly in the cap', () async {
       final adapter = _CountingAdapter(
-        (page) => _page(
-          [_job('p$page', 'Job $page', createdAt: _daysAgo(page))],
+        (page) => jobsPage(
+          [jobJson('p$page', 'Job $page', createdAt: daysAgo(page))],
           page: page,
           totalPages: JobConstants.maxPages,
           total: JobConstants.maxPages,
@@ -361,9 +313,13 @@ void main() {
       ) async {
         final adapter = FakeAdapter(
           (_) => jsonBody(
-            _page([
-              _job('j1', 'Senior Backend Engineer (Go)', company: 'Nimbus Pay'),
-              _job(
+            jobsPage([
+              jobJson(
+                'j1',
+                'Senior Backend Engineer (Go)',
+                company: 'Nimbus Pay',
+              ),
+              jobJson(
                 'j2',
                 'Principal Full-Stack TypeScript Engineer, Payments Platform',
                 company: 'Lumen Labs International',
@@ -372,7 +328,7 @@ void main() {
                 max: null,
                 negotiable: true,
               ),
-              _job('j3', 'Frontend Lead', createdAt: _daysAgo(30)),
+              jobJson('j3', 'Frontend Lead', createdAt: daysAgo(30)),
             ]),
           ),
         );
@@ -396,7 +352,7 @@ void main() {
     testWidgets('ends the list with the number of jobs seen', (tester) async {
       await _pump(
         tester,
-        FakeAdapter((_) => jsonBody(_page([_job('j1', 'Only job')]))),
+        FakeAdapter((_) => jsonBody(jobsPage([jobJson('j1', 'Only job')]))),
       );
       expect(find.text('jobs.count_one'), findsOneWidget);
       expect(find.text('jobs.end_one'), findsOneWidget);
@@ -409,8 +365,8 @@ void main() {
       // its last line without scrolling.
       final adapter = FakeAdapter(
         (options) => jsonBody(
-          _page(
-            [_job('only', 'Only job')],
+          jobsPage(
+            [jobJson('only', 'Only job')],
             page: options.queryParameters['page'] as int,
             totalPages: JobConstants.maxPages + 1,
             total: 2345,
@@ -431,7 +387,7 @@ void main() {
         tester,
         FakeAdapter(
           (_) => jsonBody(
-            _page([_job('j1', 'Support Engineer', min: null, max: null)]),
+            jobsPage([jobJson('j1', 'Support Engineer', min: null, max: null)]),
           ),
         ),
       );
@@ -448,7 +404,7 @@ void main() {
     });
 
     testWidgets('shows the empty state when no job is open', (tester) async {
-      await _pump(tester, FakeAdapter((_) => jsonBody(_page(const []))));
+      await _pump(tester, FakeAdapter((_) => jsonBody(jobsPage(const []))));
       expect(find.text('jobs.empty.title'), findsOneWidget);
       expect(find.text('jobs.empty.description'), findsOneWidget);
     });
@@ -458,7 +414,7 @@ void main() {
       final adapter = FakeAdapter(
         (_) => fail
             ? jsonBody({'message': 'Boom'}, status: 500)
-            : jsonBody(_page([_job('j1', 'Recovered job')])),
+            : jsonBody(jobsPage([jobJson('j1', 'Recovered job')])),
       );
       await _pump(tester, adapter);
 

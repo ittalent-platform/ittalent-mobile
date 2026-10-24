@@ -1,8 +1,8 @@
 import 'jobs_constants.dart';
 
-/// A public job posting as a list card shows it. The long texts of a job
-/// (description, requirements, benefits) are left out on purpose: the list
-/// carries up to 2,000 jobs, and the detail screen loads them for one job.
+/// A public job posting as a list card shows it. Of the long texts only the
+/// description and requirements are kept, and only so that the keyword search
+/// can match them; the benefits and the rest load with the detail of one job.
 class JobPosting {
   const JobPosting({
     required this.id,
@@ -16,6 +16,8 @@ class JobPosting {
     this.salaryMax,
     this.salaryNegotiable = false,
     this.currency = JobConstants.currencyVnd,
+    this.description,
+    this.requirements,
     this.openings,
     this.expiresAt,
     this.createdAt,
@@ -32,6 +34,8 @@ class JobPosting {
   final num? salaryMax;
   final bool salaryNegotiable;
   final String currency;
+  final String? description;
+  final String? requirements;
   final int? openings;
   final DateTime? expiresAt;
   final DateTime? createdAt;
@@ -52,6 +56,8 @@ class JobPosting {
       salaryMax: json['salaryMax'] as num?,
       salaryNegotiable: json['salaryNegotiable'] as bool? ?? false,
       currency: _text(json['currency']) ?? JobConstants.currencyVnd,
+      description: _text(json['description']),
+      requirements: _text(json['requirements']),
       openings: (json['openings'] as num?)?.toInt(),
       expiresAt: DateTime.tryParse(json['expiresAt'] as String? ?? ''),
       createdAt: DateTime.tryParse(json['createdAt'] as String? ?? ''),

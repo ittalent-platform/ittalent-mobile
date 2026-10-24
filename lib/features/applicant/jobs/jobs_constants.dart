@@ -20,6 +20,15 @@ class JobConstants {
   /// A deadline further ahead than this (or in another year) shows its year.
   static const int yearShownAfterDays = 180;
 
+  /// A keyword is 1–100 characters of letters (Vietnamese included), digits,
+  /// spaces and `- . '`, as on the web.
+  static const int searchMaxLength = 100;
+  static final RegExp searchPattern = RegExp(
+    r"^[a-zA-Z0-9\s.\-'\u00C0-\u024F\u1EA0-\u1EF9]*$",
+  );
+  static const int suggestionLimit = 5;
+  static const int recentSearchLimit = 5;
+
   static const int daysPerWeek = 7;
   static const int daysPerMonth = 30;
 

@@ -2759,6 +2759,25 @@
       "mid": "Mid",
       "senior": "Senior",
       "lead": "Trưởng nhóm"
+    },
+    "matches_one": "{{count}} việc làm phù hợp",
+    "matches_other": "{{count}} việc làm phù hợp",
+    "sort": {
+      "newest": "Mới nhất",
+      "oldest": "Cũ nhất",
+      "salaryHigh": "Lương cao nhất",
+      "salaryLow": "Lương thấp nhất"
+    },
+    "search": {
+      "for": "Tìm “{{text}}”",
+      "recent": "Tìm kiếm gần đây",
+      "clearRecent": "Xoá",
+      "invalid": "Chỉ dùng chữ, số, khoảng trắng và - . '",
+      "tooLong": "Tối đa {{max}} ký tự."
+    },
+    "noMatch": {
+      "title": "Không có việc làm phù hợp",
+      "description": "Hãy thử từ khoá khác."
     }
   }
 }
