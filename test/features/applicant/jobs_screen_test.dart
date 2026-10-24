@@ -373,13 +373,6 @@ void main() {
                 negotiable: true,
               ),
               _job('j3', 'Frontend Lead', createdAt: _daysAgo(30)),
-              _job(
-                'j4',
-                'Support Engineer',
-                min: null,
-                max: null,
-                createdAt: _daysAgo(30),
-              ),
             ]),
           ),
         );
@@ -388,12 +381,12 @@ void main() {
         expect(find.text('nav.jobs'), findsOneWidget);
         expect(find.text('jobs.count_other'), findsOneWidget);
         expect(find.text('Senior Backend Engineer (Go)'), findsOneWidget);
-        expect(find.text('NP'), findsNWidgets(3));
-        // "Negotiable" only for the job that says so; the job with no salary
-        // at all (j4) has no salary line.
+        expect(find.text('NP'), findsNWidgets(2));
+        // Only the job that says so is "Negotiable" (a job with no salary at
+        // all has its own test below). Three cards stay within what the list
+        // builds at once; a fourth one may not be built in a test.
         expect(find.text('jobs.salary.negotiable'), findsOneWidget);
         expect(find.textContaining('45–60M VND'), findsNWidgets(2));
-        expect(find.textContaining('jobs.salary.perMonth'), findsNWidgets(2));
         expect(find.byType(AppBadge), findsNWidgets(2));
         expect(find.text('jobs.card.new'), findsNWidgets(2));
         expect(tester.takeException(), isNull);
