@@ -210,7 +210,7 @@ void main() {
       // Info Dialog is shown
       expect(find.text('Web Portal Required'), findsOneWidget);
       expect(find.text('Recruiter Account'), findsOneWidget);
-      expect(find.text('Go to Web'), findsOneWidget);
+      expect(find.text('Open Web'), findsOneWidget);
 
       // Dismiss dialog
       await tester.tap(find.text('Dismiss'));

@@ -40,11 +40,11 @@ void main() {
     expect(find.text('Web Portal Required'), findsOneWidget);
     expect(find.text('Recruiter Account'), findsOneWidget);
     expect(
-      find.textContaining('This mobile app is exclusively for job applicants.'),
+      find.textContaining('This mobile app is for job applicants only.'),
       findsOneWidget,
     );
     expect(find.text('Dismiss'), findsOneWidget);
-    expect(find.text('Go to Web'), findsOneWidget);
+    expect(find.text('Open Web'), findsOneWidget);
   });
 
   testWidgets('WebPortalInfoDialog Dismiss button pops dialog', (tester) async {
@@ -62,7 +62,7 @@ void main() {
   });
 
   testWidgets(
-    'WebPortalInfoDialog Go to Web button invokes launcher with webBaseUrl',
+    'WebPortalInfoDialog Open Web button invokes launcher with webBaseUrl',
     (tester) async {
       Uri? launchedUri;
       LaunchMode? launchedMode;
@@ -83,7 +83,7 @@ void main() {
 
       expect(find.text('Enterprise Admin Account'), findsOneWidget);
 
-      await tester.tap(find.text('Go to Web'));
+      await tester.tap(find.text('Open Web'));
       await tester.pumpAndSettle();
 
       expect(launchedUri, Uri.parse(AppEnv.webBaseUrl));
