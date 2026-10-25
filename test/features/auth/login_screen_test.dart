@@ -182,6 +182,47 @@ void main() {
     },
   );
 
+  testWidgets(
+    'LoginScreen displays WebPortalInfoDialog and clears password when recruiter logs in',
+    (WidgetTester tester) async {
+      fakeApiClient.postResponse = {
+        'user': {
+          'id': 'usr-recruiter',
+          'email': 'recruiter@company.com',
+          'role': 'recruiter',
+        },
+        'tokens': {
+          'accessToken': 'jwt-recruiter-token',
+          'refreshToken': 'jwt-recruiter-refresh',
+        },
+      };
+
+      await tester.pumpWidget(buildTestableWidget(child: const LoginScreen()));
+      await tester.pumpAndSettle();
+
+      final textFields = find.byType(TextField);
+      await tester.enterText(textFields.at(0), 'recruiter@company.com');
+      await tester.enterText(textFields.at(1), 'Secret123!');
+
+      await tester.tap(find.text('Sign in'));
+      await tester.pumpAndSettle();
+
+      // Info Dialog is shown
+      expect(find.text('Web Portal Required'), findsOneWidget);
+      expect(find.text('Recruiter Account'), findsOneWidget);
+      expect(find.text('Open Web'), findsOneWidget);
+
+      // Dismiss dialog
+      await tester.tap(find.text('Dismiss'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Web Portal Required'), findsNothing);
+      // Password field was cleared
+      final passwordTextField = tester.widget<TextField>(textFields.at(1));
+      expect(passwordTextField.controller?.text, isEmpty);
+    },
+  );
+
   testWidgets('LoginScreen navigates to forgot-password and register routes', (
     WidgetTester tester,
   ) async {
