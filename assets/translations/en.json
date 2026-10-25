@@ -1844,6 +1844,7 @@
   "documents": {
     "mobile": {
       "all": "All",
+      "filterCount": "{{label}} ({{count}})",
       "sheetTitle": "What are you uploading?",
       "helper": "PDF, DOC, DOCX · up to 5 MiB",
       "uploadCv": "Upload a CV",

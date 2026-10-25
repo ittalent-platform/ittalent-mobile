@@ -3,6 +3,7 @@ class DocumentConstants {
   static const path = '/api/v1/documents';
   static const maxBytes = 5 * 1048576;
   static const pageSize = 20;
+  static const countPageSize = 1;
   static const searchLimit = 100;
   static const debounce = Duration(milliseconds: 300);
   static const signatures = {

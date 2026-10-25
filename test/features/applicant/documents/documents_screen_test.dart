@@ -24,6 +24,7 @@ import 'package:ittalent_mobile/features/applicant/certificates/certificates_pro
 import 'package:ittalent_mobile/features/applicant/documents/document_files.dart';
 import 'package:ittalent_mobile/features/applicant/documents/document_access_policy.dart';
 import 'package:ittalent_mobile/features/applicant/documents/document_model.dart';
+import 'package:ittalent_mobile/features/applicant/documents/documents_constants.dart';
 import 'package:ittalent_mobile/features/applicant/documents/documents_providers.dart';
 import 'package:ittalent_mobile/features/applicant/documents/documents_repository.dart';
 import 'package:ittalent_mobile/features/applicant/documents/documents_screen.dart';
@@ -123,17 +124,25 @@ class PolicyDouble extends DocumentAccessPolicy {
 
 class RepoDouble extends DocumentsRepository {
   RepoDouble() : super(ApiClient(dio: Dio()));
-  int uploads = 0, downloads = 0, lists = 0;
+  int uploads = 0, downloads = 0, lists = 0, countRequests = 0;
   DocumentType? lastType;
-  Object? uploadError, downloadError, listError;
+  Object? uploadError, downloadError, listError, countError;
   Completer<DocumentDto>? uploadPending;
   Completer<DownloadedDocument>? downloadPending;
   Completer<DocumentsPage>? listPending;
   List<DocumentDto> items = [];
   bool more = false;
   @override
-  Future<DocumentsPage> list(DocumentsQuery q, int page) async {
+  Future<DocumentsPage> list(
+    DocumentsQuery q,
+    int page, {
+    int limit = DocumentConstants.pageSize,
+  }) async {
     lists++;
+    if (limit == DocumentConstants.countPageSize) {
+      countRequests++;
+      if (countError != null) throw countError!;
+    }
     if (listError != null) throw listError!;
     if (listPending != null) return listPending!.future;
     final filtered = items
@@ -148,7 +157,7 @@ class RepoDouble extends DocumentsRepository {
           ? filtered
           : [DocumentDto.fromJson(documentJson(id: 'next'))],
       page: page,
-      limit: 20,
+      limit: limit,
       total: filtered.length,
       totalPages: more ? 2 : 1,
     );
@@ -461,9 +470,11 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Nguyễn Văn An.pdf'), findsNWidgets(2));
     final before = repo.lists;
+    final countRequestsBefore = repo.countRequests;
     await tester.tap(find.byTooltip('Refresh'));
     await tester.pumpAndSettle();
-    expect(repo.lists, before + 1);
+    expect(repo.lists, greaterThan(before));
+    expect(repo.countRequests, countRequestsBefore + 3);
   });
   testWidgets('sheet cancellation and picker cancellation never upload', (
     tester,
@@ -491,6 +502,7 @@ void main() {
         final files = FilesDouble()..selection = selected('docx');
         await pumpDocuments(tester, repo, files);
         await tester.pumpAndSettle();
+        final countRequestsBefore = repo.countRequests;
         await choose(tester, type);
         expect(repo.uploads, 1);
         expect(repo.lastType!.value, type);
@@ -512,10 +524,53 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.text('Document uploaded'), findsOneWidget);
         expect(find.text('Nguyễn Văn An.pdf'), findsOneWidget);
-        expect(repo.lists, 2);
+        expect(repo.countRequests, countRequestsBefore + 3);
       },
     );
   }
+  testWidgets(
+    'filter chips show search-aware counts without blocking the list',
+    (tester) async {
+      final repo = RepoDouble()
+        ..items = [
+          DocumentDto.fromJson(
+            documentJson(id: 'cv', type: 'cv', name: 'cv.pdf'),
+          ),
+          DocumentDto.fromJson(
+            documentJson(id: 'cover', type: 'cover_letter', name: 'cover.pdf'),
+          ),
+        ];
+      await pumpDocuments(tester, repo, FilesDouble());
+      await tester.pumpAndSettle();
+      expect(find.text('All (2)'), findsOneWidget);
+      expect(find.text('CVs (1)', skipOffstage: false), findsOneWidget);
+      expect(
+        find.text('Cover letters (1)', skipOffstage: false),
+        findsOneWidget,
+      );
+
+      await tester.enterText(find.byType(TextField), 'cover');
+      await tester.pump(DocumentConstants.debounce);
+      await tester.pumpAndSettle();
+      expect(find.text('All (1)'), findsOneWidget);
+      expect(find.text('CVs (0)', skipOffstage: false), findsOneWidget);
+      expect(
+        find.text('Cover letters (1)', skipOffstage: false),
+        findsOneWidget,
+      );
+      expect(find.text('cover.pdf'), findsOneWidget);
+    },
+  );
+  testWidgets('count errors leave the document list usable', (tester) async {
+    final repo = RepoDouble()
+      ..items = [DocumentDto.fromJson(documentJson())]
+      ..countError = const ApiError(message: 'count failed');
+    await pumpDocuments(tester, repo, FilesDouble());
+    await tester.pumpAndSettle();
+
+    expect(find.text('Nguyễn Văn An.pdf'), findsOneWidget);
+    expect(find.text('All (—)'), findsOneWidget);
+  });
   testWidgets(
     'validation shows choose again, failed upload retries without losing library',
     (tester) async {

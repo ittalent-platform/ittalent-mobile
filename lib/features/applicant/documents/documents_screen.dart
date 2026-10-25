@@ -224,6 +224,10 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen>
       .read(documentsQueryProvider.notifier)
       .update(DocumentsQuery(type: type, search: search.trim()));
 
+  void _invalidateDocumentCounts() => ref.invalidate(
+    documentFilterCountsProvider(ref.read(documentsQueryProvider).search),
+  );
+
   Future<void> _choose() async {
     if (_busy || _destinationBusy) return;
     setState(() => _busy = true);
@@ -327,6 +331,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen>
           );
       if (!mounted) return;
       ref.invalidate(documentsProvider);
+      _invalidateDocumentCounts();
       setState(() {
         _selected = null;
         _uploadError = null;
@@ -708,10 +713,24 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen>
         },
       );
 
+  String _filterLabel(DocumentType? type, DocumentFilterCounts? counts) {
+    final label = tr(
+      type == null ? 'documents.mobile.all' : 'documents.tabs.${type.value}',
+    );
+    return tr(
+      'documents.mobile.filterCount',
+      namedArgs: {'label': label, 'count': '${counts?.forType(type) ?? '—'}'},
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final query = ref.watch(documentsQueryProvider);
     final async = ref.watch(documentsProvider);
+    final counts = ref
+        .watch(documentFilterCountsProvider(query.search))
+        .asData
+        ?.value;
     return ScreenScaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -730,7 +749,10 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen>
           IconButton(
             tooltip: tr('documents.mobile.refresh'),
             icon: const Icon(LucideIcons.refreshCw),
-            onPressed: () => ref.invalidate(documentsProvider),
+            onPressed: () {
+              ref.invalidate(documentsProvider);
+              _invalidateDocumentCounts();
+            },
           ),
         ],
       ),
@@ -793,11 +815,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen>
                       child: AppButton(
                         key: Key('filter_${type?.value ?? 'all'}'),
                         size: AppButtonSize.lg,
-                        text: tr(
-                          type == null
-                              ? 'documents.mobile.all'
-                              : 'documents.tabs.${type.value}',
-                        ),
+                        text: _filterLabel(type, counts),
                         variant: query.type == type
                             ? AppButtonVariant.primary
                             : AppButtonVariant.outline,
@@ -815,6 +833,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen>
           Expanded(
             child: RefreshIndicator(
               onRefresh: () async {
+                _invalidateDocumentCounts();
                 final refreshed = ref.refresh(documentsProvider.future);
                 try {
                   await refreshed;

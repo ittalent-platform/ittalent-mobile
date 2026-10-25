@@ -1829,6 +1829,7 @@
   "documents": {
     "mobile": {
       "all": "Tất cả",
+      "filterCount": "{{label}} ({{count}})",
       "sheetTitle": "Bạn muốn tải lên tài liệu gì?",
       "helper": "PDF, DOC, DOCX · tối đa 5 MiB",
       "uploadCv": "Tải CV lên",

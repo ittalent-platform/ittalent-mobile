@@ -21,6 +21,41 @@ class DocumentsList {
   final Object? moreError;
 }
 
+class DocumentFilterCounts {
+  const DocumentFilterCounts({
+    required this.all,
+    required this.cv,
+    required this.coverLetter,
+  });
+
+  final int all;
+  final int cv;
+  final int coverLetter;
+
+  int forType(DocumentType? type) => switch (type) {
+    null => all,
+    DocumentType.cv => cv,
+    DocumentType.coverLetter => coverLetter,
+  };
+}
+
+final documentFilterCountsProvider = FutureProvider.autoDispose
+    .family<DocumentFilterCounts, String>((ref, search) async {
+      final repository = ref.watch(documentsRepositoryProvider);
+      final counts = await Future.wait([
+        repository.count(DocumentsQuery(search: search)),
+        repository.count(DocumentsQuery(type: DocumentType.cv, search: search)),
+        repository.count(
+          DocumentsQuery(type: DocumentType.coverLetter, search: search),
+        ),
+      ]);
+      return DocumentFilterCounts(
+        all: counts[0],
+        cv: counts[1],
+        coverLetter: counts[2],
+      );
+    }, retry: (_, _) => null);
+
 class DocumentsNotifier extends AsyncNotifier<DocumentsList> {
   int _generation = 0;
   @override
@@ -80,4 +115,5 @@ class DocumentsNotifier extends AsyncNotifier<DocumentsList> {
 final documentsProvider =
     AsyncNotifierProvider.autoDispose<DocumentsNotifier, DocumentsList>(
       DocumentsNotifier.new,
+      retry: (_, _) => null,
     );

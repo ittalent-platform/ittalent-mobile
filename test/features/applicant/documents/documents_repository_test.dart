@@ -25,7 +25,6 @@ Map<String, Object?> documentJson({
   'id': id,
   'ownerId': '507f191e810c19729de860ea',
   'type': type,
-  'fileUrl': 'https://storage.test/file',
   'fileName': name,
   'mimeType': 'application/pdf',
   'size': 350208,
@@ -81,6 +80,51 @@ class StreamingAdapter implements HttpClientAdapter {
   void close({bool force = false}) {}
 }
 
+class _FailingDocumentsRepository extends DocumentsRepository {
+  _FailingDocumentsRepository() : super(ApiClient(dio: Dio()));
+
+  int calls = 0;
+
+  @override
+  Future<DocumentsPage> list(
+    DocumentsQuery query,
+    int page, {
+    int limit = DocumentConstants.pageSize,
+  }) async {
+    calls++;
+    throw const ApiError(message: 'Unauthorised', statusCode: 401);
+  }
+}
+
+class _DelayedCountsRepository extends DocumentsRepository {
+  _DelayedCountsRepository() : super(ApiClient(dio: Dio()));
+
+  final pending = <String, Completer<DocumentsPage>>{};
+
+  @override
+  Future<DocumentsPage> list(
+    DocumentsQuery query,
+    int page, {
+    int limit = DocumentConstants.pageSize,
+  }) {
+    final key = '${query.search}:${query.type?.value ?? 'all'}';
+    return pending.putIfAbsent(key, Completer<DocumentsPage>.new).future;
+  }
+
+  void resolve(String search, DocumentType? type, int total) {
+    final key = '$search:${type?.value ?? 'all'}';
+    pending[key]!.complete(
+      DocumentsPage(
+        items: const [],
+        page: 1,
+        limit: DocumentConstants.countPageSize,
+        total: total,
+        totalPages: total == 0 ? 0 : total,
+      ),
+    );
+  }
+}
+
 void main() {
   test(
     'DTOs parse both types, byte size, ISO date, default and pagination',
@@ -104,6 +148,89 @@ void main() {
       expect(page.limit, 20);
     },
   );
+  test(
+    'page skips malformed items and falls back for malformed pagination',
+    () {
+      final valid = documentJson();
+      final unknownType = <String, Object?>{
+        ...documentJson(id: 'unknown'),
+        'type': 'certificate',
+      };
+      final invalidSize = <String, Object?>{
+        ...documentJson(id: 'invalid-size'),
+        'size': 'large',
+      };
+      final page = DocumentsPage.fromJson({
+        'items': <Object?>[valid, unknownType, invalidSize, 'not a document'],
+        'page': 'first',
+        'limit': 0,
+        'total': 'four',
+        'totalPages': -1,
+      });
+
+      expect(page.items.map((item) => item.id), ['507f1f77bcf86cd799439011']);
+      expect(page.page, 1);
+      expect(page.limit, DocumentConstants.pageSize);
+      expect(page.total, 1);
+      expect(page.totalPages, 1);
+      expect(DocumentType.tryParse('certificate'), isNull);
+      expect(() => DocumentDto.fromJson(unknownType), throwsFormatException);
+    },
+  );
+  test(
+    'documents provider does not retry an initial 401 automatically',
+    () async {
+      final repository = _FailingDocumentsRepository();
+      final container = ProviderContainer(
+        overrides: [documentsRepositoryProvider.overrideWithValue(repository)],
+      );
+      addTearDown(container.dispose);
+
+      await expectLater(
+        container.read(documentsProvider.future),
+        throwsA(isA<ApiError>()),
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 250));
+      expect(repository.calls, 1);
+    },
+  );
+  test('filter counts retain the latest search result when earlier requests finish', () async {
+    final repository = _DelayedCountsRepository();
+    final container = ProviderContainer(
+      overrides: [documentsRepositoryProvider.overrideWithValue(repository)],
+    );
+    addTearDown(container.dispose);
+
+    final old = container.read(documentFilterCountsProvider('old').future);
+    await Future<void>.delayed(Duration.zero);
+    final latestSubscription = container.listen(
+      documentFilterCountsProvider('latest'),
+      (_, _) {},
+    );
+    addTearDown(latestSubscription.close);
+    final latest = container.read(
+      documentFilterCountsProvider('latest').future,
+    );
+    await Future<void>.delayed(Duration.zero);
+    repository
+      ..resolve('latest', null, 4)
+      ..resolve('latest', DocumentType.cv, 3)
+      ..resolve('latest', DocumentType.coverLetter, 1);
+    final latestCounts = await latest;
+    expect(latestCounts.all, 4);
+    expect(latestCounts.cv, 3);
+    expect(latestCounts.coverLetter, 1);
+
+    repository
+      ..resolve('old', null, 9)
+      ..resolve('old', DocumentType.cv, 8)
+      ..resolve('old', DocumentType.coverLetter, 1);
+    await old;
+    expect(
+      container.read(documentFilterCountsProvider('latest')).asData!.value.all,
+      4,
+    );
+  });
   test('All omits type, trims search, omits blank, bounds search', () {
     expect(
       const DocumentsQuery(search: '   ').parameters(1).containsKey('search'),

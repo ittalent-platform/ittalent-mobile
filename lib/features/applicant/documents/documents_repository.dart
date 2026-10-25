@@ -13,13 +13,24 @@ import 'documents_constants.dart';
 class DocumentsRepository {
   DocumentsRepository(this.client);
   final ApiClient client;
-  Future<DocumentsPage> list(DocumentsQuery query, int page) async {
+  Future<DocumentsPage> list(
+    DocumentsQuery query,
+    int page, {
+    int limit = DocumentConstants.pageSize,
+  }) async {
     final response = await client.get<Map<String, Object?>>(
       DocumentConstants.path,
-      queryParameters: query.parameters(page),
+      queryParameters: query.parameters(page, limit: limit),
     );
-    return DocumentsPage.fromJson(response.data!);
+    return DocumentsPage.fromJson(
+      response.data ?? const <String, Object?>{},
+      fallbackPage: page,
+      fallbackLimit: limit,
+    );
   }
+
+  Future<int> count(DocumentsQuery query) async =>
+      (await list(query, 1, limit: DocumentConstants.countPageSize)).total;
 
   Future<DocumentDto> upload(
     SelectedDocument file,
