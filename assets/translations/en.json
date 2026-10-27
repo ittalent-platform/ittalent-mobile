@@ -2740,6 +2740,105 @@
     "deleteMenu": "Delete…",
     "notHttps": "Not HTTPS",
     "linkFailed": "{{name}} didn't respond. Check the link."
+  },
+  "notifications": {
+    "title": "Notifications",
+    "unreadCount": "{{count}} unread",
+    "unreadCount_one": "{{count}} unread",
+    "unreadCount_other": "{{count}} unread",
+    "allCaughtUp": "All caught up",
+    "markAllAsRead": "Mark all as read",
+    "nothingUnread": "Nothing unread",
+    "markAllAsReadConfirmBtn": "Mark {{count}} as read",
+    "markAllAsReadConfirmTitle": "Mark {{count}} notifications as read?",
+    "markAllAsReadConfirmTitle_one": "Mark {{count}} notification as read?",
+    "markAllAsReadConfirmTitle_other": "Mark {{count}} notifications as read?",
+    "markAllAsReadConfirmDesc": "Only the ones in your list now. Anything that arrives after you confirm stays unread.",
+    "moreActions": "More actions",
+    "deleteAll": "Delete all notifications…",
+    "deleteAllConfirmTitle": "Delete {{count}} notifications?",
+    "deleteAllConfirmTitle_one": "Delete {{count}} notification?",
+    "deleteAllConfirmTitle_other": "Delete {{count}} notifications?",
+    "deleteAllConfirmDesc": "This removes every notification in your list now. New ones that arrive after you confirm are kept. Your applications and interviews aren’t affected.",
+    "deleteAllConfirmBtn": "Delete {{count}} notifications",
+    "deleteAllConfirmBtn_one": "Delete {{count}} notification",
+    "deleteAllConfirmBtn_other": "Delete {{count}} notifications",
+    "staleBatchTitle": "Your notifications changed",
+    "staleBatchDesc": "You now have {{count}} notifications, not {{oldCount}}. Nothing was deleted yet.",
+    "staleBatchBtn": "Delete {{count}} notifications",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "showOlder": "Show older",
+    "showingCount": "Showing {{shown}} of {{total}}",
+    "tabs": {
+      "all": "All",
+      "unread": "Unread",
+      "announcements": "Announcements"
+    },
+    "groups": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "earlier": "Earlier",
+      "thisMonth": "This month"
+    },
+    "actions": {
+      "openApplication": "Open application",
+      "openAnnouncement": "Open announcement",
+      "markAsRead": "Mark as read",
+      "markAsUnread": "Mark as unread",
+      "read": "Read",
+      "unread": "Unread",
+      "delete": "Delete",
+      "undo": "Undo",
+      "close": "Close",
+      "tryAgain": "Try again",
+      "signIn": "Sign in",
+      "browseJobs": "Browse jobs",
+      "backToNotifications": "Notifications"
+    },
+    "relativeTime": {
+      "justNow": "Just now",
+      "minAgo": "{{count}} min ago",
+      "hAgo": "{{count}} h ago"
+    },
+    "announcement": {
+      "from": "From ITTalent",
+      "sender": "ITTalent",
+      "badge": "Announcement",
+      "meta": "Announcement · {{date}}",
+      "allAnnouncementsSeen": "That’s all the announcements.",
+      "repliesNotPossible": "Sent by ITTalent to a group of users. Replies aren't possible."
+    },
+    "toast": {
+      "deleted": "Notification deleted",
+      "markedRead_one": "{{count}} notification marked as read",
+      "markedRead_other": "{{count}} notifications marked as read",
+      "allMarkedRead": "All notifications marked as read",
+      "allDeleted": "All notifications deleted",
+      "markReadError": "Couldn't mark as read. Try again",
+      "deleteError": "Couldn't delete this notification. Try again",
+      "deletedOnOtherDevice": "That notification was deleted on another device, so it’s been removed.",
+      "alreadyDeleted": "That notification was already deleted."
+    },
+    "empty": {
+      "noNotifications": "No notifications yet",
+      "noNotificationsDesc": "We’ll tell you here when a company reviews your application or schedules an interview.",
+      "allCaughtUp": "You’re all caught up",
+      "allCaughtUpDesc": "No unread notifications. Older ones are under All.",
+      "noAnnouncements": "No announcements",
+      "noAnnouncementsDesc": "News from ITTalent shows up here."
+    },
+    "error": {
+      "loadTitle": "Notifications couldn’t be loaded",
+      "loadDesc": "Something went wrong on our side. Your notifications are safe. Try again in a moment.",
+      "unauthenticatedTitle": "Sign in to see your notifications",
+      "unauthenticatedDesc": "Your session ended, so nothing was loaded.",
+      "hiddenTitle": "Notifications are hidden for safety",
+      "hiddenDesc": "We couldn't check these notifications, so none are shown. Try again later.",
+      "unavailableTitle": "This notification isn’t available",
+      "unavailableDesc": "It may have been deleted. Your other notifications are unchanged.",
+      "offline": "You’re offline. Showing notifications from your last visit."
+    }
   }
 }
 
