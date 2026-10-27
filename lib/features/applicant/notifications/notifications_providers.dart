@@ -76,6 +76,19 @@ class NotificationItem {
           DateTime.now(),
     );
   }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'title': title,
+    'message': message,
+    'type': type,
+    'category': category,
+    'actionUrl': actionUrl,
+    'data': data,
+    'isRead': isRead,
+    'readAt': readAt?.toIso8601String(),
+    'createdAt': createdAt.toIso8601String(),
+  };
 }
 
 class NotificationsPage {
@@ -413,15 +426,15 @@ class NotificationsFeedNotifier extends AsyncNotifier<NotificationsFeedState> {
     }
   }
 
-  void undoDelete(NotificationItem item, int index) {
+  void undoDelete(NotificationItem item, [int? index]) {
     final current = state.value;
     if (current == null) return;
 
     final restoredList = [...current.items];
-    if (index >= 0 && index <= restoredList.length) {
+    if (index != null && index >= 0 && index <= restoredList.length) {
       restoredList.insert(index, item);
     } else {
-      restoredList.add(item);
+      restoredList.insert(0, item);
     }
     final newUnread = !item.isRead
         ? current.unreadCount + 1

@@ -15,6 +15,10 @@ import '../../../config/routes.dart';
 import '../../../theme/app_colors.dart';
 import 'notifications_constants.dart';
 import 'notifications_providers.dart';
+import 'widgets/delete_all_sheet.dart';
+import 'widgets/mark_all_read_sheet.dart';
+import 'widgets/more_actions_sheet.dart';
+import 'widgets/notification_action_sheet.dart';
 import 'widgets/notification_item_tile.dart';
 
 class NotificationsScreen extends ConsumerWidget {
@@ -77,7 +81,12 @@ class NotificationsScreen extends ConsumerWidget {
                     size: 20,
                   ),
                   onPressed: () {
-                    // Actions sheet will be fully wired in PR 3
+                    _openMoreActions(
+                      context,
+                      ref,
+                      unreadCount,
+                      feedAsync.asData?.value.total ?? 0,
+                    );
                   },
                 ),
               ],
@@ -355,6 +364,21 @@ class NotificationsScreen extends ConsumerWidget {
                 ),
               ),
               ...groupItems.map((item) {
+                final isAnnouncement =
+                    item.type == NotificationConstants.typeSystemAnnouncement;
+
+                void handleOpen() {
+                  if (isAnnouncement) {
+                    context.push(
+                      AppRoutes.announcementDetail(item.id),
+                      extra: item,
+                    );
+                  } else if (item.actionUrl != null &&
+                      item.actionUrl!.isNotEmpty) {
+                    unawaited(context.push(item.actionUrl!));
+                  }
+                }
+
                 return NotificationItemTile(
                   key: Key('notification_item_${item.id}'),
                   item: item,
@@ -365,9 +389,47 @@ class NotificationsScreen extends ConsumerWidget {
                           .markAsRead(item.id);
                     }
                     if (!context.mounted) return;
-                    if (item.actionUrl != null && item.actionUrl!.isNotEmpty) {
-                      unawaited(context.push(item.actionUrl!));
+                    handleOpen();
+                  },
+                  onLongPress: () {
+                    NotificationActionSheet.show(
+                      context,
+                      item: item,
+                      onOpen:
+                          (isAnnouncement ||
+                              (item.actionUrl != null &&
+                                  item.actionUrl!.isNotEmpty))
+                          ? handleOpen
+                          : null,
+                      onToggleRead: () {
+                        if (!item.isRead) {
+                          ref
+                              .read(notificationsFeedProvider.notifier)
+                              .markAsRead(item.id);
+                        }
+                      },
+                      onDelete: () async {
+                        await ref
+                            .read(notificationsFeedProvider.notifier)
+                            .deleteNotification(item.id);
+                        if (!context.mounted) return;
+                        _showUndoDeleteSnackBar(context, ref, item);
+                      },
+                    );
+                  },
+                  onToggleRead: () {
+                    if (!item.isRead) {
+                      ref
+                          .read(notificationsFeedProvider.notifier)
+                          .markAsRead(item.id);
                     }
+                  },
+                  onDelete: () async {
+                    await ref
+                        .read(notificationsFeedProvider.notifier)
+                        .deleteNotification(item.id);
+                    if (!context.mounted) return;
+                    _showUndoDeleteSnackBar(context, ref, item);
                   },
                 );
               }),
@@ -426,6 +488,70 @@ class NotificationsScreen extends ConsumerWidget {
             ),
           ],
         ],
+      ),
+    );
+  }
+
+  Future<void> _openMoreActions(
+    BuildContext context,
+    WidgetRef ref,
+    int unreadCount,
+    int totalCount,
+  ) async {
+    await MoreActionsSheet.show(
+      context,
+      unreadCount: unreadCount,
+      totalCount: totalCount,
+      onAction: (action) async {
+        if (!context.mounted) return;
+        if (action == MoreNotificationAction.markAllAsRead) {
+          final confirmed = await MarkAllReadSheet.show(
+            context,
+            count: unreadCount,
+          );
+          if (confirmed == true && context.mounted) {
+            await ref.read(notificationsFeedProvider.notifier).markAllAsRead();
+          }
+        } else if (action == MoreNotificationAction.deleteAll) {
+          final confirmed = await DeleteAllSheet.show(
+            context,
+            count: totalCount,
+          );
+          if (confirmed == true && context.mounted) {
+            await ref
+                .read(notificationsFeedProvider.notifier)
+                .deleteAllNotifications();
+          }
+        }
+      },
+    );
+  }
+
+  void _showUndoDeleteSnackBar(
+    BuildContext context,
+    WidgetRef ref,
+    NotificationItem item,
+  ) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.only(bottom: 24, left: 16, right: 16),
+        duration: const Duration(
+          seconds: NotificationConstants.undoDurationSeconds,
+        ),
+        backgroundColor: const Color(0xFF19191C),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        content: Text(
+          tr('notifications.toast.deleted'),
+          style: const TextStyle(color: Colors.white, fontSize: 14.5),
+        ),
+        action: SnackBarAction(
+          label: tr('notifications.actions.undo'),
+          textColor: const Color(0xFFFF9B73),
+          onPressed: () {
+            ref.read(notificationsFeedProvider.notifier).undoDelete(item);
+          },
+        ),
       ),
     );
   }
