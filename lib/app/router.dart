@@ -13,6 +13,7 @@ import '../features/applicant/applications/application_detail_screen.dart';
 import '../features/applicant/applications/application_history_screen.dart';
 import '../features/applicant/applications/applications_screen.dart';
 import '../features/applicant/certificates/certificates_screen.dart';
+import '../features/applicant/notifications/announcement_detail_screen.dart';
 import '../features/applicant/notifications/notifications_providers.dart';
 import '../features/applicant/notifications/notifications_screen.dart';
 import '../features/applicant/portfolio/portfolio_screen.dart';
@@ -273,6 +274,22 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: AppRoutes.notifications,
                 builder: (context, state) => const NotificationsScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'announcements/:id',
+                    builder: (context, state) {
+                      final id = state.pathParameters['id'] ?? '';
+                      final extra = state.extra;
+                      final initialItem = extra is NotificationItem
+                          ? extra
+                          : null;
+                      return AnnouncementDetailScreen(
+                        id: id,
+                        initialItem: initialItem,
+                      );
+                    },
+                  ),
+                ],
               ),
             ],
           ),
