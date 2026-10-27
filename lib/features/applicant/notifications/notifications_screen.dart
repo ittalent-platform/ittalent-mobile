@@ -22,7 +22,9 @@ import 'widgets/notification_action_sheet.dart';
 import 'widgets/notification_item_tile.dart';
 
 class NotificationsScreen extends ConsumerWidget {
-  const NotificationsScreen({super.key});
+  const NotificationsScreen({super.key, this.swipedItemId});
+
+  final String? swipedItemId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -382,6 +384,7 @@ class NotificationsScreen extends ConsumerWidget {
                 return NotificationItemTile(
                   key: Key('notification_item_${item.id}'),
                   item: item,
+                  initiallySwiped: item.id == swipedItemId,
                   onTap: () async {
                     if (!item.isRead) {
                       await ref

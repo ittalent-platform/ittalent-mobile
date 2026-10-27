@@ -15,6 +15,7 @@ class NotificationItemTile extends StatefulWidget {
     this.onLongPress,
     this.onToggleRead,
     this.onDelete,
+    this.initiallySwiped = false,
   });
 
   final NotificationItem item;
@@ -22,6 +23,7 @@ class NotificationItemTile extends StatefulWidget {
   final VoidCallback? onLongPress;
   final VoidCallback? onToggleRead;
   final VoidCallback? onDelete;
+  final bool initiallySwiped;
 
   @override
   State<NotificationItemTile> createState() => _NotificationItemTileState();
@@ -37,6 +39,7 @@ class _NotificationItemTileState extends State<NotificationItemTile>
   @override
   void initState() {
     super.initState();
+    _dragExtent = widget.initiallySwiped ? -_actionExtent : 0;
     _controller =
         AnimationController(
           vsync: this,
@@ -108,90 +111,91 @@ class _NotificationItemTileState extends State<NotificationItemTile>
 
     return Stack(
       children: [
-        // Background Swipe Action Tray
-        Positioned.fill(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              // Read / Unread Action
-              InkWell(
-                key: Key('notification_swipe_read_${item.id}'),
-                onTap: () {
-                  close();
-                  widget.onToggleRead?.call();
-                },
-                child: Container(
-                  width: 76,
-                  color: const Color(0xFF2A55A8),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        item.isRead ? LucideIcons.mail : LucideIcons.check,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                      const SizedBox(height: 4),
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
-                          child: Text(
-                            readLabel,
-                            maxLines: 1,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
+        // Background Swipe Action Tray (only rendered during active swipe reveal)
+        if (_dragExtent < 0)
+          Positioned.fill(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                // Read / Unread Action
+                InkWell(
+                  key: Key('notification_swipe_read_${item.id}'),
+                  onTap: () {
+                    close();
+                    widget.onToggleRead?.call();
+                  },
+                  child: Container(
+                    width: 76,
+                    color: const Color(0xFF2A55A8),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          item.isRead ? LucideIcons.mail : LucideIcons.check,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                        const SizedBox(height: 4),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            child: Text(
+                              readLabel,
+                              maxLines: 1,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              // Delete Action
-              InkWell(
-                key: Key('notification_swipe_delete_${item.id}'),
-                onTap: () {
-                  close();
-                  widget.onDelete?.call();
-                },
-                child: Container(
-                  width: 76,
-                  color: const Color(0xFFB42318),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        LucideIcons.trash2,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                      const SizedBox(height: 4),
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
-                          child: Text(
-                            deleteLabel,
-                            maxLines: 1,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
+                // Delete Action
+                InkWell(
+                  key: Key('notification_swipe_delete_${item.id}'),
+                  onTap: () {
+                    close();
+                    widget.onDelete?.call();
+                  },
+                  child: Container(
+                    width: 76,
+                    color: const Color(0xFFB42318),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          LucideIcons.trash2,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                        const SizedBox(height: 4),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            child: Text(
+                              deleteLabel,
+                              maxLines: 1,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
 
         // Foreground Tile Content
         Transform.translate(
@@ -201,9 +205,7 @@ class _NotificationItemTileState extends State<NotificationItemTile>
             onHorizontalDragUpdate: _handleDragUpdate,
             onHorizontalDragEnd: _handleDragEnd,
             child: Material(
-              color: isUnread
-                  ? colors.statusPeachBg.withValues(alpha: 0.45)
-                  : colors.card,
+              color: isUnread ? colors.statusPeachBg : colors.card,
               child: InkWell(
                 onTap: () {
                   if (_dragExtent < -10) {
