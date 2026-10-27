@@ -85,14 +85,18 @@ class NotificationConstants {
     final diffMinutes = diff.inMinutes;
 
     if (diffMinutes < 1) {
-      return tr('notifications.relativeTime.justNow');
+      final res = tr('notifications.relativeTime.justNow');
+      return res.startsWith('notifications.relativeTime') ? 'Just now' : res;
     }
 
     if (diffMinutes < 60) {
-      return tr(
+      final res = tr(
         'notifications.relativeTime.minAgo',
         namedArgs: {'count': '$diffMinutes'},
       );
+      return res.startsWith('notifications.relativeTime')
+          ? '${diffMinutes}m ago'
+          : res;
     }
 
     final todayStart = DateTime(localNow.year, localNow.month, localNow.day);
@@ -101,10 +105,13 @@ class NotificationConstants {
     if (localDate.isAfter(todayStart) ||
         localDate.isAtSameMomentAs(todayStart)) {
       final hours = diff.inHours;
-      return tr(
+      final res = tr(
         'notifications.relativeTime.hAgo',
         namedArgs: {'count': '$hours'},
       );
+      return res.startsWith('notifications.relativeTime')
+          ? '${hours}h ago'
+          : res;
     }
 
     if (localDate.isAfter(yesterdayStart) ||
