@@ -337,7 +337,7 @@ Future<void> choose(WidgetTester tester, String type) async {
 Future<void> download(WidgetTester tester, String id) async {
   await tester.tap(find.byKey(Key('menu_$id')));
   await tester.pumpAndSettle();
-  await tester.tap(find.byKey(const Key('documents_action_download')));
+  await tester.tap(find.byKey(const Key('documents_action_download')).last);
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 400));
 }
@@ -1089,12 +1089,12 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(Key('menu_${repo.items.first.id}')));
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('documents_action_download')));
+    await tester.tap(find.byKey(const Key('documents_action_download')).last);
     await tester.pump(const Duration(milliseconds: 400));
     expect(files.prepares, 1);
     await tester.tap(find.byKey(const Key('menu_other')));
     await tester.pump();
-    await tester.tap(find.byKey(const Key('documents_action_download')));
+    await tester.tap(find.byKey(const Key('documents_action_download')).last);
     await tester.pump(const Duration(milliseconds: 400));
     expect(files.prepares, 1);
     await tester.pumpWidget(const MaterialApp(home: SizedBox()));
