@@ -56,7 +56,7 @@ void main() {
 
         expect(find.text('Me'), findsOneWidget);
         expect(find.text('John Doe'), findsOneWidget);
-        expect(find.text('Project manager · Agile delivery'), findsOneWidget);
+        expect(find.text('Project manager · Agile delivery'), findsNothing);
         expect(find.text('john.doe@techcorp.com'), findsOneWidget);
       },
     );

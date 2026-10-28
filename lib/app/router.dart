@@ -26,6 +26,9 @@ import '../features/auth/verify_email/check_email_screen.dart';
 import '../features/auth/verify_email/verify_email_screen.dart';
 import '../features/auth/welcome/welcome_screen.dart';
 import '../features/profile/me_screen.dart';
+import '../features/profile/profile_screen.dart';
+import '../features/profile/edit_profile_screen.dart';
+import '../features/profile/change_password_screen.dart';
 import '../theme/app_colors.dart';
 
 class RouterNotifier extends ChangeNotifier {
@@ -88,6 +91,13 @@ final routerProvider = Provider<GoRouter>((ref) {
     redirect: notifier.redirect,
     routes: [
       GoRoute(
+        path: AppRoutes.editProfile,
+        builder: (context, state) => const EditProfileScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.changePassword,
+        builder: (context, state) => const ChangePasswordScreen(),
+      ),
         path: AppRoutes.portfolio,
         builder: (context, state) => const PortfolioScreen(),
       ),
@@ -298,6 +308,12 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: AppRoutes.profile,
                 builder: (context, state) => const MeScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'details',
+                    builder: (context, state) => const ProfileScreen(),
+                  ),
+                ],
               ),
             ],
           ),

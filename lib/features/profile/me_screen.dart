@@ -11,6 +11,8 @@ import '../../config/routes.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';
 import '../applicant/certificates/certificates_providers.dart';
+import 'profile_providers.dart';
+import 'widgets/profile_avatar.dart';
 
 class MeScreen extends ConsumerWidget {
   const MeScreen({super.key});
@@ -20,6 +22,7 @@ class MeScreen extends ConsumerWidget {
     final colors = context.colors;
     final authState = ref.watch(authNotifierProvider);
     final user = authState.user;
+    final profile = ref.watch(profileProvider).value;
     final certificateCount = ref.watch(certificateCountProvider).value ?? 0;
 
     final String fullName;
@@ -30,12 +33,12 @@ class MeScreen extends ConsumerWidget {
     } else if (user != null && user.username.trim().isNotEmpty) {
       fullName = user.username.trim();
     } else {
-      fullName = 'Nguyễn Văn An';
+      fullName = '';
     }
 
     final String email = (user != null && user.email.trim().isNotEmpty)
         ? user.email.trim()
-        : 'an.nguyen@gmail.com';
+        : '';
 
     return ScreenScaffold(
       padding: EdgeInsets.zero,
@@ -69,29 +72,14 @@ class MeScreen extends ConsumerWidget {
                 color: Colors.transparent,
                 child: InkWell(
                   borderRadius: BorderRadius.circular(16),
-                  onTap: () {},
+                  onTap: () => context.push(AppRoutes.profileDetails),
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: Row(
                       children: [
-                        // Avatar Circle
-                        Container(
-                          width: 64,
-                          height: 64,
-                          decoration: const BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: LinearGradient(
-                              begin: Alignment(-0.64, -0.77),
-                              end: Alignment(0.64, 0.77),
-                              colors: [Color(0xFFF2A07B), Color(0xFFC8501F)],
-                            ),
-                          ),
-                          clipBehavior: Clip.antiAlias,
-                          alignment: Alignment.bottomCenter,
-                          child: CustomPaint(
-                            size: const Size(46, 46),
-                            painter: _CandidateAvatarPainter(),
-                          ),
+                        ProfileAvatar(
+                          name: profile?.displayName ?? fullName,
+                          url: profile?.avatarUrl,
                         ),
                         const SizedBox(width: 14),
 
@@ -110,7 +98,7 @@ class MeScreen extends ConsumerWidget {
                               ),
                               const SizedBox(height: 3),
                               Text(
-                                'Project manager · Agile delivery',
+                                profile?.role ?? '',
                                 style: AppTypography.body(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w400,
@@ -151,7 +139,7 @@ class MeScreen extends ConsumerWidget {
                   key: const Key('me_menu_profile'),
                   icon: LucideIcons.user,
                   title: 'Profile',
-                  onTap: () {},
+                  onTap: () => context.push(AppRoutes.profileDetails),
                 ),
                 AppMenuTile(
                   key: const Key('me_menu_documents'),
@@ -184,7 +172,10 @@ class MeScreen extends ConsumerWidget {
                   key: const Key('me_menu_saved_jobs'),
                   icon: LucideIcons.heart,
                   title: 'Saved jobs',
-                  onTap: () {},
+                  onTap:
+                      profile?.canMutate == true && profile?.hasPassword == true
+                      ? () => context.push(AppRoutes.changePassword)
+                      : null,
                 ),
                 AppMenuTile(
                   key: const Key('me_menu_my_reports'),
@@ -231,30 +222,4 @@ class MeScreen extends ConsumerWidget {
       ),
     );
   }
-}
-
-class _CandidateAvatarPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = const Color(0xFFFBE3D6)
-      ..style = PaintingStyle.fill;
-
-    final scale = size.width / 24.0;
-    canvas.scale(scale, scale);
-
-    // Head circle cx="12" cy="8" r="4.2"
-    canvas.drawCircle(const Offset(12, 8), 4.2, paint);
-
-    // Shoulders path: M3.5 23c.6-5 4-8 8.5-8s7.9 3 8.5 8z
-    final path = Path()
-      ..moveTo(3.5, 23)
-      ..cubicTo(4.1, 18, 7.5, 15, 12, 15)
-      ..cubicTo(16.5, 15, 19.9, 18, 20.5, 23)
-      ..close();
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
