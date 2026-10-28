@@ -459,6 +459,19 @@ void main() {
           expect(tester.takeException(), isNull);
           await tester.tap(find.text(lang == 'en' ? 'Cancel' : 'Hủy'));
           await tester.pumpAndSettle();
+          await tester.tap(
+            find.byKey(const Key('menu_507f1f77bcf86cd799439011')),
+          );
+          await tester.pumpAndSettle();
+          expect(tester.takeException(), isNull);
+          await tester.tap(find.text(lang == 'en' ? 'Cancel' : 'Hủy'));
+          await tester.pumpAndSettle();
+          await tester.tap(find.byKey(const Key('documents_sort')));
+          await tester.pumpAndSettle();
+          expect(find.byKey(const Key('documents_sort_apply')), findsOneWidget);
+          expect(tester.takeException(), isNull);
+          await tester.tap(find.byKey(const Key('documents_sort_apply')));
+          await tester.pumpAndSettle();
         },
       );
     }
@@ -524,8 +537,10 @@ void main() {
     expect(find.textContaining('342 KB'), findsOneWidget);
     expect(formatDocumentSize(0), '0 B');
     expect(formatDocumentSize(512), '512 B');
+    expect(formatDocumentSize(1025), '1 KB');
     expect(formatDocumentSize(1229), '1.2 KB');
     expect(formatDocumentSize(3670016), '3.5 MB');
+    expect(formatDocumentSize(5242890), '5 MB');
     await tester.tap(find.byKey(const Key('documents_sort')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('File size'));
@@ -553,29 +568,57 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('menu_old')));
       await tester.pumpAndSettle();
-      expect(
-        find.textContaining('Set Nguyễn Văn An.pdf as default'),
-        findsOneWidget,
-      );
-      await tester.tap(find.textContaining('Set Nguyễn Văn An.pdf as default'));
+      expect(find.text('Set as default'), findsOneWidget);
+      await tester.tap(find.text('Set as default'));
       await tester.pumpAndSettle();
       expect(repo.defaults, 1);
+      expect(find.text('Default'), findsOneWidget);
+      await tester.tap(find.byKey(const Key('menu_old')));
+      await tester.pumpAndSettle();
+      expect(find.text('Set as default'), findsNothing);
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('menu_new')));
       await tester.pumpAndSettle();
-      await tester.tap(find.textContaining('Delete New.pdf'));
+      await tester.tap(find.text('Delete'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Cancel'));
       await tester.pumpAndSettle();
       expect(repo.deletes, 0);
       await tester.tap(find.byKey(const Key('menu_new')));
       await tester.pumpAndSettle();
-      await tester.tap(find.textContaining('Delete New.pdf'));
+      await tester.tap(find.text('Delete'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Delete document'));
       await tester.pumpAndSettle();
       expect(repo.deletes, 1);
+      expect(find.text('New.pdf'), findsNothing);
     },
   );
+
+  testWidgets('set-default error preserves the existing default badge', (
+    tester,
+  ) async {
+    final defaultItem = DocumentDto.fromJson(
+      documentJson(id: 'default', isDefault: true),
+    );
+    final target = DocumentDto.fromJson(documentJson(id: 'target'));
+    final repo = RepoDouble()
+      ..items = [defaultItem, target]
+      ..defaultError = const ApiError(message: 'unavailable', statusCode: 503);
+    await pumpDocuments(tester, repo, FilesDouble());
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('menu_target')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Set as default'));
+    await tester.pumpAndSettle();
+    expect(repo.defaults, 1);
+    expect(find.text('Default'), findsOneWidget);
+    expect(
+      find.text('Documents are temporarily unavailable. Try again later.'),
+      findsOneWidget,
+    );
+  });
 
   testWidgets('delete conflict keeps the document and reports why', (
     tester,
@@ -588,7 +631,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('menu_used')));
     await tester.pumpAndSettle();
-    await tester.tap(find.textContaining('Delete Nguyễn Văn An.pdf'));
+    await tester.tap(find.text('Delete'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Delete document'));
     await tester.pumpAndSettle();
@@ -749,6 +792,17 @@ void main() {
       expect(find.text('Document uploaded'), findsOneWidget);
     },
   );
+  testWidgets('oversize upload shows the rounded file size', (tester) async {
+    final files = FilesDouble()..selection = selected('pdf', size: 5242890);
+    await pumpDocuments(tester, RepoDouble(), files);
+    await tester.pumpAndSettle();
+    await choose(tester, 'cv');
+    await tester.pumpAndSettle();
+    expect(
+      find.text('This file (5 MB) exceeds 5 MiB. Choose a smaller file.'),
+      findsOneWidget,
+    );
+  });
   testWidgets(
     'upload success preserves current type filter and does not insert mismatched card',
     (tester) async {
@@ -783,18 +837,14 @@ void main() {
       expect(files.saves, 0);
       expect(find.text('Downloading…'), findsOneWidget);
       expect(
-        tester
-            .widget<PopupMenuButton<String>>(find.byKey(Key('menu_${item.id}')))
-            .enabled,
-        false,
+        tester.widget<IconButton>(find.byKey(Key('menu_${item.id}'))).onPressed,
+        isNull,
       );
       expect(
         tester
-            .widget<PopupMenuButton<String>>(
-              find.byKey(const Key('menu_other')),
-            )
-            .enabled,
-        true,
+            .widget<IconButton>(find.byKey(const Key('menu_other')))
+            .onPressed,
+        isNotNull,
       );
       repo.downloadPending!.complete(
         DownloadedDocument(
@@ -1042,9 +1092,9 @@ void main() {
     await tester.tap(find.textContaining('Download'));
     await tester.pump(const Duration(milliseconds: 400));
     expect(files.prepares, 1);
-    tester
-        .widget<PopupMenuButton<String>>(find.byKey(const Key('menu_other')))
-        .onSelected!('download');
+    await tester.tap(find.byKey(const Key('menu_other')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Download'));
     await tester.pump(const Duration(milliseconds: 400));
     expect(files.prepares, 1);
     await tester.pumpWidget(const MaterialApp(home: SizedBox()));

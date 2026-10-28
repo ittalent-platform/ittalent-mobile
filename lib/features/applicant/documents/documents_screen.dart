@@ -62,13 +62,19 @@ String documentError(
 }
 
 String formatDocumentSize(int bytes) {
-  String value(double amount) => amount == amount.roundToDouble()
-      ? amount.toInt().toString()
-      : amount.toStringAsFixed(1);
+  String value(double amount) {
+    final rounded = amount.toStringAsFixed(1);
+    return rounded.endsWith('.0')
+        ? rounded.substring(0, rounded.length - 2)
+        : rounded;
+  }
+
   if (bytes < 1024) return '$bytes B';
   if (bytes < 1048576) return '${value(bytes / 1024)} KB';
   return '${value(bytes / 1048576)} MB';
 }
+
+enum _DocumentMenuAction { setDefault, download, delete }
 
 class DocumentsScreen extends ConsumerStatefulWidget {
   const DocumentsScreen({super.key});
@@ -511,7 +517,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen>
           Semantics(
             liveRegion: true,
             child: Text(
-              documentError(_uploadError!),
+              _uploadErrorMessage(),
               style: AppTypography.body(color: context.colors.destructive),
             ),
           ),
@@ -541,6 +547,19 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen>
     ),
   );
 
+  String _uploadErrorMessage() {
+    final error = _uploadError!;
+    if (error is DocumentValidation &&
+        error.key == 'size' &&
+        _selected != null) {
+      return tr(
+        'documents.mobile.size',
+        namedArgs: {'size': formatDocumentSize(_selected!.size)},
+      );
+    }
+    return documentError(error);
+  }
+
   Future<void> _setDefault(DocumentDto item) async {
     if (_mutating.contains(item.id)) return;
     setState(() => _mutating.add(item.id));
@@ -550,7 +569,12 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen>
       ref.invalidate(documentsProvider);
       _toast(tr('documents.defaultDoneTitle'));
     } catch (error) {
-      if (mounted) _toast(documentError(error), error: true);
+      if (mounted) {
+        _toast(
+          documentError(error, fallback: 'documents.defaultFailedTitle'),
+          error: true,
+        );
+      }
     } finally {
       if (mounted) setState(() => _mutating.remove(item.id));
     }
@@ -589,7 +613,12 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen>
       _invalidateDocumentCounts();
       _toast(tr('documents.deletedTitle'));
     } catch (error) {
-      if (mounted) _toast(documentError(error), error: true);
+      if (mounted) {
+        _toast(
+          documentError(error, fallback: 'documents.deleteFailedTitle'),
+          error: true,
+        );
+      }
     } finally {
       if (mounted) setState(() => _mutating.remove(item.id));
     }
@@ -614,26 +643,38 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen>
                   tr('documents.sort.label'),
                   style: AppTypography.display(fontSize: 22),
                 ),
-                for (final choice in DocumentSortField.values)
-                  RadioListTile<DocumentSortField>(
-                    value: choice,
-                    groupValue: field,
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(tr('documents.sort.${choice.value}')),
-                    onChanged: (value) => setSheetState(() => field = value!),
+                RadioGroup<DocumentSortField>(
+                  groupValue: field,
+                  onChanged: (value) => setSheetState(() => field = value!),
+                  child: Column(
+                    children: [
+                      for (final choice in DocumentSortField.values)
+                        RadioListTile<DocumentSortField>(
+                          value: choice,
+                          contentPadding: EdgeInsets.zero,
+                          title: Text(tr('documents.sort.${choice.value}')),
+                        ),
+                    ],
                   ),
+                ),
                 Text(
                   tr('documents.sort.order'),
                   style: AppTypography.body(fontWeight: FontWeight.w600),
                 ),
-                for (final choice in DocumentSortOrder.values)
-                  RadioListTile<DocumentSortOrder>(
-                    value: choice,
-                    groupValue: order,
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(tr('documents.sort.${choice.value}')),
-                    onChanged: (value) => setSheetState(() => order = value!),
+                RadioGroup<DocumentSortOrder>(
+                  groupValue: order,
+                  onChanged: (value) => setSheetState(() => order = value!),
+                  child: Column(
+                    children: [
+                      for (final choice in DocumentSortOrder.values)
+                        RadioListTile<DocumentSortOrder>(
+                          value: choice,
+                          contentPadding: EdgeInsets.zero,
+                          title: Text(tr('documents.sort.${choice.value}')),
+                        ),
+                    ],
                   ),
+                ),
                 AppButton(
                   key: const Key('documents_sort_apply'),
                   size: AppButtonSize.lg,
@@ -649,6 +690,98 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen>
     if (changed == true && mounted) {
       _setQuery(query.type, query.search, sortField: field, sortOrder: order);
     }
+  }
+
+  Future<void> _chooseAction(DocumentDto item) async {
+    if (_mutating.contains(item.id) || _downloads.containsKey(item.id)) return;
+    final colors = context.colors;
+    final action = await showModalBottomSheet<_DocumentMenuAction>(
+      context: context,
+      backgroundColor: colors.card,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (sheetContext) => SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                item.fileName,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.display(fontSize: 18),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '${tr(item.type == DocumentType.cv ? 'documents.typeCv' : 'documents.typeCoverLetter')} · ${formatDocumentSize(item.size)}',
+                style: AppTypography.body(color: colors.mutedForeground),
+              ),
+              const SizedBox(height: 8),
+              if (!item.isDefault)
+                _actionRow(
+                  sheetContext,
+                  _DocumentMenuAction.setDefault,
+                  LucideIcons.star,
+                  tr('documents.mobile.setDefault'),
+                ),
+              _actionRow(
+                sheetContext,
+                _DocumentMenuAction.download,
+                LucideIcons.download,
+                tr('documents.mobile.download'),
+              ),
+              _actionRow(
+                sheetContext,
+                _DocumentMenuAction.delete,
+                LucideIcons.trash2,
+                tr('documents.mobile.delete'),
+                destructive: true,
+              ),
+              const SizedBox(height: 12),
+              AppButton(
+                text: tr('documents.mobile.cancel'),
+                variant: AppButtonVariant.secondary,
+                size: AppButtonSize.lg,
+                isFullWidth: true,
+                onPressed: () => Navigator.pop(sheetContext),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (!mounted || action == null) return;
+    switch (action) {
+      case _DocumentMenuAction.setDefault:
+        await _setDefault(item);
+        return;
+      case _DocumentMenuAction.download:
+        await _download(item);
+        return;
+      case _DocumentMenuAction.delete:
+        await _delete(item);
+        return;
+    }
+  }
+
+  Widget _actionRow(
+    BuildContext sheetContext,
+    _DocumentMenuAction action,
+    IconData icon,
+    String label, {
+    bool destructive = false,
+  }) {
+    final color = destructive
+        ? sheetContext.colors.destructive
+        : sheetContext.colors.foreground;
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: Icon(icon, color: color),
+      title: Text(label, style: AppTypography.body(fontSize: 16, color: color)),
+      onTap: () => Navigator.pop(sheetContext, action),
+    );
   }
 
   Widget _card(DocumentDto item) {
@@ -704,7 +837,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen>
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      '${tr(cv ? 'documents.typeCv' : 'documents.typeCoverLetter')} · ${formatDocumentSize(item.size)} · ${DateFormat.yMMMd(context.locale.toString()).format(item.createdAt.toLocal())}',
+                      '${tr(cv ? 'documents.typeCv' : 'documents.typeCoverLetter')} · ${formatDocumentSize(item.size)} · ${DateFormat('d MMM yyyy', context.locale.toString()).format(item.createdAt.toLocal())}',
                       style: AppTypography.body(
                         fontSize: 13,
                         color: colors.mutedForeground,
@@ -721,57 +854,16 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen>
                   ],
                 ),
               ),
-              PopupMenuButton<String>(
+              IconButton(
                 key: Key('menu_${item.id}'),
-                enabled: !downloading && !mutating,
                 tooltip: tr(
                   'documents.mobile.actions',
                   namedArgs: {'name': item.fileName},
                 ),
-                constraints: const BoxConstraints(minWidth: 180, maxWidth: 280),
                 icon: const Icon(LucideIcons.ellipsisVertical),
-                onSelected: (action) => switch (action) {
-                  'download' => _download(item),
-                  'default' => _setDefault(item),
-                  'delete' => _delete(item),
-                  _ => null,
-                },
-                itemBuilder: (_) => [
-                  if (!item.isDefault)
-                    PopupMenuItem(
-                      height: 48,
-                      value: 'default',
-                      child: Text(
-                        tr(
-                          'documents.setDefault',
-                          namedArgs: {'name': item.fileName},
-                        ),
-                      ),
-                    ),
-                  PopupMenuItem(
-                    height: 48,
-                    value: 'download',
-                    child: Text(
-                      tr(
-                        'documents.download',
-                        namedArgs: {'name': item.fileName},
-                      ),
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  PopupMenuItem(
-                    height: 48,
-                    value: 'delete',
-                    child: Text(
-                      tr(
-                        'documents.delete',
-                        namedArgs: {'name': item.fileName},
-                      ),
-                      style: AppTypography.body(color: colors.destructive),
-                    ),
-                  ),
-                ],
+                onPressed: downloading || mutating
+                    ? null
+                    : () => _chooseAction(item),
               ),
             ],
           ),
@@ -839,6 +931,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen>
                 query.search.isNotEmpty
                     ? 'documents.noMatchesHint'
                     : 'documents.emptyHint',
+                namedArgs: {'query': query.search},
               ),
             );
           }
@@ -961,42 +1054,45 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen>
             },
           ),
           const SizedBox(height: 8),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                for (final type in <DocumentType?>[
-                  null,
-                  ...DocumentType.values,
-                ])
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: Semantics(
-                      selected: query.type == type,
-                      child: AppButton(
-                        key: Key('filter_${type?.value ?? 'all'}'),
-                        size: AppButtonSize.lg,
-                        text: _filterLabel(type, counts),
-                        variant: query.type == type
-                            ? AppButtonVariant.primary
-                            : AppButtonVariant.outline,
-                        onPressed: () {
-                          _debounce?.cancel();
-                          _setQuery(type, _search.text);
-                        },
-                      ),
-                    ),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final type in <DocumentType?>[null, ...DocumentType.values])
+                ChoiceChip(
+                  key: Key('filter_${type?.value ?? 'all'}'),
+                  label: Text(_filterLabel(type, counts)),
+                  selected: query.type == type,
+                  showCheckmark: false,
+                  selectedColor: context.colors.statusPeachBg,
+                  backgroundColor: context.colors.card,
+                  side: BorderSide(
+                    color: query.type == type
+                        ? context.colors.primary
+                        : context.colors.border,
                   ),
-                AppButton(
-                  key: const Key('documents_sort'),
-                  size: AppButtonSize.lg,
-                  text: tr('documents.mobile.sort'),
-                  icon: const Icon(LucideIcons.arrowDownUp),
-                  variant: AppButtonVariant.outline,
-                  onPressed: () => _chooseSort(query),
+                  shape: const StadiumBorder(),
+                  labelStyle: AppTypography.body(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: query.type == type
+                        ? context.colors.primary
+                        : context.colors.foreground,
+                  ),
+                  onSelected: (_) {
+                    _debounce?.cancel();
+                    _setQuery(type, _search.text);
+                  },
                 ),
-              ],
-            ),
+              AppButton(
+                key: const Key('documents_sort'),
+                size: AppButtonSize.lg,
+                text: tr('documents.mobile.sort'),
+                icon: const Icon(LucideIcons.arrowDownUp),
+                variant: AppButtonVariant.outline,
+                onPressed: () => _chooseSort(query),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           Expanded(
