@@ -98,6 +98,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.changePassword,
         builder: (context, state) => const ChangePasswordScreen(),
       ),
+      GoRoute(
         path: AppRoutes.portfolio,
         builder: (context, state) => const PortfolioScreen(),
       ),
