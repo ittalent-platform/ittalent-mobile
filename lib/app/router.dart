@@ -13,6 +13,9 @@ import '../features/applicant/applications/application_detail_screen.dart';
 import '../features/applicant/applications/application_history_screen.dart';
 import '../features/applicant/applications/applications_screen.dart';
 import '../features/applicant/certificates/certificates_screen.dart';
+import '../features/applicant/notifications/announcement_detail_screen.dart';
+import '../features/applicant/notifications/notifications_providers.dart';
+import '../features/applicant/notifications/notifications_screen.dart';
 import '../features/applicant/portfolio/portfolio_screen.dart';
 import '../features/auth/forgot_password/forgot_password_screen.dart';
 import '../features/auth/forgot_password/reset_link_sent_screen.dart';
@@ -163,39 +166,70 @@ final routerProvider = Provider<GoRouter>((ref) {
 
           return Scaffold(
             body: navigationShell,
-            bottomNavigationBar: NavigationBar(
-              selectedIndex: navigationShell.currentIndex,
-              onDestinationSelected: (index) {
-                navigationShell.goBranch(
-                  index,
-                  initialLocation: index == navigationShell.currentIndex,
+            bottomNavigationBar: Consumer(
+              builder: (context, ref, _) {
+                final unreadCount = ref.watch(unreadCountProvider);
+
+                return NavigationBar(
+                  selectedIndex: navigationShell.currentIndex,
+                  onDestinationSelected: (index) {
+                    navigationShell.goBranch(
+                      index,
+                      initialLocation: index == navigationShell.currentIndex,
+                    );
+                  },
+                  backgroundColor: colors.card,
+                  indicatorColor: colors.primary.withValues(alpha: 0.15),
+                  destinations: [
+                    NavigationDestination(
+                      icon: const Icon(LucideIcons.briefcase),
+                      selectedIcon: Icon(
+                        LucideIcons.briefcase,
+                        color: colors.primary,
+                      ),
+                      label: tr('accountNav.jobSearch'),
+                    ),
+                    NavigationDestination(
+                      icon: const Icon(LucideIcons.fileText),
+                      selectedIcon: Icon(
+                        LucideIcons.fileText,
+                        color: colors.primary,
+                      ),
+                      label: tr('accountNav.myApplications'),
+                    ),
+                    NavigationDestination(
+                      icon: unreadCount > 0
+                          ? Badge.count(
+                              count: unreadCount,
+                              maxCount: 99,
+                              backgroundColor: colors.primary,
+                              child: const Icon(LucideIcons.bell),
+                            )
+                          : const Icon(LucideIcons.bell),
+                      selectedIcon: unreadCount > 0
+                          ? Badge.count(
+                              count: unreadCount,
+                              maxCount: 99,
+                              backgroundColor: colors.primary,
+                              child: Icon(
+                                LucideIcons.bell,
+                                color: colors.primary,
+                              ),
+                            )
+                          : Icon(LucideIcons.bell, color: colors.primary),
+                      label: tr('notifications.title'),
+                    ),
+                    NavigationDestination(
+                      icon: const Icon(LucideIcons.user),
+                      selectedIcon: Icon(
+                        LucideIcons.user,
+                        color: colors.primary,
+                      ),
+                      label: 'Me',
+                    ),
+                  ],
                 );
               },
-              backgroundColor: colors.card,
-              indicatorColor: colors.primary.withValues(alpha: 0.15),
-              destinations: [
-                NavigationDestination(
-                  icon: const Icon(LucideIcons.briefcase),
-                  selectedIcon: Icon(
-                    LucideIcons.briefcase,
-                    color: colors.primary,
-                  ),
-                  label: tr('accountNav.jobSearch'),
-                ),
-                NavigationDestination(
-                  icon: const Icon(LucideIcons.fileText),
-                  selectedIcon: Icon(
-                    LucideIcons.fileText,
-                    color: colors.primary,
-                  ),
-                  label: tr('accountNav.myApplications'),
-                ),
-                NavigationDestination(
-                  icon: const Icon(LucideIcons.user),
-                  selectedIcon: Icon(LucideIcons.user, color: colors.primary),
-                  label: 'Me',
-                ),
-              ],
             ),
           );
         },
@@ -235,6 +269,30 @@ final routerProvider = Provider<GoRouter>((ref) {
                         ),
                       ),
                     ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.notifications,
+                builder: (context, state) => const NotificationsScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'announcements/:id',
+                    builder: (context, state) {
+                      final id = state.pathParameters['id'] ?? '';
+                      final extra = state.extra;
+                      final initialItem = extra is NotificationItem
+                          ? extra
+                          : null;
+                      return AnnouncementDetailScreen(
+                        id: id,
+                        initialItem: initialItem,
+                      );
+                    },
                   ),
                 ],
               ),
