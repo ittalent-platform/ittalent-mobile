@@ -1851,6 +1851,8 @@
       "uploadCover": "Upload a cover letter",
       "upload": "Upload a document",
       "cancel": "Cancel",
+      "apply": "Apply",
+      "sort": "Sort",
       "retry": "Try again",
       "chooseAgain": "Choose another file",
       "back": "Back to Me",
@@ -1870,7 +1872,9 @@
       "unauthorized": "Your session has expired. Sign in again.",
       "forbidden": "Only applicant accounts can access these documents.",
       "notFound": "This document is no longer available. Refresh the list.",
+      "inUse": "This document is used by an application and cannot be deleted.",
       "storage": "Document storage is unavailable. Try again later.",
+      "unavailable": "Documents are temporarily unavailable. Try again later.",
       "network": "Could not connect. Check your connection and try again."
     },
     "permissions": {

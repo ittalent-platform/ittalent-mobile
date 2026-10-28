@@ -124,9 +124,20 @@ class PolicyDouble extends DocumentAccessPolicy {
 
 class RepoDouble extends DocumentsRepository {
   RepoDouble() : super(ApiClient(dio: Dio()));
-  int uploads = 0, downloads = 0, lists = 0, countRequests = 0;
+  int uploads = 0,
+      downloads = 0,
+      defaults = 0,
+      deletes = 0,
+      lists = 0,
+      countRequests = 0;
   DocumentType? lastType;
-  Object? uploadError, downloadError, listError, countError;
+  DocumentsQuery? lastQuery;
+  Object? uploadError,
+      downloadError,
+      defaultError,
+      deleteError,
+      listError,
+      countError;
   Completer<DocumentDto>? uploadPending;
   Completer<DownloadedDocument>? downloadPending;
   Completer<DocumentsPage>? listPending;
@@ -139,6 +150,7 @@ class RepoDouble extends DocumentsRepository {
     int limit = DocumentConstants.pageSize,
   }) async {
     lists++;
+    lastQuery = q;
     if (limit == DocumentConstants.countPageSize) {
       countRequests++;
       if (countError != null) throw countError!;
@@ -198,6 +210,33 @@ class RepoDouble extends DocumentsRepository {
             item.mimeType,
           )
         : downloadPending!.future;
+  }
+
+  @override
+  Future<DocumentDto> setDefault(String id) async {
+    defaults++;
+    if (defaultError != null) throw defaultError!;
+    items = [
+      for (final item in items)
+        DocumentDto(
+          id: item.id,
+          ownerId: item.ownerId,
+          type: item.type,
+          fileName: item.fileName,
+          mimeType: item.mimeType,
+          size: item.size,
+          isDefault: item.id == id,
+          createdAt: item.createdAt,
+        ),
+    ];
+    return items.firstWhere((item) => item.id == id);
+  }
+
+  @override
+  Future<void> delete(String id) async {
+    deletes++;
+    if (deleteError != null) throw deleteError!;
+    items = items.where((item) => item.id != id).toList();
   }
 }
 
@@ -298,7 +337,7 @@ Future<void> choose(WidgetTester tester, String type) async {
 Future<void> download(WidgetTester tester, String id) async {
   await tester.tap(find.byKey(Key('menu_$id')));
   await tester.pumpAndSettle();
-  await tester.tap(find.byType(PopupMenuItem<String>));
+  await tester.tap(find.textContaining('Download'));
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 400));
 }
@@ -475,6 +514,87 @@ void main() {
     await tester.pumpAndSettle();
     expect(repo.lists, greaterThan(before));
     expect(repo.countRequests, countRequestsBefore + 3);
+  });
+  testWidgets('sort applies once, resets the list query, and formats sizes', (
+    tester,
+  ) async {
+    final repo = RepoDouble()..items = [DocumentDto.fromJson(documentJson())];
+    final c = await pumpDocuments(tester, repo, FilesDouble());
+    await tester.pumpAndSettle();
+    expect(find.textContaining('342 KB'), findsOneWidget);
+    expect(formatDocumentSize(0), '0 B');
+    expect(formatDocumentSize(512), '512 B');
+    expect(formatDocumentSize(1229), '1.2 KB');
+    expect(formatDocumentSize(3670016), '3.5 MB');
+    await tester.tap(find.byKey(const Key('documents_sort')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('File size'));
+    await tester.tap(find.text('Ascending'));
+    await tester.tap(find.byKey(const Key('documents_sort_apply')));
+    await tester.pumpAndSettle();
+    expect(c.read(documentsQueryProvider).sortField, DocumentSortField.size);
+    expect(
+      c.read(documentsQueryProvider).sortOrder,
+      DocumentSortOrder.ascending,
+    );
+    expect(repo.lastQuery!.parameters(1)['sort_by'], 'size');
+    expect(repo.lastQuery!.parameters(1)['sort_order'], 'asc');
+  });
+
+  testWidgets(
+    'document actions set default and delete only after confirmation',
+    (tester) async {
+      final original = DocumentDto.fromJson(documentJson(id: 'old'));
+      final target = DocumentDto.fromJson(
+        documentJson(id: 'new', name: 'New.pdf'),
+      );
+      final repo = RepoDouble()..items = [original, target];
+      await pumpDocuments(tester, repo, FilesDouble());
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('menu_old')));
+      await tester.pumpAndSettle();
+      expect(
+        find.textContaining('Set Nguyễn Văn An.pdf as default'),
+        findsOneWidget,
+      );
+      await tester.tap(find.textContaining('Set Nguyễn Văn An.pdf as default'));
+      await tester.pumpAndSettle();
+      expect(repo.defaults, 1);
+      await tester.tap(find.byKey(const Key('menu_new')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.textContaining('Delete New.pdf'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      expect(repo.deletes, 0);
+      await tester.tap(find.byKey(const Key('menu_new')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.textContaining('Delete New.pdf'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delete document'));
+      await tester.pumpAndSettle();
+      expect(repo.deletes, 1);
+    },
+  );
+
+  testWidgets('delete conflict keeps the document and reports why', (
+    tester,
+  ) async {
+    final item = DocumentDto.fromJson(documentJson(id: 'used'));
+    final repo = RepoDouble()
+      ..items = [item]
+      ..deleteError = const ApiError(message: 'in use', statusCode: 409);
+    await pumpDocuments(tester, repo, FilesDouble());
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('menu_used')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.textContaining('Delete Nguyễn Văn An.pdf'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete document'));
+    await tester.pumpAndSettle();
+    expect(repo.deletes, 1);
+    expect(find.text('Nguyễn Văn An.pdf'), findsOneWidget);
+    expect(find.textContaining('used by an application'), findsOneWidget);
   });
   testWidgets('sheet cancellation and picker cancellation never upload', (
     tester,
@@ -919,7 +1039,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(Key('menu_${repo.items.first.id}')));
     await tester.pumpAndSettle();
-    await tester.tap(find.byType(PopupMenuItem<String>));
+    await tester.tap(find.textContaining('Download'));
     await tester.pump(const Duration(milliseconds: 400));
     expect(files.prepares, 1);
     tester

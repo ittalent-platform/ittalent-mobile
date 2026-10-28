@@ -16,6 +16,23 @@ enum DocumentType {
   }
 }
 
+enum DocumentSortField {
+  createdAt('created_at'),
+  fileName('file_name'),
+  size('size');
+
+  const DocumentSortField(this.value);
+  final String value;
+}
+
+enum DocumentSortOrder {
+  ascending('asc'),
+  descending('desc');
+
+  const DocumentSortOrder(this.value);
+  final String value;
+}
+
 class DocumentDto {
   const DocumentDto({
     required this.id,
@@ -114,9 +131,16 @@ class DocumentsPage {
 }
 
 class DocumentsQuery {
-  const DocumentsQuery({this.type, this.search = ''});
+  const DocumentsQuery({
+    this.type,
+    this.search = '',
+    this.sortField = DocumentSortField.createdAt,
+    this.sortOrder = DocumentSortOrder.descending,
+  });
   final DocumentType? type;
   final String search;
+  final DocumentSortField sortField;
+  final DocumentSortOrder sortOrder;
   Map<String, Object> parameters(
     int page, {
     int limit = DocumentConstants.pageSize,
@@ -129,8 +153,8 @@ class DocumentsQuery {
     return {
       'page': page,
       'limit': limit,
-      'sort_by': 'created_at',
-      'sort_order': 'desc',
+      'sort_by': sortField.value,
+      'sort_order': sortOrder.value,
       if (type != null) 'type': type!.value,
       if (keyword.isNotEmpty) 'search': keyword,
     };

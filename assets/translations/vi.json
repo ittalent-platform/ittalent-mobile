@@ -1836,6 +1836,8 @@
       "uploadCover": "Tải thư xin việc lên",
       "upload": "Tải tài liệu lên",
       "cancel": "Hủy",
+      "apply": "Áp dụng",
+      "sort": "Sắp xếp",
       "retry": "Thử lại",
       "chooseAgain": "Chọn tệp khác",
       "back": "Quay lại Tôi",
@@ -1855,7 +1857,9 @@
       "unauthorized": "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
       "forbidden": "Chỉ tài khoản ứng viên có thể truy cập tài liệu.",
       "notFound": "Tài liệu không còn tồn tại. Hãy làm mới danh sách.",
+      "inUse": "Tài liệu này đang được dùng bởi một hồ sơ ứng tuyển nên không thể xóa.",
       "storage": "Kho tài liệu tạm thời không khả dụng. Vui lòng thử lại sau.",
+      "unavailable": "Tài liệu tạm thời không khả dụng. Vui lòng thử lại sau.",
       "network": "Không kết nối được. Kiểm tra kết nối rồi thử lại."
     },
     "permissions": {

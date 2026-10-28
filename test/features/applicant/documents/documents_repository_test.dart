@@ -256,6 +256,27 @@ void main() {
       throwsArgumentError,
     );
   });
+  test('sort is typed, retained with search/type, and sent to every page', () {
+    const query = DocumentsQuery(
+      type: DocumentType.cv,
+      search: ' resume ',
+      sortField: DocumentSortField.fileName,
+      sortOrder: DocumentSortOrder.ascending,
+    );
+    expect(query.parameters(2), {
+      'page': 2,
+      'limit': 20,
+      'sort_by': 'file_name',
+      'sort_order': 'asc',
+      'type': 'cv',
+      'search': 'resume',
+    });
+    expect(
+      const DocumentsQuery(sortField: DocumentSortField.size)
+          .parameters(1)['sort_by'],
+      'size',
+    );
+  });
   for (final extension in ['pdf', 'doc', 'docx']) {
     for (final type in DocumentType.values) {
       test(
@@ -463,6 +484,47 @@ void main() {
     expect(result.name, 'Nguyễn An.doc');
     expect(result.mimeType, 'application/msword');
   });
+  test('set default PATCH has no body and parses its response', () async {
+    final dio = Dio()
+      ..httpClientAdapter = FakeAdapter((options) {
+        expect(options.method, 'PATCH');
+        expect(options.path, '${DocumentConstants.path}/doc/default');
+        expect(options.data, isNull);
+        return jsonBody(documentJson(id: 'doc', isDefault: true));
+      });
+    final item = await DocumentsRepository(ApiClient(dio: dio))
+        .setDefault('doc');
+    expect(item.isDefault, true);
+  });
+
+  test(
+    'delete only accepts 204 and mutation errors are not successes',
+    () async {
+      for (final status in [400, 401, 403, 404, 409, 503]) {
+        final dio = Dio()
+          ..httpClientAdapter = FakeAdapter((options) {
+            expect(options.method, 'DELETE');
+            expect(options.path, '${DocumentConstants.path}/doc');
+            return jsonBody({'message': 'failed'}, status: status);
+          });
+        await expectLater(
+          DocumentsRepository(ApiClient(dio: dio)).delete('doc'),
+          throwsA(
+            isA<ApiError>().having(
+              (error) => error.statusCode,
+              'status',
+              status,
+            ),
+          ),
+        );
+      }
+      final dio = Dio()
+        ..httpClientAdapter = FakeAdapter(
+          (_) => ResponseBody.fromString('', 204),
+        );
+      await DocumentsRepository(ApiClient(dio: dio)).delete('doc');
+    },
+  );
   test(
     'filename fallback, traversal, invalid UTF-8, reserved Windows names',
     () {
@@ -548,9 +610,16 @@ void main() {
     expect(calls, 3);
     c
         .read(documentsQueryProvider.notifier)
-        .update(const DocumentsQuery(type: DocumentType.coverLetter));
+        .update(
+          const DocumentsQuery(
+            type: DocumentType.coverLetter,
+            sortField: DocumentSortField.size,
+            sortOrder: DocumentSortOrder.ascending,
+          ),
+        );
     await c.read(documentsProvider.future);
     expect(c.read(documentsProvider).requireValue.result.page, 1);
+    expect(calls, 4);
   });
   test(
     'late search response and late loadMore cannot overwrite new filter',

@@ -32,6 +32,39 @@ class DocumentsRepository {
   Future<int> count(DocumentsQuery query) async =>
       (await list(query, 1, limit: DocumentConstants.countPageSize)).total;
 
+  Future<DocumentDto> setDefault(String id) async {
+    try {
+      final response = await client.dio.patch<Map<String, Object?>>(
+        '${DocumentConstants.path}/${Uri.encodeComponent(id)}/default',
+      );
+      if (response.statusCode != 200 || response.data == null) {
+        throw ApiError(
+          message: 'Unexpected set-default status',
+          statusCode: response.statusCode,
+        );
+      }
+      return DocumentDto.fromJson(response.data!);
+    } on DioException catch (e) {
+      throw ApiError.fromDio(e);
+    }
+  }
+
+  Future<void> delete(String id) async {
+    try {
+      final response = await client.dio.delete<void>(
+        '${DocumentConstants.path}/${Uri.encodeComponent(id)}',
+      );
+      if (response.statusCode != 204) {
+        throw ApiError(
+          message: 'Unexpected delete status',
+          statusCode: response.statusCode,
+        );
+      }
+    } on DioException catch (e) {
+      throw ApiError.fromDio(e);
+    }
+  }
+
   Future<DocumentDto> upload(
     SelectedDocument file,
     DocumentType type, {

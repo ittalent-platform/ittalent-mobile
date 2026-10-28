@@ -51,12 +51,23 @@ String documentError(
       401 => 'unauthorized',
       403 => 'forbidden',
       404 => 'notFound',
+      409 => 'inUse',
       502 => 'storage',
+      503 => 'unavailable',
       _ => 'network',
     };
     return tr('documents.mobile.$key');
   }
   return tr(fallback);
+}
+
+String formatDocumentSize(int bytes) {
+  String value(double amount) => amount == amount.roundToDouble()
+      ? amount.toInt().toString()
+      : amount.toStringAsFixed(1);
+  if (bytes < 1024) return '$bytes B';
+  if (bytes < 1048576) return '${value(bytes / 1024)} KB';
+  return '${value(bytes / 1048576)} MB';
 }
 
 class DocumentsScreen extends ConsumerStatefulWidget {
@@ -72,6 +83,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen>
   final Map<String, CancelToken> _downloads = {};
   final Map<String, double?> _downloadProgress = {};
   final Map<String, String> _downloadPhase = {};
+  final Set<String> _mutating = {};
   bool _destinationBusy = false;
   DocumentAccessOperation? _blockedOperation;
   DocumentAccessDecision? _blockedDecision;
@@ -220,9 +232,24 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen>
     );
   }
 
-  void _setQuery(DocumentType? type, String search) => ref
-      .read(documentsQueryProvider.notifier)
-      .update(DocumentsQuery(type: type, search: search.trim()));
+  void _setQuery(
+    DocumentType? type,
+    String search, {
+    DocumentSortField? sortField,
+    DocumentSortOrder? sortOrder,
+  }) {
+    final current = ref.read(documentsQueryProvider);
+    ref
+        .read(documentsQueryProvider.notifier)
+        .update(
+          DocumentsQuery(
+            type: type,
+            search: search.trim(),
+            sortField: sortField ?? current.sortField,
+            sortOrder: sortOrder ?? current.sortOrder,
+          ),
+        );
+  }
 
   void _invalidateDocumentCounts() => ref.invalidate(
     documentFilterCountsProvider(ref.read(documentsQueryProvider).search),
@@ -470,7 +497,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen>
           overflow: TextOverflow.ellipsis,
           style: AppTypography.body(fontWeight: FontWeight.w600),
         ),
-        if (_selected != null) Text(_size(_selected!.size)),
+        if (_selected != null) Text(formatDocumentSize(_selected!.size)),
         const SizedBox(height: 8),
         if (_uploading && _selected != null) ...[
           Text(tr('documents.uploading')),
@@ -514,14 +541,121 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen>
     ),
   );
 
-  String _size(int bytes) => bytes >= 1048576
-      ? '${(bytes / 1048576).toStringAsFixed(1)} MiB'
-      : '${(bytes / 1024).toStringAsFixed(1)} KiB';
+  Future<void> _setDefault(DocumentDto item) async {
+    if (_mutating.contains(item.id)) return;
+    setState(() => _mutating.add(item.id));
+    try {
+      await ref.read(documentsRepositoryProvider).setDefault(item.id);
+      if (!mounted) return;
+      ref.invalidate(documentsProvider);
+      _toast(tr('documents.defaultDoneTitle'));
+    } catch (error) {
+      if (mounted) _toast(documentError(error), error: true);
+    } finally {
+      if (mounted) setState(() => _mutating.remove(item.id));
+    }
+  }
+
+  Future<void> _delete(DocumentDto item) async {
+    if (_mutating.contains(item.id)) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(
+          tr('documents.deleteTitle', namedArgs: {'name': item.fileName}),
+        ),
+        content: Text(tr('documents.deleteDescription')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(tr('documents.mobile.cancel')),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(
+              tr('documents.confirmDelete'),
+              style: TextStyle(color: context.colors.destructive),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() => _mutating.add(item.id));
+    try {
+      await ref.read(documentsRepositoryProvider).delete(item.id);
+      if (!mounted) return;
+      ref.invalidate(documentsProvider);
+      _invalidateDocumentCounts();
+      _toast(tr('documents.deletedTitle'));
+    } catch (error) {
+      if (mounted) _toast(documentError(error), error: true);
+    } finally {
+      if (mounted) setState(() => _mutating.remove(item.id));
+    }
+  }
+
+  Future<void> _chooseSort(DocumentsQuery query) async {
+    var field = query.sortField;
+    var order = query.sortOrder;
+    final changed = await showModalBottomSheet<bool>(
+      context: context,
+      backgroundColor: context.colors.card,
+      isScrollControlled: true,
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (context, setSheetState) => SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  tr('documents.sort.label'),
+                  style: AppTypography.display(fontSize: 22),
+                ),
+                for (final choice in DocumentSortField.values)
+                  RadioListTile<DocumentSortField>(
+                    value: choice,
+                    groupValue: field,
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(tr('documents.sort.${choice.value}')),
+                    onChanged: (value) => setSheetState(() => field = value!),
+                  ),
+                Text(
+                  tr('documents.sort.order'),
+                  style: AppTypography.body(fontWeight: FontWeight.w600),
+                ),
+                for (final choice in DocumentSortOrder.values)
+                  RadioListTile<DocumentSortOrder>(
+                    value: choice,
+                    groupValue: order,
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(tr('documents.sort.${choice.value}')),
+                    onChanged: (value) => setSheetState(() => order = value!),
+                  ),
+                AppButton(
+                  key: const Key('documents_sort_apply'),
+                  size: AppButtonSize.lg,
+                  text: tr('documents.mobile.apply'),
+                  onPressed: () => Navigator.pop(sheetContext, true),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    if (changed == true && mounted) {
+      _setQuery(query.type, query.search, sortField: field, sortOrder: order);
+    }
+  }
 
   Widget _card(DocumentDto item) {
     final colors = context.colors;
     final cv = item.type == DocumentType.cv;
     final downloading = _downloads.containsKey(item.id);
+    final mutating = _mutating.contains(item.id);
     return AppCard(
       child: Column(
         children: [
@@ -570,7 +704,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen>
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      '${tr(cv ? 'documents.typeCv' : 'documents.typeCoverLetter')} · ${_size(item.size)} · ${DateFormat.yMMMd(context.locale.toString()).format(item.createdAt.toLocal())}',
+                      '${tr(cv ? 'documents.typeCv' : 'documents.typeCoverLetter')} · ${formatDocumentSize(item.size)} · ${DateFormat.yMMMd(context.locale.toString()).format(item.createdAt.toLocal())}',
                       style: AppTypography.body(
                         fontSize: 13,
                         color: colors.mutedForeground,
@@ -589,15 +723,31 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen>
               ),
               PopupMenuButton<String>(
                 key: Key('menu_${item.id}'),
-                enabled: !downloading,
+                enabled: !downloading && !mutating,
                 tooltip: tr(
                   'documents.mobile.actions',
                   namedArgs: {'name': item.fileName},
                 ),
                 constraints: const BoxConstraints(minWidth: 180, maxWidth: 280),
                 icon: const Icon(LucideIcons.ellipsisVertical),
-                onSelected: (_) => _download(item),
+                onSelected: (action) => switch (action) {
+                  'download' => _download(item),
+                  'default' => _setDefault(item),
+                  'delete' => _delete(item),
+                  _ => null,
+                },
                 itemBuilder: (_) => [
+                  if (!item.isDefault)
+                    PopupMenuItem(
+                      height: 48,
+                      value: 'default',
+                      child: Text(
+                        tr(
+                          'documents.setDefault',
+                          namedArgs: {'name': item.fileName},
+                        ),
+                      ),
+                    ),
                   PopupMenuItem(
                     height: 48,
                     value: 'download',
@@ -608,6 +758,17 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen>
                       ),
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  PopupMenuItem(
+                    height: 48,
+                    value: 'delete',
+                    child: Text(
+                      tr(
+                        'documents.delete',
+                        namedArgs: {'name': item.fileName},
+                      ),
+                      style: AppTypography.body(color: colors.destructive),
                     ),
                   ),
                 ],
@@ -826,6 +987,14 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen>
                       ),
                     ),
                   ),
+                AppButton(
+                  key: const Key('documents_sort'),
+                  size: AppButtonSize.lg,
+                  text: tr('documents.mobile.sort'),
+                  icon: const Icon(LucideIcons.arrowDownUp),
+                  variant: AppButtonVariant.outline,
+                  onPressed: () => _chooseSort(query),
+                ),
               ],
             ),
           ),
