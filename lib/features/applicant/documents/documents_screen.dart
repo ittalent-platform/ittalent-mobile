@@ -777,6 +777,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen>
         ? sheetContext.colors.destructive
         : sheetContext.colors.foreground;
     return ListTile(
+      key: Key('documents_action_${action.name}'),
       contentPadding: EdgeInsets.zero,
       leading: Icon(icon, color: color),
       title: Text(label, style: AppTypography.body(fontSize: 16, color: color)),
