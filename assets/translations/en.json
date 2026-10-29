@@ -2800,8 +2800,115 @@
     "linkFailed": "{{name}} didn't respond. Check the link."
   },
   "profile": {
-    "title": "Profile", "edit": "Edit profile", "personal": "PERSONAL INFORMATION", "account": "ACCOUNT", "fullName": "Full name", "phone": "Mobile number", "email": "Email", "role": "Role", "status": "Account status", "company": "Company", "verifyBanner": "Verify your email to edit your profile, photo, or password.", "changePassword": "Change password", "editHint": "Only your name and mobile number can be changed here.", "save": "Save changes", "saved": "Profile saved", "restricted": {"title":"Account restricted","message":"This account cannot access profile changes."}, "missing": {"title":"Profile unavailable","message":"Your profile needs repair. It was not created automatically."}, "loadError": {"title":"Could not load profile","message":"Check your connection and try again."}, "errors": {"name":"Enter a name between 2 and 100 characters.","phone":"Enter a valid Vietnamese mobile number.","currentPassword":"Current password is incorrect.","confirm":"Passwords do not match.","rateLimited":"Too many attempts. Wait a few minutes before trying again."}, "discard":{"title":"Discard your changes?","message":"Your unsaved changes will be lost.","keep":"Keep editing","discard":"Discard changes"}, "conflict":{"title":"Profile was updated","message":"Someone changed this profile while you were editing.","load":"Load latest"}, "avatarTitle":"Change profile photo","takePhoto":"Take photo","choosePhoto":"Choose from library","savePhoto":"Save photo","avatarInvalid":"Choose a decodable JPEG, PNG, or WebP image up to 5 MiB.","avatarSaved":"Profile photo updated", "currentPassword":"Current password","newPassword":"New password","confirmPassword":"Confirm new password","passwordHint":"Other devices will be signed out. This device will stay signed in.","passwordChanged":"Password changed. Other devices were signed out.","passwordRules":{"length":"8–64 characters","upper":"An uppercase letter","lower":"A lowercase letter","digit":"A number","special":"A character in !@#$%^&*"}}
-,
+    "title": "Profile",
+    "edit": "Edit profile",
+    "personal": "PERSONAL INFORMATION",
+    "account": "ACCOUNT",
+    "fullName": "Full name",
+    "phone": "Mobile number",
+    "phoneHelper": "Vietnamese mobile number",
+    "email": "Email",
+    "emailVerification": "Email verification",
+    "verified": "Verified",
+    "notVerified": "Not verified",
+    "role": "Role",
+    "status": "Account status",
+    "company": "Company",
+    "notProvided": "Not provided",
+    "verifyBanner": "Verify your email to edit your profile, photo, or password.",
+    "resendVerification": "Resend verification email",
+    "verificationSent": "Verification email sent.",
+    "verificationFailed": "Could not resend the verification email. Try again.",
+    "changePassword": "Change password",
+    "editHint": "Only your full name and mobile number can be changed here.",
+    "save": "Save changes",
+    "saved": "Profile saved",
+    "updateError": "Your changes could not be saved. They are still here so you can try again.",
+    "restricted": {
+      "title": "Account restricted",
+      "message": "This account cannot access profile changes."
+    },
+    "missing": {
+      "title": "Profile unavailable",
+      "message": "Your profile needs repair. It was not created automatically."
+    },
+    "loadError": {
+      "title": "Could not load profile",
+      "message": "Check your connection and try again."
+    },
+    "errors": {
+      "name": "Enter a name between 2 and 100 characters.",
+      "phone": "Enter a valid Vietnamese mobile number.",
+      "currentPassword": "Current password is incorrect.",
+      "samePassword": "Choose a new password that is different from your current password.",
+      "confirm": "Passwords do not match.",
+      "rateLimited": "Too many attempts. Wait a few minutes before trying again.",
+      "passwordGeneric": "The password could not be changed. Try again."
+    },
+    "discard": {
+      "title": "Discard your changes?",
+      "message": "Your unsaved changes will be lost.",
+      "keep": "Keep editing",
+      "discard": "Discard changes"
+    },
+    "conflict": {
+      "title": "Profile was updated",
+      "message": "Someone changed this profile while you were editing.",
+      "load": "Load latest"
+    },
+    "avatarTitle": "Change profile photo",
+    "avatarAdjust": "Move and scale the photo inside the frame.",
+    "avatarHelper": "JPG, PNG or WebP, up to 5 MB. Your current photo stays until you save a new one.",
+    "takePhoto": "Take photo",
+    "choosePhoto": "Choose from library",
+    "savePhoto": "Save photo",
+    "avatarUnsupported": "Choose a JPG, PNG or WebP image. GIF, SVG and other formats are not supported.",
+    "avatarTooLarge": "This image is {{size}} MB. Choose an image up to 5 MB.",
+    "avatarUnreadable": "This image could not be read. Choose another JPG, PNG or WebP image.",
+    "avatarUploadError": "The photo could not be uploaded. Your current photo is unchanged.",
+    "avatarSaved": "Profile photo updated",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm new password",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "passwordHint": "Other devices will be signed out. This device will stay signed in.",
+    "passwordChanged": "Password changed. Other devices were signed out.",
+    "passwordRules": {
+      "length": "8–64 characters",
+      "upper": "An uppercase letter",
+      "lower": "A lowercase letter",
+      "digit": "A number",
+      "special": "A character in !@#$%^&*"
+    },
+    "roles": {
+      "candidate": "Candidate",
+      "applicant": "Applicant",
+      "user": "Candidate",
+      "recruiter": "Recruiter",
+      "admin": "Administrator",
+      "other": "Account member"
+    },
+    "statuses": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "pending": "Pending",
+      "suspended": "Suspended",
+      "blocked": "Blocked",
+      "unknown": "Unavailable"
+    },
+    "me": {
+      "title": "Me",
+      "profileSection": "MY PROFILE",
+      "jobSearchSection": "JOB SEARCH",
+      "accountSection": "ACCOUNT",
+      "password": "Password",
+      "signOut": "Sign out",
+      "savedJobs": "Saved jobs",
+      "myReports": "My reports",
+      "portfolio": "Portfolio"
+    }
+  },
   "notifications": {
     "title": "Notifications",
     "unreadCount": "{{count}} unread",

@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 import '../../../theme/app_colors.dart';
@@ -11,10 +12,12 @@ class ProfileAvatar extends StatelessWidget {
     this.size = 64,
     this.onTap,
   });
+
   final String name;
   final String? url;
   final double size;
   final VoidCallback? onTap;
+
   String get _initials => name
       .trim()
       .split(RegExp(r'\s+'))
@@ -23,6 +26,7 @@ class ProfileAvatar extends StatelessWidget {
       .map((part) => part[0])
       .join()
       .toUpperCase();
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
@@ -48,7 +52,7 @@ class ProfileAvatar extends StatelessWidget {
         ? avatar
         : Semantics(
             button: true,
-            label: 'Change profile photo',
+            label: tr('profile.avatarTitle'),
             child: InkWell(
               onTap: onTap,
               customBorder: const CircleBorder(),

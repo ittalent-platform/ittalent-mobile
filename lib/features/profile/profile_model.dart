@@ -38,6 +38,7 @@ class MyProfile {
 
   bool get canMutate =>
       access == ProfileAccess.full && emailVerified && status == 'active';
+
   String get displayName =>
       (fullName?.trim().isNotEmpty ?? false) ? fullName!.trim() : username;
 
@@ -46,7 +47,8 @@ class MyProfile {
     if (accessValue != 'basic' && accessValue != 'full') {
       throw const FormatException('Invalid profile access projection');
     }
-    String required(String key) {
+
+    String requiredValue(String key) {
       final value = json[key]?.toString() ?? '';
       if (value.isEmpty) throw FormatException('Missing profile $key');
       return value;
@@ -56,15 +58,16 @@ class MyProfile {
     if (isFull && json['version'] == null) {
       throw const FormatException('Missing profile version');
     }
+
     return MyProfile(
       access: isFull ? ProfileAccess.full : ProfileAccess.basic,
-      id: required('id'),
-      email: required('email'),
-      username: required('username'),
+      id: requiredValue('id'),
+      email: requiredValue('email'),
+      username: requiredValue('username'),
       fullName: json['fullName']?.toString(),
       avatarUrl: json['avatarUrl']?.toString(),
-      role: required('role'),
-      status: required('status'),
+      role: requiredValue('role'),
+      status: requiredValue('status'),
       emailVerified: json['emailVerified'] == true,
       phone: json['phone']?.toString(),
       version: int.tryParse(json['version']?.toString() ?? ''),
@@ -83,16 +86,19 @@ class ProfilePatch {
     required this.includeFullName,
     required this.includePhone,
   });
+
   final int expectedVersion;
   final String? fullName;
   final String? phone;
   final bool includeFullName;
   final bool includePhone;
+
   Map<String, Object?> toJson() => {
     'expectedVersion': expectedVersion,
     if (includeFullName) 'fullName': fullName,
     if (includePhone) 'phone': phone,
   };
+
   static ProfilePatch? fromValues(
     MyProfile profile,
     String fullName,
@@ -102,9 +108,8 @@ class ProfilePatch {
     final cleanPhone = normalizePhone(phone);
     final changedName = cleanName != (profile.fullName ?? '');
     final changedPhone = cleanPhone != (profile.phone ?? '');
-    if ((!changedName && !changedPhone) || profile.version == null) {
-      return null;
-    }
+    if ((!changedName && !changedPhone) || profile.version == null) return null;
+
     return ProfilePatch(
       expectedVersion: profile.version!,
       fullName: cleanName,
@@ -117,14 +122,22 @@ class ProfilePatch {
 
 class ChangePasswordResult {
   const ChangePasswordResult(this.tokens);
+
   final AuthTokens tokens;
+
   factory ChangePasswordResult.fromJson(Map<String, Object?> json) {
     final data = json['data'];
-    if (data is! Map<String, Object?> ||
-        data['tokens'] is! Map<String, Object?>) {
+    if (data is! Map<Object?, Object?>) {
       throw const FormatException('Missing replacement tokens');
     }
-    final tokens = AuthTokens.fromJson(data['tokens']! as Map<String, dynamic>);
+    final tokenData = data['tokens'];
+    if (tokenData is! Map<Object?, Object?>) {
+      throw const FormatException('Missing replacement tokens');
+    }
+    final tokens = AuthTokens(
+      accessToken: tokenData['accessToken']?.toString() ?? '',
+      refreshToken: tokenData['refreshToken']?.toString() ?? '',
+    );
     if (tokens.accessToken.isEmpty || tokens.refreshToken.isEmpty) {
       throw const FormatException('Invalid replacement tokens');
     }

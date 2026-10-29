@@ -2,55 +2,38 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ittalent_mobile/features/profile/profile_constants.dart';
 import 'package:ittalent_mobile/features/profile/profile_model.dart';
 
+import 'profile_test_support.dart';
+
 void main() {
-  final basic = <String, Object?>{
-    'access': 'basic',
-    'id': 'u1',
-    'email': 'u@example.com',
-    'username': 'user',
-    'fullName': 'User Name',
-    'avatarUrl': null,
-    'role': 'candidate',
-    'status': 'active',
-    'emailVerified': false,
-  };
-  final full = <String, Object?>{
-    ...basic,
-    'access': 'full',
-    'emailVerified': true,
-    'version': 3,
-    'phone': '0912345678',
-    'hasPassword': true,
-    'enterpriseId': null,
-    'enterpriseName': null,
-  };
-  test('parses basic and full projections', () {
-    expect(MyProfile.fromJson(basic).canMutate, isFalse);
-    expect(MyProfile.fromJson(full).canMutate, isTrue);
+  test('patch sends only changed fields and expectedVersion', () {
+    final profile = testProfile();
+    final nameOnly = ProfilePatch.fromValues(
+      profile,
+      'New Name',
+      profile.phone!,
+    );
+    expect(nameOnly!.toJson(), {'expectedVersion': 3, 'fullName': 'New Name'});
+
+    final phoneOnly = ProfilePatch.fromValues(
+      profile,
+      profile.fullName!,
+      '0987 654 321',
+    );
+    expect(phoneOnly!.toJson(), {'expectedVersion': 3, 'phone': '0987654321'});
   });
-  test('normalizes phone and emits only changed patch fields', () {
-    final profile = MyProfile.fromJson(full);
-    expect(normalizePhone('0912 345-678'), '0912345678');
-    final patch = ProfilePatch.fromValues(profile, 'New Name', '');
-    expect(patch!.toJson(), {
-      'expectedVersion': 3,
-      'fullName': 'New Name',
-      'phone': null,
-    });
+
+  test('patch is null when values did not change', () {
+    final profile = testProfile();
+    expect(
+      ProfilePatch.fromValues(profile, profile.fullName!, '0912 345 678'),
+      isNull,
+    );
   });
-  test('password rules accept all required groups', () {
+
+  test('Vietnamese mobile number and password rules are strict', () {
+    expect(isValidProfilePhone('0912 345 678'), isTrue);
+    expect(isValidProfilePhone('0212345678'), isFalse);
     expect(PasswordRules('Abcd123!').isValid, isTrue);
     expect(PasswordRules('abcd123!').isValid, isFalse);
-  });
-  test('avatar type and inclusive size validation', () {
-    expect(
-      isAllowedAvatarFile(length: avatarMaxBytes, mimeType: 'image/png'),
-      isTrue,
-    );
-    expect(
-      isAllowedAvatarFile(length: avatarMaxBytes + 1, mimeType: 'image/png'),
-      isFalse,
-    );
-    expect(isAllowedAvatarFile(length: 1, mimeType: 'image/gif'), isFalse);
   });
 }

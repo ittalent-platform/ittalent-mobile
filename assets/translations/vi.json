@@ -2779,8 +2779,115 @@
     "linkFailed": "{{name}} không phản hồi. Hãy kiểm tra liên kết."
   },
   "profile": {
-    "title": "Hồ sơ", "edit": "Chỉnh sửa hồ sơ", "personal": "THÔNG TIN CÁ NHÂN", "account": "TÀI KHOẢN", "fullName": "Họ và tên", "phone": "Số điện thoại", "email": "Email", "role": "Vai trò", "status": "Trạng thái tài khoản", "company": "Công ty", "verifyBanner": "Hãy xác minh email để sửa hồ sơ, ảnh hoặc mật khẩu.", "changePassword": "Đổi mật khẩu", "editHint": "Chỉ họ tên và số điện thoại có thể được thay đổi ở đây.", "save": "Lưu thay đổi", "saved": "Đã lưu hồ sơ", "restricted": {"title":"Tài khoản bị hạn chế","message":"Tài khoản này không thể thay đổi hồ sơ."}, "missing": {"title":"Không có hồ sơ","message":"Hồ sơ cần được sửa chữa. Hệ thống không tự tạo hồ sơ."}, "loadError": {"title":"Không thể tải hồ sơ","message":"Kiểm tra kết nối và thử lại."}, "errors": {"name":"Nhập họ tên dài từ 2 đến 100 ký tự.","phone":"Nhập số điện thoại Việt Nam hợp lệ.","currentPassword":"Mật khẩu hiện tại không đúng.","confirm":"Mật khẩu xác nhận không khớp.","rateLimited":"Quá nhiều lần thử. Hãy đợi vài phút rồi thử lại."}, "discard":{"title":"Bỏ các thay đổi?","message":"Các thay đổi chưa lưu sẽ mất.","keep":"Tiếp tục chỉnh sửa","discard":"Bỏ thay đổi"}, "conflict":{"title":"Hồ sơ đã được cập nhật","message":"Hồ sơ đã thay đổi trong khi bạn đang chỉnh sửa.","load":"Tải bản mới nhất"}, "avatarTitle":"Đổi ảnh đại diện","takePhoto":"Chụp ảnh","choosePhoto":"Chọn từ thư viện","savePhoto":"Lưu ảnh","avatarInvalid":"Chọn ảnh JPEG, PNG hoặc WebP có thể đọc được, tối đa 5 MiB.","avatarSaved":"Đã cập nhật ảnh đại diện", "currentPassword":"Mật khẩu hiện tại","newPassword":"Mật khẩu mới","confirmPassword":"Xác nhận mật khẩu mới","passwordHint":"Các thiết bị khác sẽ bị đăng xuất. Thiết bị này vẫn đăng nhập.","passwordChanged":"Đã đổi mật khẩu. Các thiết bị khác đã được đăng xuất.","passwordRules":{"length":"8–64 ký tự","upper":"Một chữ in hoa","lower":"Một chữ thường","digit":"Một chữ số","special":"Một ký tự trong !@#$%^&*"}}
-,
+    "title": "Hồ sơ",
+    "edit": "Chỉnh sửa hồ sơ",
+    "personal": "THÔNG TIN CÁ NHÂN",
+    "account": "TÀI KHOẢN",
+    "fullName": "Họ và tên",
+    "phone": "Số điện thoại",
+    "phoneHelper": "Số điện thoại di động Việt Nam",
+    "email": "Email",
+    "emailVerification": "Xác minh email",
+    "verified": "Đã xác minh",
+    "notVerified": "Chưa xác minh",
+    "role": "Vai trò",
+    "status": "Trạng thái tài khoản",
+    "company": "Công ty",
+    "notProvided": "Chưa cung cấp",
+    "verifyBanner": "Hãy xác minh email để sửa hồ sơ, ảnh hoặc mật khẩu.",
+    "resendVerification": "Gửi lại email xác minh",
+    "verificationSent": "Đã gửi email xác minh.",
+    "verificationFailed": "Không thể gửi lại email xác minh. Hãy thử lại.",
+    "changePassword": "Đổi mật khẩu",
+    "editHint": "Chỉ họ tên và số điện thoại có thể được thay đổi tại đây.",
+    "save": "Lưu thay đổi",
+    "saved": "Đã lưu hồ sơ",
+    "updateError": "Không thể lưu thay đổi. Nội dung bạn nhập vẫn được giữ để thử lại.",
+    "restricted": {
+      "title": "Tài khoản bị hạn chế",
+      "message": "Tài khoản này không thể thay đổi hồ sơ."
+    },
+    "missing": {
+      "title": "Không có hồ sơ",
+      "message": "Hồ sơ cần được sửa chữa. Hệ thống không tự tạo hồ sơ."
+    },
+    "loadError": {
+      "title": "Không thể tải hồ sơ",
+      "message": "Kiểm tra kết nối và thử lại."
+    },
+    "errors": {
+      "name": "Nhập họ tên dài từ 2 đến 100 ký tự.",
+      "phone": "Nhập số điện thoại Việt Nam hợp lệ.",
+      "currentPassword": "Mật khẩu hiện tại không đúng.",
+      "samePassword": "Hãy chọn mật khẩu mới khác với mật khẩu hiện tại.",
+      "confirm": "Mật khẩu xác nhận không khớp.",
+      "rateLimited": "Quá nhiều lần thử. Hãy đợi vài phút rồi thử lại.",
+      "passwordGeneric": "Không thể đổi mật khẩu. Hãy thử lại."
+    },
+    "discard": {
+      "title": "Bỏ các thay đổi?",
+      "message": "Các thay đổi chưa lưu sẽ mất.",
+      "keep": "Tiếp tục chỉnh sửa",
+      "discard": "Bỏ thay đổi"
+    },
+    "conflict": {
+      "title": "Hồ sơ đã được cập nhật",
+      "message": "Hồ sơ đã thay đổi trong khi bạn đang chỉnh sửa.",
+      "load": "Tải bản mới nhất"
+    },
+    "avatarTitle": "Đổi ảnh đại diện",
+    "avatarAdjust": "Di chuyển và thu phóng ảnh bên trong khung.",
+    "avatarHelper": "JPG, PNG hoặc WebP, tối đa 5 MB. Ảnh hiện tại được giữ nguyên cho đến khi bạn lưu ảnh mới.",
+    "takePhoto": "Chụp ảnh",
+    "choosePhoto": "Chọn từ thư viện",
+    "savePhoto": "Lưu ảnh",
+    "avatarUnsupported": "Hãy chọn ảnh JPG, PNG hoặc WebP. GIF, SVG và các định dạng khác không được hỗ trợ.",
+    "avatarTooLarge": "Ảnh này có dung lượng {{size}} MB. Hãy chọn ảnh tối đa 5 MB.",
+    "avatarUnreadable": "Không thể đọc ảnh này. Hãy chọn ảnh JPG, PNG hoặc WebP khác.",
+    "avatarUploadError": "Không thể tải ảnh lên. Ảnh hiện tại của bạn không thay đổi.",
+    "avatarSaved": "Đã cập nhật ảnh đại diện",
+    "currentPassword": "Mật khẩu hiện tại",
+    "newPassword": "Mật khẩu mới",
+    "confirmPassword": "Xác nhận mật khẩu mới",
+    "showPassword": "Hiện mật khẩu",
+    "hidePassword": "Ẩn mật khẩu",
+    "passwordHint": "Các thiết bị khác sẽ bị đăng xuất. Thiết bị này vẫn đăng nhập.",
+    "passwordChanged": "Đã đổi mật khẩu. Các thiết bị khác đã được đăng xuất.",
+    "passwordRules": {
+      "length": "8–64 ký tự",
+      "upper": "Một chữ in hoa",
+      "lower": "Một chữ thường",
+      "digit": "Một chữ số",
+      "special": "Một ký tự trong !@#$%^&*"
+    },
+    "roles": {
+      "candidate": "Ứng viên",
+      "applicant": "Ứng viên",
+      "user": "Ứng viên",
+      "recruiter": "Nhà tuyển dụng",
+      "admin": "Quản trị viên",
+      "other": "Thành viên"
+    },
+    "statuses": {
+      "active": "Đang hoạt động",
+      "inactive": "Không hoạt động",
+      "pending": "Đang chờ",
+      "suspended": "Tạm khóa",
+      "blocked": "Bị khóa",
+      "unknown": "Không khả dụng"
+    },
+    "me": {
+      "title": "Tôi",
+      "profileSection": "HỒ SƠ CỦA TÔI",
+      "jobSearchSection": "TÌM VIỆC",
+      "accountSection": "TÀI KHOẢN",
+      "password": "Mật khẩu",
+      "signOut": "Đăng xuất",
+      "savedJobs": "Việc làm đã lưu",
+      "myReports": "Báo cáo của tôi",
+      "portfolio": "Hồ sơ năng lực"
+    }
+  },
   "notifications": {
     "title": "Thông báo",
     "unreadCount": "{{count}} chưa đọc",

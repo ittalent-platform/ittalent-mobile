@@ -3,27 +3,28 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:image_picker/image_picker.dart';
-
-import 'dart:typed_data';
-import 'dart:ui' as ui;
 
 import '../../api/api_error.dart';
+import '../../auth/auth_notifier.dart';
 import '../../components/common/app_error_state.dart';
 import '../../components/common/app_toast.dart';
 import '../../components/layout/screen_scaffold.dart';
+import '../../components/ui/app_badge.dart';
 import '../../components/ui/app_button.dart';
 import '../../components/ui/app_card.dart';
+import '../../components/ui/app_skeleton.dart';
 import '../../config/routes.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';
-import 'profile_model.dart';
 import 'profile_constants.dart';
+import 'profile_model.dart';
 import 'profile_providers.dart';
+import 'widgets/avatar_photo_sheet.dart';
 import 'widgets/profile_avatar.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(profileProvider);
@@ -33,6 +34,7 @@ class ProfileScreen extends ConsumerWidget {
         actions: [
           if (profile.value?.canMutate == true)
             IconButton(
+              key: const Key('profile_edit'),
               onPressed: () => context.push(AppRoutes.editProfile),
               icon: const Icon(LucideIcons.pencil),
               tooltip: tr('profile.edit'),
@@ -40,62 +42,134 @@ class ProfileScreen extends ConsumerWidget {
         ],
       ),
       body: profile.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => _error(context, ref, error),
+        loading: _ProfileLoading.new,
+        error: (error, _) => _ProfileError(error: error),
         data: (data) => RefreshIndicator(
           onRefresh: () => ref.read(profileProvider.notifier).refresh(),
-          child: ListView(children: [_body(context, ref, data)]),
+          child: ListView(children: [_ProfileBody(profile: data)]),
         ),
       ),
     );
   }
+}
 
-  Widget _error(BuildContext context, WidgetRef ref, Object error) {
-    final api = error is ApiError ? error : null;
+class _ProfileLoading extends StatelessWidget {
+  const _ProfileLoading();
+
+  @override
+  Widget build(BuildContext context) => ListView(
+    key: const Key('profile_loading'),
+    children: const [
+      Center(child: AppSkeleton(width: 88, height: 88)),
+      SizedBox(height: 16),
+      Center(child: AppSkeleton(width: 180, height: 24)),
+      SizedBox(height: 8),
+      Center(child: AppSkeleton(width: 220)),
+      SizedBox(height: 28),
+      AppSkeleton(height: 150),
+      SizedBox(height: 16),
+      AppSkeleton(height: 220),
+    ],
+  );
+}
+
+class _ProfileError extends ConsumerWidget {
+  const _ProfileError({required this.error});
+
+  final Object error;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final api = error is ApiError ? error as ApiError : null;
     final key = api?.statusCode == 403
         ? 'profile.restricted'
         : api?.statusCode == 404
         ? 'profile.missing'
         : 'profile.loadError';
     return AppErrorState(
+      key: Key('profile_error_${api?.statusCode ?? 'generic'}'),
       title: tr('$key.title'),
       message: tr('$key.message'),
-      retryText: tr('common.retry'),
+      retryText: tr('actions.retry'),
       onRetry: () => ref.read(profileProvider.notifier).refresh(),
     );
   }
+}
 
-  Widget _body(BuildContext context, WidgetRef ref, MyProfile profile) {
+class _ProfileBody extends ConsumerStatefulWidget {
+  const _ProfileBody({required this.profile});
+
+  final MyProfile profile;
+
+  @override
+  ConsumerState<_ProfileBody> createState() => _ProfileBodyState();
+}
+
+class _ProfileBodyState extends ConsumerState<_ProfileBody> {
+  bool _resending = false;
+
+  Future<void> _resend() async {
+    setState(() => _resending = true);
+    final messenger = ScaffoldMessenger.of(context);
+    final sent = await ref
+        .read(authNotifierProvider.notifier)
+        .resendVerificationEmail(widget.profile.email);
+    if (mounted) {
+      setState(() => _resending = false);
+      showAppToast(
+        messenger,
+        tr(sent ? 'profile.verificationSent' : 'profile.verificationFailed'),
+        error: !sent,
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final profile = widget.profile;
     final colors = context.colors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (!profile.canMutate)
-          Container(
-            margin: const EdgeInsets.only(bottom: 16),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: colors.statusWarningBg,
-              border: Border.all(color: colors.statusWarningBorder),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              tr('profile.verifyBanner'),
-              style: AppTypography.body(
-                fontSize: 14,
-                color: colors.statusWarningFg,
-              ),
+        if (!profile.emailVerified) ...[
+          AppCard(
+            key: const Key('profile_verify_banner'),
+            backgroundColor: colors.statusWarningBg,
+            borderColor: colors.statusWarningBorder,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  tr('profile.verifyBanner'),
+                  style: AppTypography.body(
+                    fontSize: 14,
+                    color: colors.statusWarningFg,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                AppButton(
+                  key: const Key('profile_resend_verification'),
+                  text: tr('profile.resendVerification'),
+                  size: AppButtonSize.sm,
+                  variant: AppButtonVariant.outline,
+                  isLoading: _resending,
+                  onPressed: _resending ? null : _resend,
+                ),
+              ],
             ),
           ),
+          const SizedBox(height: 20),
+        ],
         Center(
           child: Column(
             children: [
               ProfileAvatar(
+                key: const Key('profile_avatar'),
                 name: profile.displayName,
                 url: profile.avatarUrl,
                 size: 88,
                 onTap: profile.canMutate
-                    ? () => AvatarSheet.show(context, ref, profile)
+                    ? () => AvatarPhotoSheet.show(context, profile)
                     : null,
               ),
               const SizedBox(height: 12),
@@ -107,6 +181,7 @@ class ProfileScreen extends ConsumerWidget {
                   color: colors.foreground,
                 ),
               ),
+              const SizedBox(height: 4),
               Text(
                 profile.email,
                 style: AppTypography.body(
@@ -118,237 +193,152 @@ class ProfileScreen extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 24),
-        _Section(
+        _ProfileSection(
           title: tr('profile.personal'),
-          rows: [
-            tr('profile.fullName'),
-            profile.fullName ?? '—',
-            tr('profile.phone'),
-            profile.phone ?? '—',
+          children: [
+            _TextRow(
+              label: tr('profile.fullName'),
+              value: _valueOrMissing(profile.fullName),
+            ),
+            _TextRow(
+              label: tr('profile.phone'),
+              value: _valueOrMissing(profile.phone),
+            ),
           ],
         ),
         const SizedBox(height: 16),
-        _Section(
+        _ProfileSection(
           title: tr('profile.account'),
-          rows: [
-            tr('profile.email'),
-            profile.email,
-            tr('profile.role'),
-            profile.role,
-            tr('profile.status'),
-            profile.status,
-            if (profile.enterpriseName != null) ...[
-              tr('profile.company'),
-              profile.enterpriseName!,
-            ],
+          children: [
+            _TextRow(label: tr('profile.email'), value: profile.email),
+            _BadgeRow(
+              label: tr('profile.emailVerification'),
+              badge: AppBadge(
+                label: tr(
+                  profile.emailVerified
+                      ? 'profile.verified'
+                      : 'profile.notVerified',
+                ),
+                tone: profile.emailVerified
+                    ? BadgeTone.success
+                    : BadgeTone.warning,
+              ),
+            ),
+            _BadgeRow(
+              label: tr('profile.role'),
+              badge: AppBadge(
+                label: tr(profileRoleTranslationKey(profile.role)),
+              ),
+            ),
+            _BadgeRow(
+              label: tr('profile.status'),
+              badge: AppBadge(
+                label: tr(profileStatusTranslationKey(profile.status)),
+                tone: _badgeTone(profileStatusTone(profile.status)),
+              ),
+            ),
+            if (profile.enterpriseName?.trim().isNotEmpty == true)
+              _TextRow(
+                label: tr('profile.company'),
+                value: profile.enterpriseName!.trim(),
+              ),
           ],
         ),
-        if (profile.canMutate && profile.hasPassword) ...[
-          const SizedBox(height: 16),
-          AppButton(
-            text: tr('profile.changePassword'),
-            icon: const Icon(LucideIcons.key),
-            isFullWidth: true,
-            variant: AppButtonVariant.outline,
-            onPressed: () => context.push(AppRoutes.changePassword),
-          ),
-        ],
       ],
     );
   }
+
+  String _valueOrMissing(String? value) => value?.trim().isNotEmpty == true
+      ? value!.trim()
+      : tr('profile.notProvided');
 }
 
-class _Section extends StatelessWidget {
-  const _Section({required this.title, required this.rows});
+class _ProfileSection extends StatelessWidget {
+  const _ProfileSection({required this.title, required this.children});
+
   final String title;
-  final List<String> rows;
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-    return AppCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: AppTypography.body(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: colors.mutedForeground,
-            ),
-          ),
-          const SizedBox(height: 8),
-          for (var i = 0; i < rows.length; i += 2)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      rows[i],
-                      style: AppTypography.body(
-                        fontSize: 14,
-                        color: colors.mutedForeground,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Text(
-                      rows[i + 1],
-                      textAlign: TextAlign.end,
-                      style: AppTypography.body(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: colors.foreground,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class AvatarSheet {
-  static void show(BuildContext context, WidgetRef ref, MyProfile profile) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      builder: (_) => _AvatarPicker(ref: ref, profile: profile),
-    );
-  }
-}
-
-class _AvatarPicker extends StatefulWidget {
-  const _AvatarPicker({required this.ref, required this.profile});
-  final WidgetRef ref;
-  final MyProfile profile;
-  @override
-  State<_AvatarPicker> createState() => _AvatarPickerState();
-}
-
-class _AvatarPickerState extends State<_AvatarPicker> {
-  Uint8List? _bytes;
-  String? _name;
-  String? _mime;
-  String? _error;
-  bool _saving = false;
-  Future<void> _pick(ImageSource source) async {
-    final file = await ImagePicker().pickImage(source: source);
-    if (file == null) return;
-    final bytes = await file.readAsBytes();
-    final mime = file.mimeType ?? _mimeFor(file.name);
-    if (!isAllowedAvatarFile(length: bytes.length, mimeType: mime)) {
-      setState(() => _error = tr('profile.avatarInvalid'));
-      return;
-    }
-    try {
-      final codec = await ui.instantiateImageCodec(bytes);
-      codec.dispose();
-      setState(() {
-        _bytes = bytes;
-        _name = file.name;
-        _mime = mime;
-        _error = null;
-      });
-    } catch (_) {
-      setState(() => _error = tr('profile.avatarInvalid'));
-    }
-  }
-
-  String _mimeFor(String name) {
-    final lower = name.toLowerCase();
-    return lower.endsWith('.png')
-        ? 'image/png'
-        : lower.endsWith('.webp')
-        ? 'image/webp'
-        : 'image/jpeg';
-  }
-
-  Future<void> _save() async {
-    if (_bytes == null || _name == null || _mime == null) return;
-    setState(() => _saving = true);
-    final messenger = ScaffoldMessenger.of(context);
-    try {
-      await widget.ref
-          .read(profileProvider.notifier)
-          .uploadAvatar(_bytes!, _name!, _mime!);
-      if (mounted) {
-        Navigator.pop(context);
-        showAppToast(messenger, tr('profile.avatarSaved'));
-      }
-    } on ApiError catch (e) {
-      if (mounted) setState(() => _error = e.message);
-    } finally {
-      if (mounted) setState(() => _saving = false);
-    }
-  }
+  final List<Widget> children;
 
   @override
-  Widget build(BuildContext context) => SafeArea(
-    child: Padding(
-      padding: EdgeInsets.fromLTRB(
-        24,
-        24,
-        24,
-        24 + MediaQuery.viewInsetsOf(context).bottom,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            tr('profile.avatarTitle'),
-            style: Theme.of(context).textTheme.titleLarge,
+  Widget build(BuildContext context) => AppCard(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: AppTypography.body(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: context.colors.mutedForeground,
           ),
-          const SizedBox(height: 16),
-          if (_bytes != null)
-            ClipOval(
-              child: Image.memory(
-                _bytes!,
-                width: 160,
-                height: 160,
-                fit: BoxFit.cover,
-              ),
-            ),
-          if (_error != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 12),
-              child: Text(_error!),
-            ),
-          const SizedBox(height: 16),
-          AppButton(
-            text: tr('profile.takePhoto'),
-            isFullWidth: true,
-            variant: AppButtonVariant.outline,
-            onPressed: _saving ? null : () => _pick(ImageSource.camera),
-          ),
-          const SizedBox(height: 8),
-          AppButton(
-            text: tr('profile.choosePhoto'),
-            isFullWidth: true,
-            variant: AppButtonVariant.outline,
-            onPressed: _saving ? null : () => _pick(ImageSource.gallery),
-          ),
-          const SizedBox(height: 12),
-          if (_bytes != null)
-            AppButton(
-              text: tr('profile.savePhoto'),
-              isFullWidth: true,
-              isLoading: _saving,
-              onPressed: _saving ? null : _save,
-            ),
-          const SizedBox(height: 8),
-          AppButton(
-            text: tr('common.cancel'),
-            isFullWidth: true,
-            variant: AppButtonVariant.ghost,
-            onPressed: _saving ? null : () => Navigator.pop(context),
-          ),
-        ],
+        ),
+        const SizedBox(height: 8),
+        ...children,
+      ],
+    ),
+  );
+}
+
+class _TextRow extends StatelessWidget {
+  const _TextRow({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) => _ProfileRow(
+    label: label,
+    value: Text(
+      value,
+      textAlign: TextAlign.end,
+      style: AppTypography.body(
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        color: context.colors.foreground,
       ),
     ),
   );
 }
+
+class _BadgeRow extends StatelessWidget {
+  const _BadgeRow({required this.label, required this.badge});
+
+  final String label;
+  final Widget badge;
+
+  @override
+  Widget build(BuildContext context) => _ProfileRow(label: label, value: badge);
+}
+
+class _ProfileRow extends StatelessWidget {
+  const _ProfileRow({required this.label, required this.value});
+
+  final String label;
+  final Widget value;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 8),
+    child: Row(
+      children: [
+        Expanded(
+          child: Text(
+            label,
+            style: AppTypography.body(
+              fontSize: 14,
+              color: context.colors.mutedForeground,
+            ),
+          ),
+        ),
+        Flexible(child: value),
+      ],
+    ),
+  );
+}
+
+BadgeTone _badgeTone(ProfileStatusTone tone) => switch (tone) {
+  ProfileStatusTone.success => BadgeTone.success,
+  ProfileStatusTone.warning => BadgeTone.warning,
+  ProfileStatusTone.error => BadgeTone.error,
+  ProfileStatusTone.neutral => BadgeTone.neutral,
+};
