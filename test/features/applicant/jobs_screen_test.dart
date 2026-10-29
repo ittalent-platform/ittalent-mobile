@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ittalent_mobile/api/client.dart';
+import 'package:ittalent_mobile/components/common/app_error_state.dart';
 import 'package:ittalent_mobile/components/ui/app_badge.dart';
 import 'package:ittalent_mobile/features/applicant/jobs/jobs_constants.dart';
 import 'package:ittalent_mobile/features/applicant/jobs/jobs_format.dart';
@@ -453,6 +454,34 @@ void main() {
       expect(find.text('jobs.empty.description'), findsOneWidget);
     });
 
+    testWidgets('pulling down on the empty state loads the jobs again', (
+      tester,
+    ) async {
+      var open = false;
+      final adapter = FakeAdapter(
+        (_) => jsonBody(
+          _page(
+            open ? [_job('j1', 'Fresh job')] : const <Map<String, dynamic>>[],
+          ),
+        ),
+      );
+      await _pump(tester, adapter);
+      expect(find.text('jobs.empty.title'), findsOneWidget);
+      expect(adapter.requests.length, 1);
+
+      open = true;
+      await tester.fling(
+        find.text('jobs.empty.title'),
+        const Offset(0, 300),
+        1000,
+      );
+      await tester.pumpAndSettle();
+
+      expect(adapter.requests.length, 2);
+      expect(find.text('jobs.empty.title'), findsNothing);
+      expect(find.text('Fresh job'), findsOneWidget);
+    });
+
     testWidgets('shows a retryable error and never fake data', (tester) async {
       var fail = true;
       final adapter = FakeAdapter(
@@ -462,6 +491,7 @@ void main() {
       );
       await _pump(tester, adapter);
 
+      expect(find.byType(AppErrorState), findsOneWidget);
       expect(find.text('jobs.loadError.title'), findsOneWidget);
       expect(find.text('jobs.loadError.description'), findsOneWidget);
       expect(find.text('Boom'), findsNothing);
