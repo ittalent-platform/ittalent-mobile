@@ -14,6 +14,7 @@ class AppRoutes {
 
   static const String jobs = '/jobs';
   static const String myApplications = '/my-applications';
+  static const String notifications = '/notifications';
   static const String certificates = '/certificates';
   static const String portfolio = '/portfolio';
   static const String profile = '/profile';
@@ -23,4 +24,6 @@ class AppRoutes {
       '/my-applications/$applicationId';
   static String applicationHistory(String applicationId) =>
       '/my-applications/$applicationId/history';
+  static String announcementDetail(String id) =>
+      '/notifications/announcements/$id';
 }

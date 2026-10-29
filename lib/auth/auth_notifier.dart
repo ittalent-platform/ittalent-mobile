@@ -34,7 +34,12 @@ class AuthNotifier extends Notifier<AuthState> {
       );
       final data = response.data;
       if (data != null) {
-        state = AuthState.authenticated(user: UserDTO.fromJson(data));
+        final user = UserDTO.fromJson(data);
+        if (!isAllowedMobileApplicantRole(user.role)) {
+          await logout();
+          return;
+        }
+        state = AuthState.authenticated(user: user);
       } else {
         state = AuthState.unauthenticated();
       }
@@ -43,7 +48,7 @@ class AuthNotifier extends Notifier<AuthState> {
     }
   }
 
-  Future<bool> login(String identifier, String password) async {
+  Future<LoginResult> login(String identifier, String password) async {
     state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
 
     try {
@@ -62,11 +67,6 @@ class AuthNotifier extends Notifier<AuthState> {
           data?['refreshToken']?.toString();
 
       if (accessToken != null && accessToken.isNotEmpty) {
-        await _tokenStorage.saveAccessToken(accessToken);
-        if (refreshToken != null && refreshToken.isNotEmpty) {
-          await _tokenStorage.saveRefreshToken(refreshToken);
-        }
-
         final userMap = data?['user'] as Map<String, dynamic>?;
         var user = userMap != null
             ? UserDTO.fromJson(userMap)
@@ -79,18 +79,42 @@ class AuthNotifier extends Notifier<AuthState> {
         if (user.email.isEmpty && identifier.contains('@')) {
           user = user.copyWith(email: identifier.trim());
         }
+
+        if (!isAllowedMobileApplicantRole(user.role)) {
+          await _tokenStorage.clear();
+          state = AuthState.unauthenticated();
+          return LoginResult(
+            status: LoginResultStatus.webRoleNotSupported,
+            role: user.role,
+          );
+        }
+
+        await _tokenStorage.saveAccessToken(accessToken);
+        if (refreshToken != null && refreshToken.isNotEmpty) {
+          await _tokenStorage.saveRefreshToken(refreshToken);
+        }
+
         state = AuthState.authenticated(user: user);
-        return true;
+        return const LoginResult(status: LoginResultStatus.success);
       } else {
         state = AuthState.unauthenticated('Invalid credentials');
-        return false;
+        return const LoginResult(
+          status: LoginResultStatus.invalidCredentials,
+          errorMessage: 'Invalid credentials',
+        );
       }
     } on ApiError catch (e) {
       state = AuthState.unauthenticated(e.message);
-      return false;
+      return LoginResult(
+        status: LoginResultStatus.invalidCredentials,
+        errorMessage: e.message,
+      );
     } catch (e) {
       state = AuthState.unauthenticated(e.toString());
-      return false;
+      return LoginResult(
+        status: LoginResultStatus.error,
+        errorMessage: e.toString(),
+      );
     }
   }
 

@@ -153,6 +153,23 @@ void main() {
       },
     );
 
+    test('checkAuthStatus purges stored token and resets state if user role is not applicant', () async {
+      fakeTokenStorage.accessToken = 'existing-recruiter-token';
+      fakeApiClient.getResponse = {
+        'id': 'usr-recruiter',
+        'email': 'recruiter@company.com',
+        'role': 'recruiter',
+      };
+
+      final notifier = container.read(authNotifierProvider.notifier);
+      await notifier.checkAuthStatus();
+
+      expect(fakeTokenStorage.accessToken, isNull);
+      final state = container.read(authNotifierProvider);
+      expect(state.status, AuthStatus.unauthenticated);
+      expect(state.isAuthenticated, isFalse);
+    });
+
     test('login sends identifier and parses nested tokens correctly', () async {
       fakeApiClient.postResponse = {
         'user': {
@@ -169,7 +186,7 @@ void main() {
       final notifier = container.read(authNotifierProvider.notifier);
       final result = await notifier.login('alex_dev', 'SecretPass123!');
 
-      expect(result, isTrue);
+      expect(result.isSuccess, isTrue);
       expect(fakeApiClient.lastPostPath, '/api/v1/auth/login');
       expect(fakeApiClient.lastPostData, {
         'identifier': 'alex_dev',
@@ -203,7 +220,7 @@ void main() {
           'Password123!',
         );
 
-        expect(result, isTrue);
+        expect(result.isSuccess, isTrue);
         final state = container.read(authNotifierProvider);
         expect(state.email, 'developer@example.com');
       },
@@ -218,7 +235,8 @@ void main() {
       final notifier = container.read(authNotifierProvider.notifier);
       final result = await notifier.login('wrong_user', 'bad_pass');
 
-      expect(result, isFalse);
+      expect(result.isSuccess, isFalse);
+      expect(result.status, LoginResultStatus.invalidCredentials);
       final state = container.read(authNotifierProvider);
       expect(state.status, AuthStatus.unauthenticated);
       expect(state.errorMessage, 'Email or password is incorrect.');
@@ -233,10 +251,64 @@ void main() {
       final notifier = container.read(authNotifierProvider.notifier);
       final result = await notifier.login('test_user', 'pass');
 
-      expect(result, isFalse);
+      expect(result.isSuccess, isFalse);
+      expect(result.status, LoginResultStatus.invalidCredentials);
       final state = container.read(authNotifierProvider);
       expect(state.status, AuthStatus.unauthenticated);
       expect(state.errorMessage, 'Invalid credentials');
+    });
+
+    test('login rejects recruiter role, purges tokens, and returns webRoleNotSupported', () async {
+      fakeApiClient.postResponse = {
+        'user': {
+          'id': 'usr-recruiter',
+          'email': 'recruiter@company.com',
+          'role': 'recruiter',
+        },
+        'tokens': {
+          'accessToken': 'jwt-recruiter-token',
+          'refreshToken': 'jwt-recruiter-refresh',
+        },
+      };
+
+      final notifier = container.read(authNotifierProvider.notifier);
+      final result = await notifier.login(
+        'recruiter@company.com',
+        'Password123!',
+      );
+
+      expect(result.isSuccess, isFalse);
+      expect(result.isWebRoleNotSupported, isTrue);
+      expect(result.status, LoginResultStatus.webRoleNotSupported);
+      expect(result.role, 'recruiter');
+
+      expect(fakeTokenStorage.accessToken, isNull);
+      expect(fakeTokenStorage.refreshToken, isNull);
+
+      final state = container.read(authNotifierProvider);
+      expect(state.status, AuthStatus.unauthenticated);
+      expect(state.isAuthenticated, isFalse);
+    });
+
+    test('login rejects admin and enterprise_admin accounts with webRoleNotSupported', () async {
+      for (final role in ['admin', 'enterprise_admin']) {
+        fakeApiClient.postResponse = {
+          'user': {
+            'id': 'usr-$role',
+            'email': '$role@platform.com',
+            'role': role,
+          },
+          'tokens': {'accessToken': 'jwt-token', 'refreshToken': 'jwt-refresh'},
+        };
+
+        final notifier = container.read(authNotifierProvider.notifier);
+        final result = await notifier.login('$role@platform.com', 'Pass123!');
+
+        expect(result.isWebRoleNotSupported, isTrue);
+        expect(result.role, role);
+        expect(fakeTokenStorage.accessToken, isNull);
+        expect(container.read(authNotifierProvider).isAuthenticated, isFalse);
+      }
     });
 
     test(

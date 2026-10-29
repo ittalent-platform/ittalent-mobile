@@ -2760,6 +2760,105 @@
       "senior": "Senior",
       "lead": "Trưởng nhóm"
     }
+  },
+  "notifications": {
+    "title": "Thông báo",
+    "unreadCount": "{{count}} chưa đọc",
+    "unreadCount_one": "{{count}} chưa đọc",
+    "unreadCount_other": "{{count}} chưa đọc",
+    "allCaughtUp": "Đã xem hết",
+    "markAllAsRead": "Đánh dấu tất cả đã đọc",
+    "nothingUnread": "Không có thông báo chưa đọc",
+    "markAllAsReadConfirmBtn": "Đánh dấu {{count}} đã đọc",
+    "markAllAsReadConfirmTitle": "Đánh dấu {{count}} thông báo là đã đọc?",
+    "markAllAsReadConfirmTitle_one": "Đánh dấu {{count}} thông báo là đã đọc?",
+    "markAllAsReadConfirmTitle_other": "Đánh dấu {{count}} thông báo là đã đọc?",
+    "markAllAsReadConfirmDesc": "Chỉ các thông báo hiện có trong danh sách. Thông báo mới đến sau khi xác nhận vẫn chưa đọc.",
+    "moreActions": "Thao tác khác",
+    "deleteAll": "Xóa tất cả thông báo…",
+    "deleteAllConfirmTitle": "Xóa {{count}} thông báo?",
+    "deleteAllConfirmTitle_one": "Xóa {{count}} thông báo?",
+    "deleteAllConfirmTitle_other": "Xóa {{count}} thông báo?",
+    "deleteAllConfirmDesc": "Thao tác này sẽ xóa tất cả thông báo hiện có. Thông báo mới đến sau khi xác nhận được giữ lại. Đơn ứng tuyển và lịch phỏng vấn của bạn không bị ảnh hưởng.",
+    "deleteAllConfirmBtn": "Xóa {{count}} thông báo",
+    "deleteAllConfirmBtn_one": "Xóa {{count}} thông báo",
+    "deleteAllConfirmBtn_other": "Xóa {{count}} thông báo",
+    "staleBatchTitle": "Thông báo của bạn đã thay đổi",
+    "staleBatchDesc": "Hiện bạn có {{count}} thông báo, không phải {{oldCount}}. Chưa có gì bị xóa.",
+    "staleBatchBtn": "Xóa {{count}} thông báo",
+    "cancel": "Hủy",
+    "confirm": "Xác nhận",
+    "showOlder": "Xem thông báo cũ hơn",
+    "showingCount": "Đang hiển thị {{shown}} trên {{total}}",
+    "tabs": {
+      "all": "Tất cả",
+      "unread": "Chưa đọc",
+      "announcements": "Thông báo chung"
+    },
+    "groups": {
+      "today": "Hôm nay",
+      "yesterday": "Hôm qua",
+      "earlier": "Trước đó",
+      "thisMonth": "Tháng này"
+    },
+    "actions": {
+      "openApplication": "Mở đơn ứng tuyển",
+      "openAnnouncement": "Xem thông báo",
+      "markAsRead": "Đánh dấu đã đọc",
+      "markAsUnread": "Đánh dấu chưa đọc",
+      "read": "Đã đọc",
+      "unread": "Chưa đọc",
+      "delete": "Xóa",
+      "undo": "Hoàn tác",
+      "close": "Đóng",
+      "tryAgain": "Thử lại",
+      "signIn": "Đăng nhập",
+      "browseJobs": "Tìm việc ngay",
+      "backToNotifications": "Thông báo"
+    },
+    "relativeTime": {
+      "justNow": "Vừa xong",
+      "minAgo": "{{count}} phút trước",
+      "hAgo": "{{count}} giờ trước"
+    },
+    "announcement": {
+      "from": "Từ ITTalent",
+      "sender": "ITTalent",
+      "badge": "Thông báo chung",
+      "meta": "Thông báo · {{date}}",
+      "allAnnouncementsSeen": "Đó là tất cả thông báo chung.",
+      "repliesNotPossible": "Được gửi từ ITTalent đến một nhóm người dùng. Không thể phản hồi thông báo này."
+    },
+    "toast": {
+      "deleted": "Đã xóa thông báo",
+      "markedRead_one": "Đã đánh dấu {{count}} thông báo là đã đọc",
+      "markedRead_other": "Đã đánh dấu {{count}} thông báo là đã đọc",
+      "allMarkedRead": "Đã đánh dấu tất cả thông báo là đã đọc",
+      "allDeleted": "Đã xóa tất cả thông báo",
+      "markReadError": "Không thể đánh dấu đã đọc. Thử lại",
+      "deleteError": "Không thể xóa thông báo này. Thử lại",
+      "deletedOnOtherDevice": "Thông báo đã bị xóa trên thiết bị khác nên đã được gỡ bỏ.",
+      "alreadyDeleted": "Thông báo đó đã được xóa trước đó."
+    },
+    "empty": {
+      "noNotifications": "Chưa có thông báo nào",
+      "noNotificationsDesc": "Chúng tôi sẽ thông báo cho bạn khi có công ty xem xét đơn ứng tuyển hoặc lên lịch phỏng vấn.",
+      "allCaughtUp": "Bạn đã xem hết thông báo",
+      "allCaughtUpDesc": "Không có thông báo chưa đọc. Các thông báo cũ hơn nằm ở mục Tất cả.",
+      "noAnnouncements": "Chưa có thông báo chung",
+      "noAnnouncementsDesc": "Tin tức và cập nhật từ ITTalent sẽ hiển thị tại đây."
+    },
+    "error": {
+      "loadTitle": "Không thể tải thông báo",
+      "loadDesc": "Đã xảy ra sự cố từ phía máy chủ. Thông báo của bạn vẫn an toàn. Vui lòng thử lại sau giây lát.",
+      "unauthenticatedTitle": "Đăng nhập để xem thông báo",
+      "unauthenticatedDesc": "Phiên đăng nhập đã hết hạn nên không thể tải thông báo.",
+      "hiddenTitle": "Thông báo bị ẩn để bảo đảm an toàn",
+      "hiddenDesc": "Không thể xác thực các thông báo này nên tạm thời không hiển thị. Vui lòng thử lại sau.",
+      "unavailableTitle": "Thông báo này không khả dụng",
+      "unavailableDesc": "Có thể thông báo đã bị xóa. Các thông báo khác vẫn không đổi.",
+      "offline": "Bạn đang ngoại tuyến. Đang hiển thị thông báo từ lần truy cập gần nhất."
+    }
   }
 }
 
