@@ -106,20 +106,14 @@ void main() {
     final first = await pumpMe(tester, profile: testProfile());
     await tester.tap(find.byKey(const Key('me_profile_card')));
     await tester.pumpAndSettle();
-    expect(
-      first.router.routerDelegate.currentConfiguration.uri.path,
-      AppRoutes.profileDetails,
-    );
+    expect(find.text('PROFILE DETAILS'), findsOneWidget);
 
     first.router.go(AppRoutes.profile);
     await tester.pumpAndSettle();
     await reveal(tester, const Key('me_menu_profile'));
     await tester.tap(find.byKey(const Key('me_menu_profile')));
     await tester.pumpAndSettle();
-    expect(
-      first.router.routerDelegate.currentConfiguration.uri.path,
-      AppRoutes.profileDetails,
-    );
+    expect(find.text('PROFILE DETAILS'), findsOneWidget);
   });
 
   testWidgets('Saved jobs never opens Change password', (tester) async {
@@ -137,14 +131,11 @@ void main() {
   testWidgets('Password opens Change password when mutation is allowed', (
     tester,
   ) async {
-    final result = await pumpMe(tester, profile: testProfile());
+    await pumpMe(tester, profile: testProfile());
     await reveal(tester, const Key('me_menu_password'));
     await tester.tap(find.byKey(const Key('me_menu_password')));
     await tester.pumpAndSettle();
-    expect(
-      result.router.routerDelegate.currentConfiguration.uri.path,
-      AppRoutes.changePassword,
-    );
+    expect(find.text('CHANGE PASSWORD'), findsOneWidget);
   });
 
   for (final profile in [
