@@ -2818,6 +2818,98 @@
       "unavailableDesc": "Có thể thông báo đã bị xóa. Các thông báo khác vẫn không đổi.",
       "offline": "Bạn đang ngoại tuyến. Đang hiển thị thông báo từ lần truy cập gần nhất."
     }
+  },
+  "companies": {
+    "search": "Tên công ty hoặc ngành",
+    "verified": "được ITTalent xác minh",
+    "count_one": "{{count}} công ty",
+    "count_other": "{{count}} công ty",
+    "loadMoreFailed": "Không tải thêm được công ty.",
+    "errors": {
+      "keywordTooLong": "Từ khóa tìm kiếm tối đa {{max}} ký tự."
+    },
+    "loadError": {
+      "title": "Không tải được danh sách công ty",
+      "description": "Kiểm tra kết nối và thử lại."
+    },
+    "noMatches": {
+      "title": "Không có công ty phù hợp",
+      "description": "Thử tên khác hoặc xóa bộ lọc.",
+      "clear": "Xóa bộ lọc"
+    },
+    "empty": {
+      "title": "Chưa có công ty nào",
+      "description": "Các công ty tham gia ITTalent sẽ hiển thị ở đây."
+    },
+    "card": {
+      "openJobs_one": "{{count}} việc đang mở",
+      "openJobs_other": "{{count}} việc đang mở",
+      "noOpenJobs": "Chưa có việc đang mở"
+    },
+    "filter": {
+      "title": "Bộ lọc",
+      "industry": "Ngành",
+      "size": "Quy mô",
+      "city": "Thành phố",
+      "industryCount": "Ngành · {{count}}",
+      "sizeCount": "Quy mô · {{count}}",
+      "reset": "Đặt lại",
+      "showAll": "Xem tất cả công ty",
+      "show_one": "Xem {{count}} công ty",
+      "show_other": "Xem {{count}} công ty",
+      "industriesFailed": "Không tải được danh sách ngành."
+    },
+    "tabs": {
+      "about": "Giới thiệu",
+      "jobs": "Việc làm · {{count}}",
+      "benefits": "Phúc lợi"
+    },
+    "page": {
+      "back": "Quay lại",
+      "industry": "Ngành",
+      "size": "Quy mô công ty",
+      "headquarters": "Trụ sở",
+      "offices": "Văn phòng",
+      "website": "Website",
+      "techStack": "Công nghệ",
+      "facts": "Thông tin công ty",
+      "linkFailed": "Không mở được {{site}}.",
+      "seeJobs_one": "Xem {{count}} việc đang mở",
+      "seeJobs_other": "Xem {{count}} việc đang mở",
+      "browse": "Xem các công ty",
+      "loadError": {
+        "title": "Không tải được công ty này",
+        "description": "Kiểm tra kết nối và thử lại."
+      }
+    },
+    "notAvailable": {
+      "title": "Công ty này không khả dụng",
+      "description": "Công ty có thể đã bị gỡ khỏi ITTalent.",
+      "back": "Về danh sách công ty"
+    },
+    "jobs": {
+      "negotiable": "Thỏa thuận",
+      "salaryFrom": "Từ {{amount}}",
+      "salaryUpTo": "Đến {{amount}}",
+      "showing": "Đang hiển thị {{shown}}/{{total}}",
+      "loadMore": "Tải thêm",
+      "loadMoreFailed": "Không tải thêm được việc làm.",
+      "loadError": {
+        "title": "Không tải được việc làm",
+        "description": "Kiểm tra kết nối và thử lại."
+      },
+      "empty": {
+        "title": "Hiện chưa có việc đang mở",
+        "description": "Quay lại sau hoặc xem các công ty tương tự.",
+        "browse": "Xem các công ty"
+      }
+    },
+    "benefits": {
+      "empty": {
+        "title": "Chưa có phúc lợi nào",
+        "description": "Công ty này chưa chia sẻ phúc lợi."
+      }
+    }
   }
 }
 
