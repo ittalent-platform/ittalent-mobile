@@ -759,7 +759,8 @@ void main() {
       await tester.drag(find.byType(ListView), const Offset(0, -3000));
       await tester.pumpAndSettle();
       expect(find.text('companies.loadMoreFailed'), findsOneWidget);
-      expect(find.text('First page 0'), findsOneWidget);
+      // The list is scrolled to its end: the last card of page 1 is on show.
+      expect(find.text('First page 7'), findsOneWidget);
 
       // Scrolling again does not ask again.
       await tester.drag(find.byType(ListView), const Offset(0, -300));
@@ -886,7 +887,8 @@ void main() {
         tester,
         adapter,
         location: detailLocation,
-        size: const Size(390, 1400),
+        // Untranslated tab names are long, so give the tabs room to be tapped.
+        size: const Size(900, 1400),
       );
 
       await tester.tap(find.text('companies.tabs.jobs'));
@@ -934,7 +936,12 @@ void main() {
             ? jsonBody({'message': 'Boom'}, status: 500)
             : jsonBody(_jobs([_job('j1', 'Recovered job')])),
       );
-      await _pump(tester, adapter, location: detailLocation);
+      await _pump(
+        tester,
+        adapter,
+        location: detailLocation,
+        size: const Size(900, 1000),
+      );
 
       await tester.tap(find.text('companies.tabs.jobs'));
       await tester.pumpAndSettle();
@@ -947,7 +954,12 @@ void main() {
     });
 
     testWidgets('Benefits lists what the company offers', (tester) async {
-      await _pump(tester, _adapter(), location: detailLocation);
+      await _pump(
+        tester,
+        _adapter(),
+        location: detailLocation,
+        size: const Size(900, 1000),
+      );
       await tester.tap(find.text('companies.tabs.benefits'));
       await tester.pumpAndSettle();
       expect(find.text('Health insurance'), findsOneWidget);
