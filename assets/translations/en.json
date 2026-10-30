@@ -2690,6 +2690,7 @@
   "portfolio": {
     "title": "Portfolio",
     "add": "Add portfolio link",
+    "edit": "Edit",
     "openLink": "Open link",
     "empty": {
       "title": "No portfolio links yet",
@@ -2708,20 +2709,26 @@
       "title": "Title",
       "titlePlaceholder": "e.g. My portfolio site",
       "url": "Link",
-      "urlHint": "Where companies can see your work. Must start with https://",
+      "urlHint": "Where companies can see your work. Must start with http:// or https://",
       "description": "Description",
       "optional": "optional",
       "add": "Save link",
+      "save": "Save changes",
+      "editTitle": "Edit portfolio link",
+      "editDescription": "Editing Version {{version}}. This updates your portfolio link only; copies in applications you already submitted stay unchanged.",
       "errors": {
         "title": "Enter a title.",
-        "url": "Use a secure link that starts with https://",
+        "url": "Use a safe link that starts with http:// or https://",
         "duplicate": "You already added this link.",
         "saveFailed": "Couldn't save the link. Nothing was changed. Try again.",
+        "conflict": "This link changed elsewhere. Load the latest version before editing again.",
+        "unavailable": "This link is no longer available.",
         "summary_one": "Fix 1 field to save.",
         "summary_other": "Fix {{count}} fields to save."
       },
       "optionalHint": "Optional",
-      "saving": "Saving…"
+      "saving": "Saving…",
+      "loadLatest": "Load latest"
     },
     "delete": {
       "title": "Delete {{name}}?",
@@ -2731,6 +2738,7 @@
     },
     "toast": {
       "added": "Link added",
+      "saved": "Changes saved",
       "deleted": "{{name}} deleted.",
       "alreadyGone": "That link was already removed."
     },

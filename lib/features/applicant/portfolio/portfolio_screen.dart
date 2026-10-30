@@ -62,6 +62,13 @@ class _PortfolioScreenState extends ConsumerState<PortfolioScreen> {
     _toast('portfolio.toast.added', link.title);
   }
 
+  Future<void> _edit(PortfolioLink link) async {
+    final updated = await PortfolioFormPage.open(context, existing: link);
+    if (updated == null || !mounted) return;
+    setState(() => _highlightId = updated.id);
+    _toast('portfolio.toast.saved', updated.title);
+  }
+
   Future<void> _openLink(PortfolioLink link) async {
     var opened = false;
     try {
@@ -81,6 +88,8 @@ class _PortfolioScreenState extends ConsumerState<PortfolioScreen> {
     switch (action) {
       case PortfolioMenuAction.openLink:
         await _openLink(link);
+      case PortfolioMenuAction.edit:
+        await _edit(link);
       case PortfolioMenuAction.delete:
         await _delete(link);
       case null:

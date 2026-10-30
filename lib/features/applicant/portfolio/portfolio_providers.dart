@@ -159,6 +159,19 @@ class PortfolioActions {
     return PortfolioLink.fromJson(response.data ?? const {});
   }
 
+  /// UC-S4-PORT-02. Only changed fields are sent; the server owns versioning.
+  Future<PortfolioLink> update({
+    required PortfolioLink current,
+    required Map<String, Object?> changes,
+  }) async {
+    final response = await _ref.read(apiClientProvider).patch<Map<String, dynamic>>(
+      PortfolioConstants.itemPath(current.id),
+      data: {'expectedVersion': current.version, ...changes},
+    );
+    _ref.invalidate(portfolioProvider);
+    return PortfolioLink.fromJson(response.data ?? const {});
+  }
+
   /// UC-S4-PORT-03. Only the platform's reference goes, never the page it points to.
   Future<void> delete(PortfolioLink link) async {
     await _ref
