@@ -2839,6 +2839,98 @@
       "unavailableDesc": "It may have been deleted. Your other notifications are unchanged.",
       "offline": "You’re offline. Showing notifications from your last visit."
     }
+  },
+  "companies": {
+    "search": "Company name or industry",
+    "verified": "verified by ITTalent",
+    "count_one": "{{count}} company",
+    "count_other": "{{count}} companies",
+    "loadMoreFailed": "Couldn’t load more companies.",
+    "errors": {
+      "keywordTooLong": "Keep the search under {{max}} characters."
+    },
+    "loadError": {
+      "title": "Couldn’t load companies",
+      "description": "Check your connection and try again."
+    },
+    "noMatches": {
+      "title": "No companies match",
+      "description": "Try another name or clear the filters.",
+      "clear": "Clear filters"
+    },
+    "empty": {
+      "title": "No companies yet",
+      "description": "Companies that join ITTalent will show up here."
+    },
+    "card": {
+      "openJobs_one": "{{count}} open job",
+      "openJobs_other": "{{count}} open jobs",
+      "noOpenJobs": "No open jobs"
+    },
+    "filter": {
+      "title": "Filters",
+      "industry": "Industry",
+      "size": "Size",
+      "city": "City",
+      "industryCount": "Industry · {{count}}",
+      "sizeCount": "Size · {{count}}",
+      "reset": "Reset",
+      "showAll": "Show all companies",
+      "show_one": "Show {{count}} company",
+      "show_other": "Show {{count}} companies",
+      "industriesFailed": "Couldn’t load industries."
+    },
+    "tabs": {
+      "about": "About",
+      "jobs": "Jobs · {{count}}",
+      "benefits": "Benefits"
+    },
+    "page": {
+      "back": "Back",
+      "industry": "Industry",
+      "size": "Company size",
+      "headquarters": "Headquarters",
+      "offices": "Offices",
+      "website": "Website",
+      "techStack": "Tech stack",
+      "facts": "Company facts",
+      "linkFailed": "Couldn’t open {{site}}.",
+      "seeJobs_one": "See {{count}} open job",
+      "seeJobs_other": "See {{count}} open jobs",
+      "browse": "Browse companies",
+      "loadError": {
+        "title": "Couldn’t load this company",
+        "description": "Check your connection and try again."
+      }
+    },
+    "notAvailable": {
+      "title": "This company isn’t available",
+      "description": "It may have been removed from ITTalent.",
+      "back": "Back to companies"
+    },
+    "jobs": {
+      "negotiable": "Negotiable",
+      "salaryFrom": "From {{amount}}",
+      "salaryUpTo": "Up to {{amount}}",
+      "showing": "Showing {{shown}} of {{total}}",
+      "loadMore": "Load more",
+      "loadMoreFailed": "Couldn’t load more jobs.",
+      "loadError": {
+        "title": "Couldn’t load jobs",
+        "description": "Check your connection and try again."
+      },
+      "empty": {
+        "title": "No open jobs right now",
+        "description": "Check back later or browse similar companies.",
+        "browse": "Browse companies"
+      }
+    },
+    "benefits": {
+      "empty": {
+        "title": "No benefits listed yet",
+        "description": "This company hasn’t shared its benefits."
+      }
+    }
   }
 }
 

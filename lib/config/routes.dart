@@ -13,6 +13,7 @@ class AppRoutes {
   static const String resetPassword = '/reset-password';
 
   static const String jobs = '/jobs';
+  static const String companies = '/companies';
   static const String myApplications = '/my-applications';
   static const String notifications = '/notifications';
   static const String certificates = '/certificates';
@@ -20,6 +21,7 @@ class AppRoutes {
   static const String profile = '/profile';
 
   static String jobDetail(String jobId) => '/jobs/$jobId';
+  static String companyDetail(String companyId) => '/companies/$companyId';
   static String applicationDetail(String applicationId) =>
       '/my-applications/$applicationId';
   static String applicationHistory(String applicationId) =>

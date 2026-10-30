@@ -9,6 +9,7 @@ import '../../../api/api_error.dart';
 import '../../../components/common/app_empty_state.dart';
 import '../../../components/common/app_error_state.dart';
 import '../../../components/common/app_toast.dart';
+import '../../../components/common/company_avatar.dart';
 import '../../../components/layout/screen_scaffold.dart';
 import '../../../components/ui/app_button.dart';
 import '../../../components/ui/app_card.dart';
@@ -19,7 +20,6 @@ import 'applications_constants.dart';
 import 'applications_providers.dart';
 import 'widgets/application_skeletons.dart';
 import 'widgets/back_link.dart';
-import 'widgets/company_avatar.dart';
 import 'widgets/offer_notice.dart';
 import 'widgets/withdraw_application_sheet.dart';
 
