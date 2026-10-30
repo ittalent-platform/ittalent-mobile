@@ -164,10 +164,12 @@ class PortfolioActions {
     required PortfolioLink current,
     required Map<String, Object?> changes,
   }) async {
-    final response = await _ref.read(apiClientProvider).patch<Map<String, dynamic>>(
-      PortfolioConstants.itemPath(current.id),
-      data: {'expectedVersion': current.version, ...changes},
-    );
+    final response = await _ref
+        .read(apiClientProvider)
+        .patch<Map<String, dynamic>>(
+          PortfolioConstants.itemPath(current.id),
+          data: {'expectedVersion': current.version, ...changes},
+        );
     _ref.invalidate(portfolioProvider);
     return PortfolioLink.fromJson(response.data ?? const {});
   }
