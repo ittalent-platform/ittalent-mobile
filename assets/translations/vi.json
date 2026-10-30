@@ -2669,6 +2669,7 @@
   "portfolio": {
     "title": "Portfolio",
     "add": "Thêm liên kết portfolio",
+    "edit": "Chỉnh sửa",
     "openLink": "Mở liên kết",
     "empty": {
       "title": "Chưa có liên kết portfolio",
@@ -2687,20 +2688,26 @@
       "title": "Tiêu đề",
       "titlePlaceholder": "VD: Website portfolio của tôi",
       "url": "Liên kết",
-      "urlHint": "Nơi doanh nghiệp xem được sản phẩm của bạn. Phải bắt đầu bằng https://",
+      "urlHint": "Nơi doanh nghiệp xem được sản phẩm của bạn. Phải bắt đầu bằng http:// hoặc https://",
       "description": "Mô tả",
       "optional": "không bắt buộc",
       "add": "Lưu liên kết",
+      "save": "Lưu thay đổi",
+      "editTitle": "Chỉnh sửa liên kết portfolio",
+      "editDescription": "Bạn đang chỉnh sửa Phiên bản {{version}}. Thao tác này chỉ cập nhật liên kết portfolio; bản sao trong các đơn đã nộp vẫn giữ nguyên.",
       "errors": {
         "title": "Nhập tiêu đề.",
-        "url": "Dùng liên kết an toàn bắt đầu bằng https://",
+        "url": "Dùng liên kết an toàn bắt đầu bằng http:// hoặc https://",
         "duplicate": "Bạn đã thêm liên kết này rồi.",
         "saveFailed": "Không lưu được liên kết. Chưa có gì thay đổi. Hãy thử lại.",
+        "conflict": "Liên kết này đã được thay đổi ở nơi khác. Hãy tải phiên bản mới nhất trước khi chỉnh sửa lại.",
+        "unavailable": "Liên kết này không còn khả dụng.",
         "summary_one": "Sửa 1 trường để lưu.",
         "summary_other": "Sửa {{count}} trường để lưu."
       },
       "optionalHint": "Không bắt buộc",
-      "saving": "Đang lưu…"
+      "saving": "Đang lưu…",
+      "loadLatest": "Tải bản mới nhất"
     },
     "delete": {
       "title": "Xoá {{name}}?",
@@ -2710,6 +2717,7 @@
     },
     "toast": {
       "added": "Đã thêm liên kết",
+      "saved": "Đã lưu thay đổi",
       "deleted": "Đã xóa {{name}}.",
       "alreadyGone": "Liên kết đó đã bị xóa trước đó."
     },

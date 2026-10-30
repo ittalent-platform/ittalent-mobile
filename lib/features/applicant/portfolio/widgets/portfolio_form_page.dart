@@ -30,11 +30,18 @@ PortfolioFormErrors validatePortfolio({
   required String url,
 }) {
   final uri = Uri.tryParse(url.trim());
+  final host = uri?.host.toLowerCase() ?? '';
   final urlOk =
       uri != null &&
-      uri.scheme == 'https' &&
-      uri.host.contains('.') &&
+      (uri.scheme == 'http' || uri.scheme == 'https') &&
+      (host.contains('.') || host.contains(':')) &&
       uri.userInfo.isEmpty &&
+      host != 'localhost' &&
+      !host.endsWith('.localhost') &&
+      !host.endsWith('.local') &&
+      !host.endsWith('.internal') &&
+      !_isPrivateIpv4(host) &&
+      !_isPrivateIpv6(host) &&
       url.trim().length <= PortfolioConstants.urlMaxLength;
   final titleOk =
       title.trim().isNotEmpty &&
@@ -43,6 +50,38 @@ PortfolioFormErrors validatePortfolio({
     title: titleOk ? null : tr('portfolio.form.errors.title'),
     url: urlOk ? null : tr('portfolio.form.errors.url'),
   );
+}
+
+bool _isPrivateIpv4(String host) {
+  final parts = host.split('.');
+  if (parts.length != 4) return false;
+  final octets = parts.map(int.tryParse).toList();
+  if (octets.any((octet) => octet == null || octet < 0 || octet > 255)) {
+    return false;
+  }
+  final first = octets[0]!;
+  final second = octets[1]!;
+  return first == 0 ||
+      first == 10 ||
+      first == 127 ||
+      (first == 169 && second == 254) ||
+      (first == 100 && second >= 64 && second <= 127) ||
+      (first == 172 && second >= 16 && second <= 31) ||
+      (first == 192 && second == 168) ||
+      (first == 192 && second == 0) ||
+      (first == 198 && second >= 18 && second <= 19) ||
+      first >= 224;
+}
+
+bool _isPrivateIpv6(String host) {
+  final address = host.replaceAll(RegExp(r'^\[|\]$'), '').toLowerCase();
+  return address == '::' ||
+      address == '::1' ||
+      address.startsWith('fc') ||
+      address.startsWith('fd') ||
+      RegExp(r'^fe[89ab]').hasMatch(address) ||
+      address.startsWith('ff') ||
+      address.startsWith('::ffff:');
 }
 
 /// A new idempotency key; kept for the lifetime of the form so a retry cannot duplicate.
@@ -56,15 +95,19 @@ String newPortfolioIdempotencyKey() {
 
 /// Full-screen page to add a portfolio link. Pops the saved link once created.
 class PortfolioFormPage extends ConsumerStatefulWidget {
-  const PortfolioFormPage({super.key});
+  const PortfolioFormPage({super.key, this.existing});
 
-  static Future<PortfolioLink?> open(BuildContext context) =>
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          fullscreenDialog: true,
-          builder: (_) => const PortfolioFormPage(),
-        ),
-      );
+  final PortfolioLink? existing;
+
+  static Future<PortfolioLink?> open(
+    BuildContext context, {
+    PortfolioLink? existing,
+  }) => Navigator.of(context).push(
+    MaterialPageRoute(
+      fullscreenDialog: true,
+      builder: (_) => PortfolioFormPage(existing: existing),
+    ),
+  );
 
   @override
   ConsumerState<PortfolioFormPage> createState() => _PortfolioFormPageState();
@@ -78,6 +121,21 @@ class _PortfolioFormPageState extends ConsumerState<PortfolioFormPage> {
   PortfolioFormErrors _errors = const PortfolioFormErrors();
   bool _saving = false;
   String? _failure;
+  bool _unavailable = false;
+  bool _conflict = false;
+
+  bool get _editing => widget.existing != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final existing = widget.existing;
+    if (existing != null) {
+      _title.text = existing.title;
+      _url.text = existing.url;
+      _description.text = existing.description ?? '';
+    }
+  }
 
   @override
   void dispose() {
@@ -104,14 +162,17 @@ class _PortfolioFormPageState extends ConsumerState<PortfolioFormPage> {
 
     setState(() => _saving = true);
     try {
-      final link = await ref
-          .read(portfolioActionsProvider)
-          .create(
-            idempotencyKey: _idempotencyKey,
-            title: title,
-            url: url,
-            description: description.isEmpty ? null : description,
-          );
+      final existing = widget.existing;
+      final link = existing == null
+          ? await ref
+                .read(portfolioActionsProvider)
+                .create(
+                  idempotencyKey: _idempotencyKey,
+                  title: title,
+                  url: url,
+                  description: description.isEmpty ? null : description,
+                )
+          : await _update(existing, title, url, description);
       if (mounted) Navigator.of(context).pop(link);
     } on ApiError catch (e) {
       if (!mounted) return;
@@ -121,6 +182,13 @@ class _PortfolioFormPageState extends ConsumerState<PortfolioFormPage> {
           _errors = PortfolioFormErrors(
             url: tr('portfolio.form.errors.duplicate'),
           );
+        } else if (_editing &&
+            e.code == PortfolioConstants.codeVersionConflict) {
+          _conflict = true;
+          _failure = tr('portfolio.form.errors.conflict');
+        } else if (_editing && e.isNotFound) {
+          _unavailable = true;
+          _failure = tr('portfolio.form.errors.unavailable');
         } else {
           _failure = tr('portfolio.form.errors.saveFailed');
         }
@@ -132,6 +200,30 @@ class _PortfolioFormPageState extends ConsumerState<PortfolioFormPage> {
         _failure = tr('portfolio.form.errors.saveFailed');
       });
     }
+  }
+
+  Future<PortfolioLink> _update(
+    PortfolioLink existing,
+    String title,
+    String url,
+    String description,
+  ) {
+    final changes = <String, Object?>{};
+    if (title != existing.title) changes['title'] = title;
+    if (url != existing.url) changes['url'] = url;
+    final nextDescription = description.isEmpty ? null : description;
+    if (nextDescription != existing.description) {
+      changes['description'] = nextDescription;
+    }
+    if (changes.isEmpty) return Future.value(existing);
+    return ref
+        .read(portfolioActionsProvider)
+        .update(current: existing, changes: changes);
+  }
+
+  void _loadLatest() {
+    ref.invalidate(portfolioProvider);
+    Navigator.of(context).pop();
   }
 
   Widget _callout(String text) {
@@ -176,7 +268,7 @@ class _PortfolioFormPageState extends ConsumerState<PortfolioFormPage> {
           onPressed: () => Navigator.of(context).maybePop(),
         ),
         title: Text(
-          tr('portfolio.form.addTitle'),
+          tr(_editing ? 'portfolio.form.editTitle' : 'portfolio.form.addTitle'),
           style: AppTypography.display(
             fontSize: 17,
             fontWeight: FontWeight.w700,
@@ -188,6 +280,20 @@ class _PortfolioFormPageState extends ConsumerState<PortfolioFormPage> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          if (_editing)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: Text(
+                tr(
+                  'portfolio.form.editDescription',
+                  namedArgs: {'version': '${widget.existing!.version}'},
+                ),
+                style: AppTypography.body(
+                  fontSize: 13,
+                  color: colors.mutedForeground,
+                ),
+              ),
+            ),
           if (_errors.any)
             _callout(
               tr(
@@ -198,6 +304,16 @@ class _PortfolioFormPageState extends ConsumerState<PortfolioFormPage> {
               ),
             ),
           if (_failure != null) _callout(_failure!),
+          if (_conflict || _unavailable)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: AppButton(
+                text: tr('portfolio.form.loadLatest'),
+                variant: AppButtonVariant.outline,
+                isFullWidth: true,
+                onPressed: _loadLatest,
+              ),
+            ),
           AppInput(
             controller: _title,
             label: tr('portfolio.form.title'),
@@ -239,7 +355,11 @@ class _PortfolioFormPageState extends ConsumerState<PortfolioFormPage> {
             ),
             child: AppButton(
               text: tr(
-                _saving ? 'portfolio.form.saving' : 'portfolio.form.add',
+                _saving
+                    ? 'portfolio.form.saving'
+                    : _editing
+                    ? 'portfolio.form.save'
+                    : 'portfolio.form.add',
               ),
               size: AppButtonSize.lg,
               isFullWidth: true,

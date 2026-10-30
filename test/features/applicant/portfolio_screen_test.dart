@@ -87,7 +87,6 @@ void main() {
     });
 
     for (final url in const [
-      'http://me.example',
       'javascript:alert(1)',
       'data:text/html,x',
       'ftp://me.example',
@@ -100,6 +99,13 @@ void main() {
         expect(validatePortfolio(title: 'Site', url: url).url, isNotNull);
       });
     }
+
+    test('accepts HTTP when the backend accepts it', () {
+      expect(
+        validatePortfolio(title: 'Site', url: 'http://me.example').any,
+        isFalse,
+      );
+    });
   });
 
   testWidgets('lists the portfolio links', (tester) async {
@@ -126,6 +132,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.textContaining('me.example · '), findsOneWidget);
     expect(find.text('portfolio.openLink'), findsOneWidget);
+    expect(find.text('portfolio.edit'), findsOneWidget);
     expect(find.text('portfolio.deleteMenu'), findsOneWidget);
   });
 
@@ -209,9 +216,8 @@ void main() {
       await tester.tap(find.text('portfolio.form.add'));
       await tester.pumpAndSettle();
 
-      expect(find.text('portfolio.form.errors.summary_other'), findsOneWidget);
+      expect(find.text('portfolio.form.errors.summary_one'), findsOneWidget);
       expect(find.text('portfolio.form.errors.title'), findsOneWidget);
-      expect(find.text('portfolio.form.errors.url'), findsOneWidget);
       expect(adapter.requests.where((r) => r.method == 'POST'), isEmpty);
     });
 
@@ -256,6 +262,101 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('portfolio.form.errors.duplicate'), findsOneWidget);
+    });
+  });
+
+  group('edit', () {
+    Future<void> openEdit(WidgetTester tester) async {
+      await _menu(tester, 'portfolio.edit');
+    }
+
+    testWidgets('prefills the edit form and patches only changed fields', (
+      tester,
+    ) async {
+      final adapter = await _open(tester);
+      await openEdit(tester);
+      expect(find.text('portfolio.form.editDescription'), findsOneWidget);
+      expect(
+        tester.widget<TextField>(_fields().at(0)).controller!.text,
+        'My site',
+      );
+      expect(
+        tester.widget<TextField>(_fields().at(1)).controller!.text,
+        'https://www.me.example/p1',
+      );
+
+      await tester.enterText(_fields().at(0), 'Updated site');
+      await tester.tap(find.text('portfolio.form.save'));
+      await tester.pumpAndSettle();
+
+      final patch = adapter.requests.singleWhere((r) => r.method == 'PATCH');
+      expect(patch.path, '/api/v1/me/portfolio-links/p1');
+      expect(patch.data, {'expectedVersion': 1, 'title': 'Updated site'});
+      expect(patch.headers['Idempotency-Key'], isNull);
+      expect(find.text('portfolio.toast.saved'), findsOneWidget);
+    });
+
+    testWidgets('does not call update for an unchanged edit', (tester) async {
+      final adapter = await _open(tester);
+      await openEdit(tester);
+      await tester.tap(find.text('portfolio.form.save'));
+      await tester.pumpAndSettle();
+
+      expect(adapter.requests.where((r) => r.method == 'PATCH'), isEmpty);
+      expect(find.text('portfolio.toast.saved'), findsOneWidget);
+    });
+
+    testWidgets('clears description with null in the partial update', (
+      tester,
+    ) async {
+      final adapter = await _open(
+        tester,
+        items: [_link('p1', 'My site', description: 'Old description')],
+      );
+      await openEdit(tester);
+      await tester.enterText(_fields().at(2), '');
+      await tester.tap(find.text('portfolio.form.save'));
+      await tester.pumpAndSettle();
+
+      final patch = adapter.requests.singleWhere((r) => r.method == 'PATCH');
+      expect(patch.data, {'expectedVersion': 1, 'description': null});
+    });
+
+    testWidgets('keeps the form and offers Load latest after a conflict', (
+      tester,
+    ) async {
+      final adapter = await _open(
+        tester,
+        onWrite: (_) => jsonBody({
+          'message': 'stale',
+          'code': 'VERSION_CONFLICT',
+        }, status: 409),
+      );
+      await openEdit(tester);
+      await tester.enterText(_fields().at(0), 'Updated site');
+      await tester.tap(find.text('portfolio.form.save'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('portfolio.form.loadLatest'), findsOneWidget);
+      expect(find.byType(PortfolioFormPage), findsOneWidget);
+      await tester.tap(find.text('portfolio.form.loadLatest'));
+      await tester.pumpAndSettle();
+      expect(find.byType(PortfolioFormPage), findsNothing);
+      expect(adapter.requests.where((r) => r.method == 'GET').length, 2);
+    });
+
+    testWidgets('keeps the form on an unavailable link', (tester) async {
+      await _open(
+        tester,
+        onWrite: (_) => jsonBody({'message': 'gone'}, status: 404),
+      );
+      await openEdit(tester);
+      await tester.enterText(_fields().at(0), 'Updated site');
+      await tester.tap(find.text('portfolio.form.save'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('portfolio.form.loadLatest'), findsOneWidget);
+      expect(find.byType(PortfolioFormPage), findsOneWidget);
     });
   });
 
