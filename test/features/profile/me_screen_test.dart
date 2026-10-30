@@ -104,30 +104,20 @@ void main() {
 
   testWidgets('card and Profile tile open Profile details', (tester) async {
     final first = await pumpMe(tester, profile: testProfile());
-    await tester.tap(
-      find.descendant(
-        of: find.byKey(const Key('me_profile_card')),
-        matching: find.text('Nguyen Van An'),
-      ),
-    );
+    await tester.tap(find.byKey(const Key('me_profile_card')));
     await tester.pumpAndSettle();
     expect(
-      first.router.routeInformationProvider.value.uri.path,
+      first.router.routerDelegate.currentConfiguration.uri.path,
       AppRoutes.profileDetails,
     );
 
     first.router.go(AppRoutes.profile);
     await tester.pumpAndSettle();
     await reveal(tester, const Key('me_menu_profile'));
-    await tester.tap(
-      find.descendant(
-        of: find.byKey(const Key('me_menu_profile')),
-        matching: find.text('Profile'),
-      ),
-    );
+    await tester.tap(find.byKey(const Key('me_menu_profile')));
     await tester.pumpAndSettle();
     expect(
-      first.router.routeInformationProvider.value.uri.path,
+      first.router.routerDelegate.currentConfiguration.uri.path,
       AppRoutes.profileDetails,
     );
   });
@@ -135,12 +125,7 @@ void main() {
   testWidgets('Saved jobs never opens Change password', (tester) async {
     final result = await pumpMe(tester, profile: testProfile());
     await reveal(tester, const Key('me_menu_saved_jobs'));
-    await tester.tap(
-      find.descendant(
-        of: find.byKey(const Key('me_menu_saved_jobs')),
-        matching: find.text('Saved jobs'),
-      ),
-    );
+    await tester.tap(find.byKey(const Key('me_menu_saved_jobs')));
     await tester.pumpAndSettle();
     expect(
       result.router.routeInformationProvider.value.uri.path,
@@ -154,15 +139,10 @@ void main() {
   ) async {
     final result = await pumpMe(tester, profile: testProfile());
     await reveal(tester, const Key('me_menu_password'));
-    await tester.tap(
-      find.descendant(
-        of: find.byKey(const Key('me_menu_password')),
-        matching: find.text('Password'),
-      ),
-    );
+    await tester.tap(find.byKey(const Key('me_menu_password')));
     await tester.pumpAndSettle();
     expect(
-      result.router.routeInformationProvider.value.uri.path,
+      result.router.routerDelegate.currentConfiguration.uri.path,
       AppRoutes.changePassword,
     );
   });
@@ -177,12 +157,7 @@ void main() {
     ) async {
       final result = await pumpMe(tester, profile: profile);
       await reveal(tester, const Key('me_menu_password'));
-      await tester.tap(
-        find.descendant(
-          of: find.byKey(const Key('me_menu_password')),
-          matching: find.text('Password'),
-        ),
-      );
+      await tester.tap(find.byKey(const Key('me_menu_password')));
       await tester.pumpAndSettle();
       expect(
         result.router.routeInformationProvider.value.uri.path,
