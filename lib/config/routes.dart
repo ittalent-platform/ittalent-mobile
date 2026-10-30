@@ -16,7 +16,7 @@ class AppRoutes {
   static const String myApplications = '/my-applications';
   static const String notifications = '/notifications';
   static const String certificates = '/certificates';
-  static const String documents = '/documents';
+  static const String documents = '/profile/documents';
   static const String portfolio = '/portfolio';
   static const String profile = '/profile';
 

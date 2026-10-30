@@ -89,10 +89,6 @@ final routerProvider = Provider<GoRouter>((ref) {
     redirect: notifier.redirect,
     routes: [
       GoRoute(
-        path: AppRoutes.documents,
-        builder: (context, state) => const DocumentsScreen(),
-      ),
-      GoRoute(
         path: AppRoutes.portfolio,
         builder: (context, state) => const PortfolioScreen(),
       ),
@@ -303,6 +299,12 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: AppRoutes.profile,
                 builder: (context, state) => const MeScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'documents',
+                    builder: (context, state) => const DocumentsScreen(),
+                  ),
+                ],
               ),
             ],
           ),

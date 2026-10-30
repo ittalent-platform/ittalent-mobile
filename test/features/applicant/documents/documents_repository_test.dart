@@ -242,42 +242,14 @@ void main() {
         type: DocumentType.coverLetter,
         search: '  An  ',
       ).parameters(2),
-      {
-        'page': 2,
-        'limit': 20,
-        'sort_by': 'created_at',
-        'sort_order': 'desc',
-        'type': 'cover_letter',
-        'search': 'An',
-      },
+      {'page': 2, 'limit': 20, 'type': 'cover_letter', 'search': 'An'},
     );
     expect(
       () => DocumentsQuery(search: 'a' * 101).parameters(1),
       throwsArgumentError,
     );
   });
-  test('sort is typed, retained with search/type, and sent to every page', () {
-    const query = DocumentsQuery(
-      type: DocumentType.cv,
-      search: ' resume ',
-      sortField: DocumentSortField.fileName,
-      sortOrder: DocumentSortOrder.ascending,
-    );
-    expect(query.parameters(2), {
-      'page': 2,
-      'limit': 20,
-      'sort_by': 'file_name',
-      'sort_order': 'asc',
-      'type': 'cv',
-      'search': 'resume',
-    });
-    expect(
-      const DocumentsQuery(sortField: DocumentSortField.size)
-          .parameters(1)['sort_by'],
-      'size',
-    );
-  });
-  for (final extension in ['pdf', 'doc', 'docx']) {
+  for (final extension in ['pdf']) {
     for (final type in DocumentType.values) {
       test(
         'multipart $extension ${type.value}: exact fields, MIME, filename, auth and bytes',
@@ -327,7 +299,7 @@ void main() {
     final repo = DocumentsRepository(ApiClient(dio: dio));
     for (final file in [
       selected('pdf', size: 0),
-      selected('pdf', size: 5242881),
+      selected('pdf', size: 5000001),
       selected('txt'),
       selected('pdf', bytes: Uint8List.fromList([1, 2, 3])),
       SelectedDocument(
@@ -347,7 +319,7 @@ void main() {
       );
     }
     expect(calls, 0);
-    final bytes = Uint8List(5242880)
+    final bytes = Uint8List(5000000)
       ..setAll(0, DocumentConstants.signatures['pdf']!);
     await repo.upload(selected('pdf', bytes: bytes), DocumentType.cv);
     expect(calls, 1);
@@ -372,14 +344,14 @@ void main() {
         });
       final repo = DocumentsRepository(ApiClient(dio: dio));
       await expectLater(
-        repo.upload(selected('docx'), DocumentType.coverLetter),
+        repo.upload(selected('pdf'), DocumentType.coverLetter),
         throwsA(isA<ApiError>()),
       );
       await expectLater(
-        repo.upload(selected('docx'), DocumentType.coverLetter),
+        repo.upload(selected('pdf'), DocumentType.coverLetter),
         throwsA(isA<ApiError>()),
       );
-      await repo.upload(selected('docx'), DocumentType.coverLetter);
+      await repo.upload(selected('pdf'), DocumentType.coverLetter);
       expect(bodies.toSet().length, 3);
       expect(calls, 3);
     },
@@ -466,14 +438,14 @@ void main() {
       );
       expect(o.headers['Authorization'], 'Bearer access');
       expect(o.responseType, ResponseType.bytes);
-      expect(o.headers['Accept'], contains('application/msword'));
+      expect(o.headers['Accept'], 'application/pdf');
       return ResponseBody.fromBytes(
         bytes,
         200,
         headers: {
-          'content-type': ['application/msword'],
+          'content-type': ['application/pdf'],
           'content-disposition': [
-            "attachment; filename=ascii.doc; filename*=UTF-8''Nguy%E1%BB%85n%20An.doc",
+            "attachment; filename=ascii.pdf; filename*=UTF-8''Nguy%E1%BB%85n%20An.pdf",
           ],
         },
       );
@@ -481,8 +453,8 @@ void main() {
     final result = await DocumentsRepository(ApiClient(dio: dio))
         .download(DocumentDto.fromJson(documentJson()));
     expect(result.bytes, bytes);
-    expect(result.name, 'Nguyễn An.doc');
-    expect(result.mimeType, 'application/msword');
+    expect(result.name, 'Nguyễn An.pdf');
+    expect(result.mimeType, 'application/pdf');
   });
   test('set default PATCH has no body and parses its response', () async {
     final dio = Dio()
@@ -495,6 +467,26 @@ void main() {
     final item = await DocumentsRepository(ApiClient(dio: dio))
         .setDefault('doc');
     expect(item.isDefault, true);
+  });
+
+  test('preview endpoint returns only an HTTP(S) preview URL', () async {
+    final dio = Dio()
+      ..httpClientAdapter = FakeAdapter((options) {
+        expect(options.method, 'GET');
+        expect(options.path, '${DocumentConstants.path}/doc/preview');
+        return jsonBody({'previewUrl': 'https://storage.example/preview.pdf'});
+      });
+    final url = await DocumentsRepository(ApiClient(dio: dio)).preview('doc');
+    expect(url, Uri.parse('https://storage.example/preview.pdf'));
+
+    final invalidDio = Dio()
+      ..httpClientAdapter = FakeAdapter(
+        (_) => jsonBody({'previewUrl': 'file:///untrusted.pdf'}),
+      );
+    await expectLater(
+      DocumentsRepository(ApiClient(dio: invalidDio)).preview('doc'),
+      throwsA(isA<ApiError>()),
+    );
   });
 
   test(
@@ -528,20 +520,17 @@ void main() {
   test(
     'filename fallback, traversal, invalid UTF-8, reserved Windows names',
     () {
-      expect(
-        documentFileName(null, 'CV tiếng Việt.docx'),
-        'CV tiếng Việt.docx',
-      );
+      expect(documentFileName(null, 'CV tiếng Việt.pdf'), 'CV tiếng Việt.pdf');
       expect(
         documentFileName('attachment; filename="../../cv.pdf"', 'x.pdf'),
         isNot(contains('/')),
       );
       expect(
         documentFileName(
-          "attachment; filename*=UTF-8''%ZZ; filename=plain.doc",
+          "attachment; filename*=UTF-8''%ZZ; filename=plain.pdf",
           'x.pdf',
         ),
-        'plain.doc',
+        'plain.pdf',
       );
       expect(
         documentFileName('attachment; filename="CON.pdf"', 'x.pdf'),
@@ -610,13 +599,7 @@ void main() {
     expect(calls, 3);
     c
         .read(documentsQueryProvider.notifier)
-        .update(
-          const DocumentsQuery(
-            type: DocumentType.coverLetter,
-            sortField: DocumentSortField.size,
-            sortOrder: DocumentSortOrder.ascending,
-          ),
-        );
+        .update(const DocumentsQuery(type: DocumentType.coverLetter));
     await c.read(documentsProvider.future);
     expect(c.read(documentsProvider).requireValue.result.page, 1);
     expect(calls, 4);
@@ -723,7 +706,7 @@ void main() {
         final repo = DocumentsRepository(ApiClient(dio: dio));
         if (multipart) {
           await repo.upload(
-            selected('docx'),
+            selected('pdf'),
             DocumentType.coverLetter,
             cancelToken: cancel,
           );

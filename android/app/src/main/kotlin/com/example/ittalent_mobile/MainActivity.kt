@@ -5,7 +5,6 @@ import android.app.Activity
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
-import android.provider.Settings
 import android.provider.DocumentsContract
 import java.util.UUID
 import io.flutter.embedding.android.FlutterActivity
@@ -115,15 +114,6 @@ class MainActivity : FlutterActivity() {
                         deleteCreated(uri)
                     }
                     result.success(null)
-                }
-                "openSettings" -> {
-                    try {
-                        startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                            Uri.parse("package:$packageName")))
-                        result.success(true)
-                    } catch (_: Exception) {
-                        result.success(false)
-                    }
                 }
                 else -> result.notImplemented()
             }

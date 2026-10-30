@@ -65,6 +65,28 @@ class DocumentsRepository {
     }
   }
 
+  Future<Uri> preview(String id) async {
+    try {
+      final response = await client.dio.get<Map<String, Object?>>(
+        '${DocumentConstants.path}/${Uri.encodeComponent(id)}/preview',
+      );
+      final rawUrl = response.data?['previewUrl'];
+      final url = rawUrl is String ? Uri.tryParse(rawUrl) : null;
+      if (response.statusCode != 200 ||
+          url == null ||
+          !url.hasScheme ||
+          (url.scheme != 'https' && url.scheme != 'http')) {
+        throw ApiError(
+          message: 'Invalid document preview response',
+          statusCode: response.statusCode,
+        );
+      }
+      return url;
+    } on DioException catch (e) {
+      throw ApiError.fromDio(e);
+    }
+  }
+
   Future<DocumentDto> upload(
     SelectedDocument file,
     DocumentType type, {
@@ -138,9 +160,7 @@ class DocumentsRepository {
         onReceiveProgress: onProgress,
         options: Options(
           responseType: ResponseType.bytes,
-          headers: {
-            'Accept': 'application/pdf, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-          },
+          headers: {'Accept': 'application/pdf'},
         ),
       );
       final mime =
