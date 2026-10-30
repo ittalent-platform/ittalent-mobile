@@ -103,7 +103,8 @@ void main() {
     tester.testTextInput.hide();
     await tester.pump();
     await tester.tap(find.byKey(const Key('profile_save')));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.text('Profile was updated'), findsOneWidget);
     expect(find.text('Cancel'), findsOneWidget);
@@ -113,7 +114,8 @@ void main() {
     expect(find.text('Changed Name'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('profile_save')));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
     repository
       ..profile = testProfile(fullName: 'Latest Name', version: 4)
       ..updateError = null;

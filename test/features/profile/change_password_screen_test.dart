@@ -76,6 +76,7 @@ void main() {
 
     await tester.enterText(input(const Key('password_new')), 'Newpass1!');
     await tester.enterText(input(const Key('password_confirm')), 'Mismatch1!');
+    await tester.pump();
     expect(find.text('Passwords do not match.'), findsOneWidget);
     await tester.enterText(input(const Key('password_confirm')), 'Newpass1!');
     await tester.pump();
