@@ -2741,6 +2741,47 @@
     "notHttps": "Not HTTPS",
     "linkFailed": "{{name}} didn't respond. Check the link."
   },
+  "jobs": {
+    "count_one": "{{count}} job",
+    "count_other": "{{count}} jobs",
+    "end_one": "You've seen all {{count}} job.",
+    "end_other": "You've seen all {{count}} jobs.",
+    "endPartial": "Showing the newest {{count}} of {{total}} jobs.",
+    "empty": {
+      "title": "No open jobs right now",
+      "description": "Check back soon for new roles."
+    },
+    "loadError": {
+      "title": "Couldn't load jobs",
+      "description": "Check your connection and try again."
+    },
+    "card": {
+      "new": "New",
+      "posted": "Posted {{when}}"
+    },
+    "ago": {
+      "today": "today",
+      "days_one": "{{count}} day ago",
+      "days_other": "{{count}} days ago",
+      "weeks_one": "{{count}} week ago",
+      "weeks_other": "{{count}} weeks ago",
+      "months_one": "{{count}} month ago",
+      "months_other": "{{count}} months ago"
+    },
+    "salary": {
+      "negotiable": "Negotiable",
+      "perMonth": "/ month",
+      "from": "From {{amount}}",
+      "upTo": "Up to {{amount}}"
+    },
+    "level": {
+      "intern": "Intern",
+      "junior": "Junior",
+      "mid": "Mid",
+      "senior": "Senior",
+      "lead": "Lead"
+    }
+  },
   "notifications": {
     "title": "Notifications",
     "unreadCount": "{{count}} unread",
