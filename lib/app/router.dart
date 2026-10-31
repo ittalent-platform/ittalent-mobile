@@ -25,6 +25,7 @@ import '../features/auth/verify_email/check_email_screen.dart';
 import '../features/auth/verify_email/verify_email_screen.dart';
 import '../features/auth/welcome/welcome_screen.dart';
 import '../features/profile/me_screen.dart';
+import '../features/applicant/documents/documents_screen.dart';
 import '../theme/app_colors.dart';
 
 class RouterNotifier extends ChangeNotifier {
@@ -289,6 +290,12 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: AppRoutes.profile,
                 builder: (context, state) => const MeScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'documents',
+                    builder: (context, state) => const DocumentsScreen(),
+                  ),
+                ],
               ),
             ],
           ),

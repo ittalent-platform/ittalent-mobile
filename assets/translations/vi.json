@@ -1827,6 +1827,57 @@
     }
   },
   "documents": {
+    "mobile": {
+      "all": "Tất cả",
+      "filterCount": "{{label}} ({{count}})",
+      "sheetTitle": "Bạn muốn tải lên tài liệu gì?",
+      "helper": "PDF · tối đa 5 MB",
+      "uploadCv": "Tải CV lên",
+      "uploadCover": "Tải thư xin việc lên",
+      "upload": "Tải tài liệu lên",
+      "cancel": "Hủy",
+      "pickCancelled": "Đã hủy chọn tệp.",
+      "saveCancelled": "Đã hủy chọn nơi lưu.",
+      "setDefault": "Đặt làm CV mặc định",
+      "view": "Xem",
+      "download": "Tải xuống",
+      "delete": "Xóa",
+      "retry": "Thử lại",
+      "chooseAgain": "Chọn tệp khác",
+      "back": "Quay lại Tôi",
+      "refresh": "Làm mới",
+      "loadMore": "Tải thêm",
+      "emptyType": "Chưa có tài liệu thuộc loại này",
+      "cl": "TXV",
+      "actions": "Thao tác với {{name}}",
+      "defaultCv": "★ CV mặc định",
+      "downloadChoosing": "Chọn nơi lưu…",
+      "downloadDownloading": "Đang tải xuống…",
+      "downloadSaving": "Đang lưu tệp…",
+      "uploadProgress": "Đang tải lên {{percent}}%",
+      "uploadCancelled": "Đã hủy tải lên.",
+      "deleteLibraryDescription": "Tài liệu sẽ bị gỡ khỏi thư viện. Công ty vẫn giữ bản sao đã nhận cùng các đơn ứng tuyển đã nộp.",
+      "deleteDefaultDescription": "Đây là CV mặc định của bạn. Việc gỡ tài liệu này sẽ ảnh hưởng đến lựa chọn CV mặc định.",
+      "saved": "Đã lưu tại {{location}}",
+      "browserSave": "Đã chuyển tệp cho trình duyệt. Kiểm tra mục Tải xuống.",
+      "format": "Hãy chọn tệp PDF hợp lệ.",
+      "empty": "Tệp trống. Hãy chọn tệp khác.",
+      "size": "Tệp này ({{size}}) vượt quá 5 MB. Hãy chọn tệp nhỏ hơn.",
+      "read": "Không đọc được tệp. Hãy chọn lại.",
+      "invalid": "Yêu cầu hoặc tệp không hợp lệ. Kiểm tra rồi thử lại.",
+      "unauthorized": "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
+      "forbidden": "Chỉ tài khoản ứng viên có thể truy cập tài liệu.",
+      "notFound": "Tài liệu không còn tồn tại. Hãy làm mới danh sách.",
+      "conflict": "Không thể thay đổi tài liệu này. Hãy làm mới rồi thử lại.",
+      "storage": "Kho tài liệu tạm thời không khả dụng. Vui lòng thử lại sau.",
+      "unavailable": "Tài liệu tạm thời không khả dụng. Vui lòng thử lại sau.",
+      "network": "Không kết nối được. Kiểm tra kết nối rồi thử lại."
+    },
+    "permissions": {
+      "unsupported": "Thiết bị này không hỗ trợ truy cập tệp.",
+      "resourceDenied": "Không được phép truy cập tệp đã chọn. Hãy chọn lại.",
+      "saveFailed": "Không lưu được tệp. Hãy chọn nơi lưu rồi thử lại."
+    },
     "title": "Tài liệu của tôi",
     "subtitle": "Tải lên CV và thư xin việc. Tệp được nền tảng lưu trữ an toàn.",
     "dropTitle": "Kéo và thả tài liệu vào đây",
@@ -1870,7 +1921,20 @@
     "defaultDoneTitle": "Đã cập nhật tài liệu mặc định",
     "defaultDoneMessage": "{{name}} hiện là tài liệu mặc định của loại này.",
     "defaultFailedTitle": "Không đặt được tài liệu mặc định",
-    "preview": "Xem trước {{name}}",
+    "preview": {
+      "expired": {
+        "title": "Bản xem trước đã hết hạn",
+        "description": "Hãy yêu cầu bản xem trước mới rồi thử lại."
+      },
+      "notFound": {
+        "title": "Không tìm thấy tài liệu",
+        "description": "Tài liệu có thể đã bị gỡ khỏi thư viện của bạn."
+      },
+      "cannotOpen": {
+        "title": "Không thể mở tệp này",
+        "description": "Hãy thử lại sau ít phút."
+      }
+    },
     "download": "Tải xuống {{name}}",
     "delete": "Xóa {{name}}",
     "previewFailedTitle": "Không xem trước được tài liệu",
@@ -1880,7 +1944,7 @@
     "downloadFailedTitle": "Không tải xuống được tài liệu",
     "downloadFailedMessage": "Không tải xuống được tài liệu.",
     "deleteTitle": "Xóa “{{name}}”?",
-    "deleteDescription": "Tài liệu sẽ bị xóa khỏi thư viện của bạn. Không thể xóa tài liệu đã gắn với hồ sơ ứng tuyển.",
+    "deleteDescription": "Tài liệu sẽ bị gỡ khỏi thư viện của bạn.",
     "confirmDelete": "Xóa tài liệu",
     "deleting": "Đang xóa…",
     "deletedTitle": "Đã xóa tài liệu",
@@ -1889,7 +1953,7 @@
     "emptyTitle": "Chưa có tài liệu",
     "emptyHint": "Tải lên CV hoặc thư xin việc để xem tại đây.",
     "noMatchesTitle": "Không có tài liệu phù hợp",
-    "noMatchesHint": "Không có tài liệu nào khớp với tìm kiếm hoặc bộ lọc hiện tại.",
+    "noMatchesHint": "Không có tài liệu nào khớp với “{{query}}”.",
     "loadError": "Không thể tải tài liệu",
     "invalidFile": "Tệp không hợp lệ",
     "uploadedTitle": "Đã tải tài liệu lên",
@@ -1897,7 +1961,7 @@
     "uploadFailedTitle": "Không thể tải tài liệu lên",
     "uploadFailedMessage": "Không thể tải tài liệu lên.",
     "errors": {
-      "format": "Chỉ hỗ trợ tệp PDF, DOC và DOCX (.pdf, .doc, .docx). Không thể tải lên \"{{name}}\".",
+      "format": "Chỉ hỗ trợ tệp PDF (.pdf). Không thể tải lên \"{{name}}\".",
       "empty": "\"{{name}}\" bị trống. Hãy chọn tệp có nội dung.",
       "size": "\"{{name}}\" lớn hơn {{size}} MB. Hãy chọn tệp nhỏ hơn."
     }
