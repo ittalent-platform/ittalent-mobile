@@ -7,7 +7,7 @@ import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_typography.dart';
 import '../portfolio_providers.dart';
 
-enum PortfolioMenuAction { openLink, delete }
+enum PortfolioMenuAction { openLink, edit, delete }
 
 /// Bottom sheet with a title, a muted line, [children] and a Cancel button.
 Future<T?> _showSheet<T>(
@@ -96,6 +96,8 @@ Future<PortfolioMenuAction?> showPortfolioMenu(
           LucideIcons.externalLink,
           'portfolio.openLink',
         ),
+        Divider(height: 1, color: colors.border),
+        row(PortfolioMenuAction.edit, LucideIcons.pencil, 'portfolio.edit'),
         Divider(height: 1, color: colors.border),
         row(
           PortfolioMenuAction.delete,
