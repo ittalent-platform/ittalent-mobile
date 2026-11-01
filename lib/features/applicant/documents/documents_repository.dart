@@ -10,6 +10,20 @@ import 'document_files.dart';
 import 'document_model.dart';
 import 'documents_constants.dart';
 
+sealed class DocumentPreview {
+  const DocumentPreview();
+}
+
+class PdfDocumentPreview extends DocumentPreview {
+  const PdfDocumentPreview(this.bytes);
+  final Uint8List bytes;
+}
+
+class UrlDocumentPreview extends DocumentPreview {
+  const UrlDocumentPreview(this.url);
+  final Uri url;
+}
+
 class DocumentsRepository {
   DocumentsRepository(this.client);
   final ApiClient client;
@@ -65,24 +79,59 @@ class DocumentsRepository {
     }
   }
 
-  Future<Uri> preview(String id) async {
+  Future<DocumentPreview> preview(String id) async {
     try {
-      final response = await client.dio.get<Map<String, Object?>>(
+      final response = await client.dio.get<List<int>>(
         '${DocumentConstants.path}/${Uri.encodeComponent(id)}/preview',
+        options: Options(
+          responseType: ResponseType.bytes,
+          headers: {'Accept': 'application/pdf, application/json'},
+        ),
       );
-      final rawUrl = response.data?['previewUrl'];
-      final url = rawUrl is String ? Uri.tryParse(rawUrl) : null;
-      if (response.statusCode != 200 ||
-          url == null ||
-          !url.hasScheme ||
-          (url.scheme != 'https' && url.scheme != 'http')) {
-        throw ApiError(
-          message: 'Invalid document preview response',
-          statusCode: response.statusCode,
-        );
+      final bytes = response.data;
+      final mime = response.headers
+          .value(Headers.contentTypeHeader)
+          ?.split(';')
+          .first
+          .trim()
+          .toLowerCase();
+      final length = int.tryParse(
+        response.headers.value(Headers.contentLengthHeader) ?? '',
+      );
+      if (response.statusCode == 200 && bytes != null && bytes.isNotEmpty) {
+        if (mime == DocumentConstants.mimeTypes['pdf'] &&
+            bytes.length >= DocumentConstants.signatures['pdf']!.length &&
+            bytes.length == (length ?? bytes.length)) {
+          final signature = DocumentConstants.signatures['pdf']!;
+          if (List.generate(
+            signature.length,
+            (index) => bytes[index] == signature[index],
+          ).every((match) => match)) {
+            return PdfDocumentPreview(Uint8List.fromList(bytes));
+          }
+        } else if (mime == Headers.jsonContentType) {
+          try {
+            final Object? data = jsonDecode(utf8.decode(bytes));
+            if (data is Map<String, Object?>) {
+              final rawUrl = data['previewUrl'];
+              final url = rawUrl is String ? Uri.tryParse(rawUrl) : null;
+              if (url != null &&
+                  url.host.isNotEmpty &&
+                  (url.scheme == 'https' || url.scheme == 'http')) {
+                return UrlDocumentPreview(url);
+              }
+            }
+          } on FormatException {
+            // A malformed legacy response is handled below.
+          }
+        }
       }
-      return url;
+      throw ApiError(
+        message: 'Invalid document preview response',
+        statusCode: response.statusCode,
+      );
     } on DioException catch (e) {
+      _decodeByteError(e);
       throw ApiError.fromDio(e);
     }
   }
@@ -190,15 +239,19 @@ class DocumentsRepository {
         mime,
       );
     } on DioException catch (e) {
-      final data = e.response?.data;
-      if (data is List<int> && data.length < 65536) {
-        try {
-          e.response?.data = jsonDecode(utf8.decode(data));
-        } on FormatException {
-          /* Non-JSON server error. */
-        }
-      }
+      _decodeByteError(e);
       throw ApiError.fromDio(e);
+    }
+  }
+}
+
+void _decodeByteError(DioException error) {
+  final data = error.response?.data;
+  if (data is List<int> && data.length < 65536) {
+    try {
+      error.response?.data = jsonDecode(utf8.decode(data));
+    } on FormatException {
+      // Non-JSON server error.
     }
   }
 }

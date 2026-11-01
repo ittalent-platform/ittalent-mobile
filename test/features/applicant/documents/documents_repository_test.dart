@@ -469,24 +469,116 @@ void main() {
     expect(item.isDefault, true);
   });
 
-  test('preview endpoint returns only an HTTP(S) preview URL', () async {
-    final dio = Dio()
-      ..httpClientAdapter = FakeAdapter((options) {
-        expect(options.method, 'GET');
-        expect(options.path, '${DocumentConstants.path}/doc/preview');
-        return jsonBody({'previewUrl': 'https://storage.example/preview.pdf'});
-      });
-    final url = await DocumentsRepository(ApiClient(dio: dio)).preview('doc');
-    expect(url, Uri.parse('https://storage.example/preview.pdf'));
-
-    final invalidDio = Dio()
-      ..httpClientAdapter = FakeAdapter(
-        (_) => jsonBody({'previewUrl': 'file:///untrusted.pdf'}),
-      );
-    await expectLater(
-      DocumentsRepository(ApiClient(dio: invalidDio)).preview('doc'),
-      throwsA(isA<ApiError>()),
+  test('preview fetches authenticated PDF bytes', () async {
+    final bytes = Uint8List.fromList([
+      ...DocumentConstants.signatures['pdf']!,
+      1,
+      2,
+    ]);
+    final dio = Dio(BaseOptions(baseUrl: 'http://test'));
+    dio.interceptors.add(
+      AuthInterceptor(
+        tokenStorage: InMemoryTokenStorage(accessToken: 'access'),
+        dio: dio,
+      ),
     );
+    dio.httpClientAdapter = FakeAdapter((options) {
+      expect(options.method, 'GET');
+      expect(options.path, '${DocumentConstants.path}/doc/preview');
+      expect(options.responseType, ResponseType.bytes);
+      expect(options.headers['Authorization'], 'Bearer access');
+      expect(options.headers['Accept'], contains('application/pdf'));
+      return ResponseBody.fromBytes(
+        bytes,
+        200,
+        headers: {
+          Headers.contentTypeHeader: ['application/pdf; charset=binary'],
+          Headers.contentLengthHeader: ['${bytes.length}'],
+        },
+      );
+    });
+    final preview = await DocumentsRepository(ApiClient(dio: dio))
+        .preview('doc');
+    expect(preview, isA<PdfDocumentPreview>());
+    expect((preview as PdfDocumentPreview).bytes, bytes);
+  });
+
+  test('preview keeps the legacy HTTP(S) URL response', () async {
+    final dio = Dio()
+      ..httpClientAdapter = FakeAdapter(
+        (_) => jsonBody({'previewUrl': 'https://storage.example/old.docx'}),
+      );
+    final preview = await DocumentsRepository(ApiClient(dio: dio))
+        .preview('doc');
+    expect(preview, isA<UrlDocumentPreview>());
+    expect(
+      (preview as UrlDocumentPreview).url,
+      Uri.parse('https://storage.example/old.docx'),
+    );
+  });
+
+  test('preview rejects empty, mislabeled and invalid PDF responses', () async {
+    final bodies = [
+      ResponseBody.fromBytes(
+        [],
+        200,
+        headers: {
+          Headers.contentTypeHeader: ['application/pdf'],
+        },
+      ),
+      ResponseBody.fromBytes(
+        [1, 2, 3, 4, 5],
+        200,
+        headers: {
+          Headers.contentTypeHeader: ['application/pdf'],
+        },
+      ),
+      ResponseBody.fromBytes(
+        DocumentConstants.signatures['pdf']!,
+        200,
+        headers: {
+          Headers.contentTypeHeader: ['text/plain'],
+        },
+      ),
+      ResponseBody.fromBytes(
+        DocumentConstants.signatures['pdf']!,
+        200,
+        headers: {
+          Headers.contentTypeHeader: ['application/pdf'],
+          Headers.contentLengthHeader: ['99'],
+        },
+      ),
+      jsonBody({'previewUrl': 'file:///untrusted.pdf'}),
+      jsonBody({'previewUrl': ''}),
+    ];
+    for (final body in bodies) {
+      final dio = Dio()..httpClientAdapter = FakeAdapter((_) => body);
+      await expectLater(
+        DocumentsRepository(ApiClient(dio: dio)).preview('doc'),
+        throwsA(isA<ApiError>()),
+      );
+    }
+  });
+
+  test('preview decodes JSON errors even with byte response type', () async {
+    for (final status in [404, 410, 503]) {
+      final dio = Dio()
+        ..httpClientAdapter = FakeAdapter(
+          (_) => jsonBody({'message': 'Preview unavailable'}, status: status),
+        );
+      await expectLater(
+        DocumentsRepository(ApiClient(dio: dio)).preview('doc'),
+        throwsA(
+          isA<ApiError>()
+              .having((error) => error.statusCode, 'status', status)
+              .having(
+                (error) => error.message,
+                'message',
+                'Preview unavailable',
+              ),
+        ),
+      );
+    }
   });
 
   test(

@@ -12,11 +12,13 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:ittalent_mobile/api/client.dart';
+import 'package:ittalent_mobile/api/api_error.dart';
 import 'package:ittalent_mobile/features/applicant/documents/document_files.dart';
 import 'package:ittalent_mobile/features/applicant/documents/document_model.dart';
 import 'package:ittalent_mobile/features/applicant/documents/documents_constants.dart';
 import 'package:ittalent_mobile/features/applicant/documents/documents_repository.dart';
 import 'package:ittalent_mobile/features/applicant/documents/documents_screen.dart';
+import 'package:ittalent_mobile/features/applicant/documents/widgets/document_preview_screen.dart';
 import 'package:ittalent_mobile/theme/app_theme.dart';
 import 'package:ittalent_mobile/utils/double_brace_asset_loader.dart';
 
@@ -46,6 +48,9 @@ class _RepositoryDouble extends DocumentsRepository {
   List<DocumentDto> items = [];
   Completer<DocumentDto>? uploadPending;
   CancelToken? uploadCancel;
+  final List<Object> previewResponses = [];
+  Object? deleteFailure;
+  int previewCalls = 0;
 
   @override
   Future<DocumentsPage> list(
@@ -80,6 +85,19 @@ class _RepositoryDouble extends DocumentsRepository {
     onProgress?.call(1, 2);
     return uploadPending?.future ?? item(type: type);
   }
+
+  @override
+  Future<DocumentPreview> preview(String id) async {
+    previewCalls++;
+    final response = previewResponses.removeAt(0);
+    if (response is DocumentPreview) return response;
+    throw response;
+  }
+
+  @override
+  Future<void> delete(String id) async {
+    if (deleteFailure != null) throw deleteFailure!;
+  }
 }
 
 DocumentDto item({
@@ -106,8 +124,9 @@ SelectedDocument selectedPdf() => SelectedDocument(
 Future<void> _pumpDocuments(
   WidgetTester tester,
   _RepositoryDouble repository,
-  _FilesDouble files,
-) async {
+  _FilesDouble files, {
+  Widget? home,
+}) async {
   final container = ProviderContainer(
     overrides: [
       documentsRepositoryProvider.overrideWithValue(repository),
@@ -130,7 +149,7 @@ Future<void> _pumpDocuments(
             locale: context.locale,
             localizationsDelegates: context.localizationDelegates,
             supportedLocales: context.supportedLocales,
-            home: const DocumentsScreen(),
+            home: home ?? const DocumentsScreen(),
           ),
         ),
       ),
@@ -235,19 +254,105 @@ void main() {
     expect(find.byKey(const Key('documents_action_setDefault')), findsNothing);
   });
 
-  testWidgets(
-    'delete sheet explains application snapshots and default impact',
-    (tester) async {
-      final repository = _RepositoryDouble()..items = [item(isDefault: true)];
-      await _pumpDocuments(tester, repository, _FilesDouble(null));
+  testWidgets('delete sheet explains linked documents and default impact', (
+    tester,
+  ) async {
+    final repository = _RepositoryDouble()..items = [item(isDefault: true)];
+    await _pumpDocuments(tester, repository, _FilesDouble(null));
 
+    await openMenu(tester, 'document');
+    await tester.tap(find.byKey(const Key('documents_action_delete')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('cannot be deleted'), findsOneWidget);
+    expect(find.textContaining('default CV'), findsOneWidget);
+  });
+
+  testWidgets('View retries after a missing document error', (tester) async {
+    final repository = _RepositoryDouble()
+      ..items = [item()]
+      ..previewResponses.addAll([
+        const ApiError(message: 'missing', statusCode: 404),
+        const ApiError(message: 'expired', statusCode: 410),
+      ]);
+    await _pumpDocuments(tester, repository, _FilesDouble(null));
+    await openMenu(tester, 'document');
+    await tester.tap(find.byKey(const Key('documents_action_view')));
+    await tester.pumpAndSettle();
+    expect(find.text('Document not found'), findsOneWidget);
+
+    await tester.tap(find.text('Try again'));
+    await tester.pump();
+    await tester.pump();
+    expect(repository.previewCalls, 2);
+    expect(find.text('This preview expired'), findsOneWidget);
+  });
+
+  testWidgets('View passes PDF bytes to the in-app renderer', (tester) async {
+    final bytes = Uint8List.fromList([
+      ...DocumentConstants.signatures['pdf']!,
+      1,
+      2,
+    ]);
+    final repository = _RepositoryDouble()
+      ..previewResponses.add(PdfDocumentPreview(bytes));
+    Uint8List? renderedBytes;
+    var loaded = false;
+    await _pumpDocuments(
+      tester,
+      repository,
+      _FilesDouble(null),
+      home: DocumentPreviewScreen(
+        item: item(),
+        pdfBuilder: (data, onLoaded, _) {
+          renderedBytes = data;
+          if (!loaded) {
+            loaded = true;
+            scheduleMicrotask(onLoaded);
+          }
+          return const Text('PDF in app');
+        },
+      ),
+    );
+    expect(repository.previewCalls, 1);
+    expect(renderedBytes, bytes);
+    expect(find.text('PDF in app'), findsOneWidget);
+  });
+
+  for (final (status, title) in [
+    (410, 'This preview expired'),
+    (503, "Can't open this file"),
+  ]) {
+    testWidgets('View shows $status error and Retry', (tester) async {
+      final repository = _RepositoryDouble()
+        ..items = [item()]
+        ..previewResponses.add(ApiError(message: 'failed', statusCode: status));
+      await _pumpDocuments(tester, repository, _FilesDouble(null));
       await openMenu(tester, 'document');
-      await tester.tap(find.byKey(const Key('documents_action_delete')));
+      await tester.tap(find.byKey(const Key('documents_action_view')));
       await tester.pumpAndSettle();
-      expect(find.textContaining('Companies keep the copies'), findsOneWidget);
-      expect(find.textContaining('default CV'), findsOneWidget);
-    },
-  );
+      expect(find.text(title), findsOneWidget);
+      expect(find.text('Try again'), findsOneWidget);
+    });
+  }
+
+  testWidgets('delete 409 explains why the document stays', (tester) async {
+    final repository = _RepositoryDouble()
+      ..items = [item()]
+      ..deleteFailure = const ApiError(message: 'linked', statusCode: 409);
+    await _pumpDocuments(tester, repository, _FilesDouble(null));
+    await openMenu(tester, 'document');
+    await tester.tap(find.byKey(const Key('documents_action_delete')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete document'));
+    await tester.pumpAndSettle();
+    expect(
+      find.text(
+        'This document is linked to an application and cannot be deleted.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('CV.pdf'), findsOneWidget);
+  });
 
   testWidgets('upload cancellation cancels its request token', (tester) async {
     final pending = Completer<DocumentDto>();

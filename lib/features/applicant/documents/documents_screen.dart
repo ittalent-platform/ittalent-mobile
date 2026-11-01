@@ -393,7 +393,9 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
     } catch (error) {
       if (mounted) {
         _toast(
-          documentError(error, fallback: 'documents.deleteFailedTitle'),
+          error is ApiError && error.statusCode == 409
+              ? tr('documents.mobile.deleteLinked')
+              : documentError(error, fallback: 'documents.deleteFailedTitle'),
           error: true,
         );
       }
