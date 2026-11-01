@@ -6,9 +6,6 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../auth/auth_notifier.dart';
 import '../auth/auth_state.dart';
-import '../components/common/app_empty_state.dart';
-import '../components/common/explore_header.dart';
-import '../components/layout/screen_scaffold.dart';
 import '../config/routes.dart';
 import '../features/applicant/applications/application_detail_screen.dart';
 import '../features/applicant/applications/application_history_screen.dart';
@@ -16,6 +13,7 @@ import '../features/applicant/applications/applications_screen.dart';
 import '../features/applicant/certificates/certificates_screen.dart';
 import '../features/applicant/companies/companies_screen.dart';
 import '../features/applicant/companies/company_detail_screen.dart';
+import '../features/applicant/jobs/jobs_screen.dart';
 import '../features/applicant/notifications/announcement_detail_screen.dart';
 import '../features/applicant/notifications/notifications_providers.dart';
 import '../features/applicant/notifications/notifications_screen.dart';
@@ -246,21 +244,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: AppRoutes.jobs,
-                builder: (context, state) => ScreenScaffold(
-                  body: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const ExploreHeader(selected: ExploreTab.jobs),
-                      Expanded(
-                        child: AppEmptyState(
-                          icon: const Icon(LucideIcons.search),
-                          title: tr('accountNav.jobSearch'),
-                          description: 'Search open tech positions matching your skills.',
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                builder: (context, state) => const JobsScreen(),
               ),
               GoRoute(
                 path: AppRoutes.companies,
