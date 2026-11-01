@@ -1,15 +1,25 @@
 import 'package:flutter/material.dart';
 
-import '../../../../theme/app_colors.dart';
-import '../../../../theme/app_typography.dart';
+import '../../theme/app_colors.dart';
+import '../../theme/app_typography.dart';
 
 /// Rounded square with the company's initials; the colour is derived from the
-/// name so the same company always looks the same.
+/// name so the same company always looks the same. [tinted] swaps the solid
+/// tile for a light tint with coloured initials, as on the job and company
+/// cards.
 class CompanyAvatar extends StatelessWidget {
-  const CompanyAvatar({super.key, required this.name, this.size = 40});
+  const CompanyAvatar({
+    super.key,
+    required this.name,
+    this.size = 40,
+    this.tinted = false,
+  });
 
   final String name;
   final double size;
+  final bool tinted;
+
+  static const double tintAlpha = 0.12;
 
   /// "CloudBridge" → CB, "Pixel Labs" → PL, "Acme" → AC.
   static String initials(String name) {
@@ -34,12 +44,13 @@ class CompanyAvatar extends StatelessWidget {
       colors.statusBlockedFg,
     ];
     final hash = name.codeUnits.fold<int>(0, (sum, c) => sum + c);
+    final tone = palette[hash % palette.length];
     return Container(
       width: size,
       height: size,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: palette[hash % palette.length],
+        color: tinted ? tone.withValues(alpha: tintAlpha) : tone,
         borderRadius: BorderRadius.circular(size / 4),
       ),
       child: Text(
@@ -47,7 +58,7 @@ class CompanyAvatar extends StatelessWidget {
         style: AppTypography.body(
           fontSize: size * 0.33,
           fontWeight: FontWeight.w700,
-          color: colors.card,
+          color: tinted ? tone : colors.card,
         ),
       ),
     );
