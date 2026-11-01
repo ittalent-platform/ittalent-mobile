@@ -195,6 +195,15 @@ Future<ProviderContainer> _pump(
   return container;
 }
 
+/// Chips that fit on one line share it. A chip stretched to the full width
+/// would sit under the one before.
+void _expectSameRow(WidgetTester tester, String first, String second) {
+  expect(
+    tester.getTopLeft(find.text(second)).dy,
+    tester.getTopLeft(find.text(first)).dy,
+  );
+}
+
 List<RequestOptions> _listRequests(FakeAdapter adapter) => adapter.requests
     .where(
       (r) =>
@@ -654,6 +663,18 @@ void main() {
       expect(find.widgetWithText(AppFilterPill, 'Da Nang'), findsOneWidget);
     });
 
+    testWidgets('filter choices are chips side by side', (tester) async {
+      await _pump(tester, _adapter(), size: const Size(390, 1400));
+
+      await tester.tap(find.text('companies.filter.title'));
+      await tester.pumpAndSettle();
+
+      _expectSameRow(tester, 'Fintech', 'E-commerce');
+      _expectSameRow(tester, '1–10', '11–50');
+      _expectSameRow(tester, 'Ho Chi Minh', 'Ha Noi');
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('Reset in the sheet clears the choices', (tester) async {
       final adapter = _adapter(list: _narrowing);
       final container = await _pump(
@@ -821,6 +842,12 @@ void main() {
       expect(find.text('nimbuspay.example'), findsOneWidget);
       expect(find.text('companies.page.seeJobs_other'), findsOneWidget);
       expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('the tech stack is chips side by side', (tester) async {
+      await _pump(tester, _adapter(), location: detailLocation);
+
+      _expectSameRow(tester, 'Dart', 'Go');
     });
 
     testWidgets('fits a 360px screen', (tester) async {

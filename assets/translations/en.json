@@ -2888,7 +2888,7 @@
     "count_other": "{{count}} companies",
     "loadMoreFailed": "Couldn’t load more companies.",
     "errors": {
-      "keywordTooLong": "Keep the search under {{max}} characters."
+      "keywordTooLong": "Keep the search to {{max}} characters or fewer."
     },
     "loadError": {
       "title": "Couldn’t load companies",

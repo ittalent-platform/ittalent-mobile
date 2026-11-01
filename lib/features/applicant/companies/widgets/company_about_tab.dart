@@ -153,24 +153,30 @@ class _TechChip extends StatelessWidget {
 
   final String label;
 
+  static const double height = 26;
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    // Not an alignment on the Container: that would fill the width it is given
+    // and the Wrap could not put chips side by side.
     return Container(
-      height: 26,
+      constraints: const BoxConstraints(minHeight: height),
       padding: const EdgeInsets.symmetric(horizontal: 9),
-      alignment: Alignment.center,
       decoration: BoxDecoration(
         color: colors.card,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: colors.border),
       ),
-      child: Text(
-        label,
-        style: AppTypography.body(
-          fontSize: 12.5,
-          fontWeight: FontWeight.w500,
-          color: colors.mutedForeground,
+      child: Center(
+        widthFactor: 1,
+        child: Text(
+          label,
+          style: AppTypography.body(
+            fontSize: 12.5,
+            fontWeight: FontWeight.w500,
+            color: colors.mutedForeground,
+          ),
         ),
       ),
     );

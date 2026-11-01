@@ -274,16 +274,22 @@ class _FilterChip extends StatelessWidget {
         child: InkWell(
           customBorder: const StadiumBorder(),
           onTap: onTap,
-          child: Container(
-            height: height,
-            padding: const EdgeInsets.symmetric(horizontal: 14),
-            alignment: Alignment.center,
-            child: Text(
-              label,
-              style: AppTypography.body(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: selected ? colors.fgLink : colors.foreground,
+          // Not a Container with an alignment: that one fills the width it is
+          // given, so the Wrap could not put chips side by side.
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: height),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              child: Center(
+                widthFactor: 1,
+                child: Text(
+                  label,
+                  style: AppTypography.body(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: selected ? colors.fgLink : colors.foreground,
+                  ),
+                ),
               ),
             ),
           ),

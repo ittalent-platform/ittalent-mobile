@@ -85,6 +85,9 @@ class _CompaniesScreenState extends ConsumerState<CompaniesScreen> {
   }
 
   Future<void> _openFilters(Set<CompanyFilterGroup> groups) async {
+    // Otherwise the search box gets its focus back, and the keyboard with it,
+    // when the sheet closes.
+    FocusManager.instance.primaryFocus?.unfocus();
     final result = await showModalBottomSheet<CompaniesQuery>(
       context: context,
       isScrollControlled: true,
