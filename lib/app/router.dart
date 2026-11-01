@@ -11,6 +11,8 @@ import '../features/applicant/applications/application_detail_screen.dart';
 import '../features/applicant/applications/application_history_screen.dart';
 import '../features/applicant/applications/applications_screen.dart';
 import '../features/applicant/certificates/certificates_screen.dart';
+import '../features/applicant/companies/companies_screen.dart';
+import '../features/applicant/companies/company_detail_screen.dart';
 import '../features/applicant/jobs/jobs_screen.dart';
 import '../features/applicant/notifications/announcement_detail_screen.dart';
 import '../features/applicant/notifications/notifications_providers.dart';
@@ -57,7 +59,10 @@ class RouterNotifier extends ChangeNotifier {
         loc == AppRoutes.emailVerified ||
         loc == AppRoutes.resetPassword;
 
-    final isGuestAllowed = isAuthRoute || loc.startsWith(AppRoutes.jobs);
+    final isGuestAllowed =
+        isAuthRoute ||
+        loc.startsWith(AppRoutes.jobs) ||
+        loc.startsWith(AppRoutes.companies);
 
     if (!authState.isAuthenticated && !isGuestAllowed) {
       return AppRoutes.welcome;
@@ -105,6 +110,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.certificates,
         builder: (context, state) => const CertificatesScreen(),
+      ),
+      // Outside the tab bar: the company page has its own bar with "See open
+      // jobs". The list of companies is in the Explore tab below.
+      GoRoute(
+        path: '${AppRoutes.companies}/:id',
+        builder: (context, state) =>
+            CompanyDetailScreen(companyId: state.pathParameters['id']!),
       ),
       GoRoute(
         path: AppRoutes.welcome,
@@ -245,6 +257,10 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: AppRoutes.jobs,
                 builder: (context, state) => const JobsScreen(),
+              ),
+              GoRoute(
+                path: AppRoutes.companies,
+                builder: (context, state) => const CompaniesScreen(),
               ),
             ],
           ),

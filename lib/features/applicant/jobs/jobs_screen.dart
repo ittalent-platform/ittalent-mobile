@@ -5,6 +5,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../components/common/app_empty_state.dart';
 import '../../../components/common/app_error_state.dart';
+import '../../../components/common/explore_header.dart';
 import '../../../components/layout/screen_scaffold.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_typography.dart';
@@ -18,28 +19,7 @@ import 'widgets/job_card_skeleton.dart';
 class JobsScreen extends ConsumerWidget {
   const JobsScreen({super.key});
 
-  static const double headingSize = 30;
-  static const double underlineHeight = 3;
   static const int skeletonCount = 4;
-
-  Widget _heading(BuildContext context) {
-    final colors = context.colors;
-    return Container(
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: colors.primary, width: underlineHeight),
-        ),
-      ),
-      child: Text(
-        tr('nav.jobs'),
-        style: AppTypography.display(
-          fontSize: headingSize,
-          fontWeight: FontWeight.w600,
-          color: colors.foreground,
-        ),
-      ),
-    );
-  }
 
   Widget _skeleton() => ListView.separated(
     physics: const NeverScrollableScrollPhysics(),
@@ -130,8 +110,7 @@ class JobsScreen extends ConsumerWidget {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 12),
-          _heading(context),
+          const ExploreHeader(selected: ExploreTab.jobs),
           Expanded(
             child: jobs.when(
               skipLoadingOnReload: false,
