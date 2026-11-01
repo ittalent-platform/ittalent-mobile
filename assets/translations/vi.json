@@ -1831,14 +1831,17 @@
       "all": "Tất cả",
       "filterCount": "{{label}} ({{count}})",
       "sheetTitle": "Bạn muốn tải lên tài liệu gì?",
-      "helper": "PDF, DOC, DOCX · tối đa 5 MiB",
+      "helper": "PDF · tối đa 5 MB",
       "uploadCv": "Tải CV lên",
       "uploadCover": "Tải thư xin việc lên",
       "upload": "Tải tài liệu lên",
       "cancel": "Hủy",
       "apply": "Áp dụng",
       "sort": "Sắp xếp",
-      "setDefault": "Đặt làm mặc định",
+      "pickCancelled": "Đã hủy chọn tệp.",
+      "saveCancelled": "Đã hủy chọn nơi lưu.",
+      "setDefault": "Đặt làm CV mặc định",
+      "view": "Xem",
       "download": "Tải xuống",
       "delete": "Xóa",
       "retry": "Thử lại",
@@ -1850,17 +1853,27 @@
       "cl": "TXV",
       "actions": "Thao tác với {{name}}",
       "downloading": "Đang tải xuống…",
+      "defaultCv": "★ CV mặc định",
+      "downloadChoosing": "Chọn nơi lưu…",
+      "downloadDownloading": "Đang tải xuống…",
+      "downloadSaving": "Đang lưu tệp…",
+      "uploadProgress": "Đang tải lên {{percent}}%",
+      "uploadCancelled": "Đã hủy tải lên.",
+      "deleteLibraryDescription": "Tài liệu chỉ được gỡ khỏi thư viện nếu chưa gắn với đơn ứng tuyển. Không thể xóa tài liệu đã gửi cùng đơn ứng tuyển.",
+      "deleteLinked": "Tài liệu này đã gắn với đơn ứng tuyển nên không thể xóa.",
+      "deleteDefaultDescription": "Đây là CV mặc định của bạn. Việc gỡ tài liệu này sẽ ảnh hưởng đến lựa chọn CV mặc định.",
       "saved": "Đã lưu tại {{location}}",
       "browserSave": "Đã chuyển tệp cho trình duyệt. Kiểm tra mục Tải xuống.",
-      "format": "Hãy chọn tệp PDF, DOC hoặc DOCX hợp lệ.",
+      "format": "Hãy chọn tệp PDF hợp lệ.",
       "empty": "Tệp trống. Hãy chọn tệp khác.",
-      "size": "Tệp này ({{size}}) vượt quá 5 MiB. Hãy chọn tệp nhỏ hơn.",
+      "size": "Tệp này ({{size}}) vượt quá 5 MB. Hãy chọn tệp nhỏ hơn.",
       "read": "Không đọc được tệp. Hãy chọn lại.",
       "invalid": "Yêu cầu hoặc tệp không hợp lệ. Kiểm tra rồi thử lại.",
       "unauthorized": "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
       "forbidden": "Chỉ tài khoản ứng viên có thể truy cập tài liệu.",
       "notFound": "Tài liệu không còn tồn tại. Hãy làm mới danh sách.",
       "inUse": "Tài liệu này đang được dùng bởi một hồ sơ ứng tuyển nên không thể xóa.",
+      "conflict": "Không thể thay đổi tài liệu này. Hãy làm mới rồi thử lại.",
       "storage": "Kho tài liệu tạm thời không khả dụng. Vui lòng thử lại sau.",
       "unavailable": "Tài liệu tạm thời không khả dụng. Vui lòng thử lại sau.",
       "network": "Không kết nối được. Kiểm tra kết nối rồi thử lại."
@@ -1928,7 +1941,20 @@
     "defaultDoneTitle": "Đã cập nhật tài liệu mặc định",
     "defaultDoneMessage": "{{name}} hiện là tài liệu mặc định của loại này.",
     "defaultFailedTitle": "Không đặt được tài liệu mặc định",
-    "preview": "Xem trước {{name}}",
+    "preview": {
+      "expired": {
+        "title": "Bản xem trước đã hết hạn",
+        "description": "Hãy yêu cầu bản xem trước mới rồi thử lại."
+      },
+      "notFound": {
+        "title": "Không tìm thấy tài liệu",
+        "description": "Tài liệu có thể đã bị gỡ khỏi thư viện của bạn."
+      },
+      "cannotOpen": {
+        "title": "Không thể mở tệp này",
+        "description": "Hãy thử lại sau ít phút."
+      }
+    },
     "download": "Tải xuống {{name}}",
     "delete": "Xóa {{name}}",
     "previewFailedTitle": "Không xem trước được tài liệu",
@@ -1938,7 +1964,7 @@
     "downloadFailedTitle": "Không tải xuống được tài liệu",
     "downloadFailedMessage": "Không tải xuống được tài liệu.",
     "deleteTitle": "Xóa “{{name}}”?",
-    "deleteDescription": "Tài liệu sẽ bị xóa khỏi thư viện của bạn. Không thể xóa tài liệu đã gắn với hồ sơ ứng tuyển.",
+    "deleteDescription": "Tài liệu sẽ bị gỡ khỏi thư viện của bạn.",
     "confirmDelete": "Xóa tài liệu",
     "deleting": "Đang xóa…",
     "deletedTitle": "Đã xóa tài liệu",
@@ -1955,7 +1981,7 @@
     "uploadFailedTitle": "Không thể tải tài liệu lên",
     "uploadFailedMessage": "Không thể tải tài liệu lên.",
     "errors": {
-      "format": "Chỉ hỗ trợ tệp PDF, DOC và DOCX (.pdf, .doc, .docx). Không thể tải lên \"{{name}}\".",
+      "format": "Chỉ hỗ trợ tệp PDF (.pdf). Không thể tải lên \"{{name}}\".",
       "empty": "\"{{name}}\" bị trống. Hãy chọn tệp có nội dung.",
       "size": "\"{{name}}\" lớn hơn {{size}} MB. Hãy chọn tệp nhỏ hơn."
     }
@@ -3029,4 +3055,3 @@
     }
   }
 }
-

@@ -72,6 +72,10 @@ Future<({GoRouter router, _AuthNotifier auth})> pumpMe(
         path: AppRoutes.notifications,
         builder: (_, _) => const Scaffold(body: Text('NOTIFICATIONS')),
       ),
+      GoRoute(
+        path: AppRoutes.documents,
+        builder: (_, _) => const Scaffold(body: Text('DOCUMENTS')),
+      ),
     ],
   );
   await tester.pumpWidget(

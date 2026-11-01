@@ -111,7 +111,7 @@ class MeScreen extends ConsumerWidget {
                   key: const Key('me_menu_documents'),
                   icon: LucideIcons.fileText,
                   title: tr('accountNav.documents'),
-                  onTap: () {},
+                  onTap: () => context.push(AppRoutes.documents),
                 ),
                 AppMenuTile(
                   key: const Key('me_menu_certificates'),

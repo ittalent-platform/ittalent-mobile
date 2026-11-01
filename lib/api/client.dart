@@ -5,7 +5,7 @@ import '../auth/token_storage.dart';
 import '../config/env.dart';
 import 'api_error.dart';
 
-class AuthInterceptor extends QueuedInterceptor {
+class AuthInterceptor extends Interceptor {
   AuthInterceptor({
     required this.tokenStorage,
     required this.dio,
@@ -40,69 +40,89 @@ class AuthInterceptor extends QueuedInterceptor {
     return handler.next(options);
   }
 
+  Future<String?>? _refreshInFlight;
+
+  Future<String?> _refreshAccess() async {
+    final refreshToken = await tokenStorage.getRefreshToken();
+    if (refreshToken == null || refreshToken.isEmpty) {
+      await tokenStorage.clear();
+      return null;
+    }
+    try {
+      final res = await _refreshDio.post<Map<String, dynamic>>(
+        '/api/v1/auth/refresh',
+        data: {'refreshToken': refreshToken},
+      );
+      final data = res.data;
+      final tokens = data?['tokens'] as Map<String, dynamic>?;
+      final access =
+          (tokens?['accessToken'] ?? data?['accessToken']) as String?;
+      final refresh =
+          (tokens?['refreshToken'] ?? data?['refreshToken']) as String?;
+      if (access == null || access.isEmpty) {
+        await tokenStorage.clear();
+        return null;
+      }
+      await tokenStorage.saveAccessToken(access);
+      if (refresh != null && refresh.isNotEmpty) {
+        await tokenStorage.saveRefreshToken(refresh);
+      }
+      return access;
+    } on DioException catch (error) {
+      if (error.response?.statusCode == 401 ||
+          error.response?.statusCode == 403) {
+        await tokenStorage.clear();
+      }
+      return null;
+    }
+  }
+
   @override
   Future<void> onError(
     DioException err,
     ErrorInterceptorHandler handler,
   ) async {
-    final isUnauthorized = err.response?.statusCode == 401;
-    final path = err.requestOptions.path;
+    final request = err.requestOptions;
+    if (err.response?.statusCode != 401) return handler.next(err);
     final isAuthEndpoint =
-        path.contains('/auth/login') ||
-        path.contains('/auth/refresh') ||
-        path.contains('/auth/register');
-
-    if (isUnauthorized && !isAuthEndpoint) {
-      final refreshToken = await tokenStorage.getRefreshToken();
-      if (refreshToken != null && refreshToken.isNotEmpty) {
-        try {
-          final res = await _refreshDio.post<Map<String, dynamic>>(
-            '/api/v1/auth/refresh',
-            data: {'refreshToken': refreshToken},
-          );
-          final data = res.data;
-          final tokens = data?['tokens'] as Map<String, dynamic>?;
-          final newAccess =
-              tokens?['accessToken']?.toString() ??
-              data?['accessToken']?.toString();
-          final newRefresh =
-              tokens?['refreshToken']?.toString() ??
-              data?['refreshToken']?.toString();
-
-          if (newAccess != null && newAccess.isNotEmpty) {
-            await tokenStorage.saveAccessToken(newAccess);
-            if (newRefresh != null && newRefresh.isNotEmpty) {
-              await tokenStorage.saveRefreshToken(newRefresh);
-            }
-
-            final opts = Options(
-              method: err.requestOptions.method,
-              headers: {
-                ...err.requestOptions.headers,
-                'Authorization': 'Bearer $newAccess',
-              },
-            );
-
-            final cloneReq = await dio.request<dynamic>(
-              err.requestOptions.path,
-              options: opts,
-              data: err.requestOptions.data,
-              queryParameters: err.requestOptions.queryParameters,
-            );
-
-            return handler.resolve(cloneReq);
-          }
-        } catch (_) {
-          await tokenStorage.clear();
-        }
-      } else {
-        await tokenStorage.clear();
-      }
-    } else if (isUnauthorized) {
+        request.path.contains('/auth/login') ||
+        request.path.contains('/auth/refresh') ||
+        request.path.contains('/auth/register');
+    if (isAuthEndpoint || request.extra['authRetried'] == true) {
       await tokenStorage.clear();
+      return handler.next(err);
     }
-
-    return handler.next(err);
+    // Concurrent expired requests share a single refresh. A replay may happen once.
+    final current = await tokenStorage.getAccessToken();
+    String? access;
+    if (current != null &&
+        request.headers['Authorization'] != 'Bearer $current') {
+      access = current;
+    } else {
+      final pending = _refreshInFlight ??= _refreshAccess();
+      try {
+        access = await pending;
+      } finally {
+        if (identical(_refreshInFlight, pending)) _refreshInFlight = null;
+      }
+    }
+    if (access == null) return handler.next(err);
+    try {
+      final factory = request.extra['replayBody'];
+      final body = factory is FormData Function()
+          ? factory()
+          : request.data is FormData
+          ? (request.data as FormData).clone()
+          : request.data;
+      final replay = request.copyWith(
+        data: body,
+        headers: {...request.headers, 'Authorization': 'Bearer $access'},
+        extra: {...request.extra, 'authRetried': true},
+      );
+      return handler.resolve(await dio.fetch<Object?>(replay));
+    } on DioException catch (error) {
+      return handler.next(error);
+    }
   }
 }
 
