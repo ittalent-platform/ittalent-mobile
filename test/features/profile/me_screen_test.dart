@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ittalent_mobile/auth/auth_dto.dart';
@@ -97,7 +98,7 @@ void main() {
       expect(find.byKey(const Key('me_menu_profile')), findsOneWidget);
       expect(find.text('Profile'), findsOneWidget);
       expect(find.byKey(const Key('me_menu_documents')), findsOneWidget);
-      expect(find.text('Documents'), findsOneWidget);
+      expect(find.text(tr('accountNav.documents')), findsOneWidget);
       expect(find.byKey(const Key('me_menu_certificates')), findsOneWidget);
       expect(find.text('Certificates'), findsOneWidget);
       // The only badge is the real certificate count; the rest had none.

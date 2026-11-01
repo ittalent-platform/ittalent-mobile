@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -156,8 +157,8 @@ class MeScreen extends ConsumerWidget {
                 AppMenuTile(
                   key: const Key('me_menu_documents'),
                   icon: LucideIcons.fileText,
-                  title: 'Documents',
-                  onTap: () {},
+                  title: tr('accountNav.documents'),
+                  onTap: () => context.push(AppRoutes.documents),
                 ),
                 AppMenuTile(
                   key: const Key('me_menu_certificates'),
