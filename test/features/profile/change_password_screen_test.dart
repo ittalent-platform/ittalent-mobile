@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ittalent_mobile/api/api_error.dart';
+import 'package:ittalent_mobile/auth/auth_notifier.dart';
 import 'package:ittalent_mobile/auth/token_storage.dart';
 import 'package:ittalent_mobile/config/routes.dart';
 import 'package:ittalent_mobile/features/profile/change_password_screen.dart';
@@ -45,6 +46,7 @@ Future<({GoRouter router, _TokenStorage tokens})> pumpPassword(
     localizedRouterApp(
       router: router,
       overrides: [
+        authNotifierProvider.overrideWith(TestProfileAuthNotifier.new),
         profileRepositoryProvider.overrideWithValue(repository),
         tokenStorageProvider.overrideWithValue(tokens),
       ],

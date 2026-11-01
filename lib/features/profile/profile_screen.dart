@@ -28,11 +28,12 @@ class ProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(profileProvider);
+    final current = ref.watch(currentProfileProvider);
     return ScreenScaffold(
       appBar: AppBar(
         title: Text(tr('profile.title')),
         actions: [
-          if (profile.value?.canMutate == true)
+          if (current?.canMutate == true)
             IconButton(
               key: const Key('profile_edit'),
               onPressed: () => context.push(AppRoutes.editProfile),
@@ -41,14 +42,14 @@ class ProfileScreen extends ConsumerWidget {
             ),
         ],
       ),
-      body: profile.when(
-        loading: _ProfileLoading.new,
-        error: (error, _) => _ProfileError(error: error),
-        data: (data) => RefreshIndicator(
-          onRefresh: () => ref.read(profileProvider.notifier).refresh(),
-          child: ListView(children: [_ProfileBody(profile: data)]),
-        ),
-      ),
+      body: current != null
+          ? RefreshIndicator(
+              onRefresh: () => ref.read(profileProvider.notifier).refresh(),
+              child: ListView(children: [_ProfileBody(profile: current)]),
+            )
+          : profile.hasError && !profile.isLoading
+          ? _ProfileError(error: profile.error!)
+          : const _ProfileLoading(),
     );
   }
 }

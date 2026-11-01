@@ -23,8 +23,11 @@ class MeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.colors;
     final user = ref.watch(authNotifierProvider).user;
-    final profile = ref.watch(profileProvider).value;
-    final certificateCount = ref.watch(certificateCountProvider).value ?? 0;
+    final profile = ref.watch(currentProfileProvider);
+    final asyncCertificateCount = ref.watch(certificateCountProvider);
+    final certificateCount = asyncCertificateCount.isLoading
+        ? 0
+        : asyncCertificateCount.value ?? 0;
     final authName = user?.fullName?.trim();
     final name =
         profile?.displayName ??

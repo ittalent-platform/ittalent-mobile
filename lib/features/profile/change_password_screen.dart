@@ -36,6 +36,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
   bool _saving = false;
   String? _currentError;
   String? _apiError;
+  String? _profileId;
 
   @override
   void dispose() {
@@ -77,7 +78,10 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
   );
 
   Future<void> _save() async {
-    if (!_canSave) return;
+    final owner = ref.read(currentProfileProvider);
+    if (!_canSave || owner == null || !owner.canMutate || !owner.hasPassword) {
+      return;
+    }
     setState(() {
       _saving = true;
       _currentError = null;
@@ -92,6 +96,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
             newPassword: _next.text,
             confirmation: _confirm.text,
           );
+      if (ref.read(currentProfileProvider)?.id != owner.id) return;
       await ref
           .read(tokenStorageProvider)
           .saveTokens(result.tokens.accessToken, result.tokens.refreshToken);
@@ -121,8 +126,13 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final asyncProfile = ref.watch(profileProvider);
-    final profile = asyncProfile.value;
+    final profile = ref.watch(currentProfileProvider);
+    if (_profileId != profile?.id) {
+      _profileId = profile?.id;
+      _current.clear();
+      _next.clear();
+      _confirm.clear();
+    }
     if (profile == null) {
       return ScreenScaffold(
         appBar: AppBar(title: Text(tr('profile.changePassword'))),

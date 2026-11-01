@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../api/client.dart';
+import '../../../auth/auth_notifier.dart';
 import 'certificates_constants.dart';
 
 class CertificateLink {
@@ -381,6 +382,7 @@ final certificateActionsProvider = Provider<CertificateActions>(
 /// the list's search and filters; refresh it with `ref.invalidate` after the
 /// number changes.
 final certificateCountProvider = FutureProvider.autoDispose<int>((ref) async {
+  if (ref.watch(currentUserIdProvider) == null) return 0;
   final response = await ref
       .read(apiClientProvider)
       .get<Map<String, dynamic>>(

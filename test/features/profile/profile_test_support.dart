@@ -8,6 +8,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ittalent_mobile/auth/auth_dto.dart';
+import 'package:ittalent_mobile/auth/auth_notifier.dart';
+import 'package:ittalent_mobile/auth/auth_state.dart';
 import 'package:ittalent_mobile/features/profile/profile_model.dart';
 import 'package:ittalent_mobile/features/profile/profile_repository.dart';
 import 'package:ittalent_mobile/theme/app_theme.dart';
@@ -36,6 +38,9 @@ Future<void> initializeProfileTests() async {
 }
 
 MyProfile testProfile({
+  String id = 'user-1',
+  String email = 'an@example.com',
+  String username = 'an.nguyen',
   ProfileAccess access = ProfileAccess.full,
   String fullName = 'Nguyen Van An',
   String phone = '0912345678',
@@ -48,9 +53,9 @@ MyProfile testProfile({
   String? enterpriseName,
 }) => MyProfile(
   access: access,
-  id: 'user-1',
-  email: 'an@example.com',
-  username: 'an.nguyen',
+  id: id,
+  email: email,
+  username: username,
   fullName: fullName,
   avatarUrl: avatarUrl,
   role: role,
@@ -129,9 +134,29 @@ class FakeProfileRepository implements ProfileRepository {
   }
 }
 
+class TestProfileAuthNotifier extends AuthNotifier {
+  @override
+  AuthState build() => AuthState.authenticated(
+    user: const UserDTO(
+      id: 'user-1',
+      email: 'an@example.com',
+      username: 'an.nguyen',
+      role: 'candidate',
+    ),
+  );
+
+  void setAuth(AuthState next) => state = next;
+
+  @override
+  Future<void> logout() async => state = AuthState.unauthenticated();
+}
+
 Widget localizedApp({required List<Object> overrides, required Widget home}) =>
     ProviderScope(
-      overrides: overrides.cast(),
+      overrides: [
+        authNotifierProvider.overrideWith(TestProfileAuthNotifier.new),
+        ...overrides.cast(),
+      ],
       child: EasyLocalization(
         supportedLocales: const [Locale('en'), Locale('vi')],
         path: 'assets/translations',

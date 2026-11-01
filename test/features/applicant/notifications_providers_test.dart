@@ -2,10 +2,22 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ittalent_mobile/api/client.dart';
+import 'package:ittalent_mobile/auth/auth_notifier.dart';
+import 'package:ittalent_mobile/auth/auth_state.dart';
 import 'package:ittalent_mobile/features/applicant/notifications/notifications_constants.dart';
 import 'package:ittalent_mobile/features/applicant/notifications/notifications_providers.dart';
 
 import '../../helpers/fake_api.dart';
+
+class _SwitchingAuth extends AuthNotifier {
+  @override
+  AuthState build() => AuthState.authenticated(userId: 'user-1');
+
+  @override
+  Future<void> logout() async => state = AuthState.unauthenticated();
+
+  void loginAs(String id) => state = AuthState.authenticated(userId: id);
+}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -200,7 +212,10 @@ void main() {
       final dio = Dio(BaseOptions(baseUrl: 'http://test'))
         ..httpClientAdapter = adapter;
       container = ProviderContainer(
-        overrides: [dioProvider.overrideWithValue(dio)],
+        overrides: [
+          dioProvider.overrideWithValue(dio),
+          authNotifierProvider.overrideWith(_SwitchingAuth.new),
+        ],
       );
       final sub = container.listen(notificationsFeedProvider, (_, _) {});
       addTearDown(sub.close);
@@ -300,4 +315,25 @@ void main() {
       expect(container.read(unreadCountProvider), 0);
     });
   });
+
+  test(
+    'unread count resets between A and B in one ProviderContainer',
+    () async {
+      final container = ProviderContainer(
+        overrides: [authNotifierProvider.overrideWith(_SwitchingAuth.new)],
+      );
+      addTearDown(container.dispose);
+      final sub = container.listen(unreadCountProvider, (_, _) {});
+      addTearDown(sub.close);
+      container.read(unreadCountProvider.notifier).setCount(3);
+      expect(container.read(unreadCountProvider), 3);
+
+      final auth =
+          container.read(authNotifierProvider.notifier) as _SwitchingAuth;
+      await auth.logout();
+      expect(container.read(unreadCountProvider), 0);
+      auth.loginAs('user-2');
+      expect(container.read(unreadCountProvider), 0);
+    },
+  );
 }

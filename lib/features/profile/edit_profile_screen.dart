@@ -108,7 +108,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   }
 
   Future<void> _save() async {
-    if (!_validate() || _profile == null || _saving) return;
+    if (!_validate() ||
+        _profile == null ||
+        _profile?.id != ref.read(currentProfileProvider)?.id ||
+        _saving) {
+      return;
+    }
     final patch = ProfilePatch.fromValues(_profile!, _name.text, _phone.text);
     if (patch == null) return;
 
@@ -171,9 +176,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final asyncProfile = ref.watch(profileProvider);
-    final profile = asyncProfile.value;
+    final profile = ref.watch(currentProfileProvider);
     if (profile == null) {
+      _profile = null;
+      _name.clear();
+      _phone.clear();
       return ScreenScaffold(
         appBar: AppBar(title: Text(tr('profile.edit'))),
         body: const Column(
@@ -193,6 +200,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         appBar: AppBar(title: Text(tr('profile.edit'))),
         body: Center(child: Text(tr('profile.restricted.message'))),
       );
+    }
+    if (_profile?.id != profile.id) {
+      _profile = null;
+      _name.clear();
+      _phone.clear();
     }
     _setInitialProfile(profile);
 

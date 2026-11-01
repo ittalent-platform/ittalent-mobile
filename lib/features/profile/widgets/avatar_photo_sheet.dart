@@ -105,7 +105,11 @@ class _AvatarPhotoSheetState extends ConsumerState<AvatarPhotoSheet> {
   }
 
   Future<void> _save() async {
-    if (_file == null || _saving) return;
+    if (_file == null ||
+        _saving ||
+        ref.read(currentProfileProvider)?.id != widget.profile.id) {
+      return;
+    }
     setState(() {
       _saving = true;
       _error = null;
@@ -131,6 +135,9 @@ class _AvatarPhotoSheetState extends ConsumerState<AvatarPhotoSheet> {
 
   @override
   Widget build(BuildContext context) {
+    if (ref.watch(currentProfileProvider)?.id != widget.profile.id) {
+      return const SizedBox.shrink();
+    }
     final colors = context.colors;
     return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../api/client.dart';
+import '../../../auth/auth_notifier.dart';
 import 'notifications_constants.dart';
 
 class NotificationItem {
@@ -181,14 +182,21 @@ final notificationTabProvider =
 
 class UnreadCountNotifier extends Notifier<int> {
   @override
-  int build() => 0;
+  int build() {
+    ref.watch(currentUserIdProvider);
+    return 0;
+  }
 
   Future<void> fetch() async {
+    final userId = ref.read(currentUserIdProvider);
+    if (userId == null) return;
     try {
       final res = await ref
           .read(apiClientProvider)
           .get<Map<String, dynamic>>(NotificationConstants.unreadCountPath);
-      state = res.data?['unreadCount'] as int? ?? 0;
+      if (ref.mounted && ref.read(currentUserIdProvider) == userId) {
+        state = res.data?['unreadCount'] as int? ?? 0;
+      }
     } catch (_) {}
   }
 
@@ -214,14 +222,18 @@ final unreadCountProvider = NotifierProvider<UnreadCountNotifier, int>(
 );
 
 class NotificationsFeedNotifier extends AsyncNotifier<NotificationsFeedState> {
+  bool _isCurrentUser(String? userId) =>
+      ref.mounted && ref.read(currentUserIdProvider) == userId;
+
   @override
   Future<NotificationsFeedState> build() async {
+    final userId = ref.watch(currentUserIdProvider);
     final tab = ref.watch(notificationTabProvider);
     final pageData = await _fetch(tab, 1);
-    if (ref.mounted) {
+    if (ref.mounted && ref.read(currentUserIdProvider) == userId) {
       unawaited(
         Future.microtask(() {
-          if (ref.mounted) {
+          if (ref.mounted && ref.read(currentUserIdProvider) == userId) {
             ref
                 .read(unreadCountProvider.notifier)
                 .setCount(pageData.unreadCount);
@@ -259,11 +271,11 @@ class NotificationsFeedNotifier extends AsyncNotifier<NotificationsFeedState> {
   }
 
   Future<void> refresh() async {
+    final userId = ref.read(currentUserIdProvider);
     final tab = ref.read(notificationTabProvider);
     state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
+    final next = await AsyncValue.guard(() async {
       final pageData = await _fetch(tab, 1);
-      ref.read(unreadCountProvider.notifier).setCount(pageData.unreadCount);
       return NotificationsFeedState(
         items: pageData.items,
         page: pageData.page,
@@ -272,9 +284,16 @@ class NotificationsFeedNotifier extends AsyncNotifier<NotificationsFeedState> {
         unreadCount: pageData.unreadCount,
       );
     });
+    if (_isCurrentUser(userId)) {
+      state = next;
+      if (next.value case final value?) {
+        ref.read(unreadCountProvider.notifier).setCount(value.unreadCount);
+      }
+    }
   }
 
   Future<void> loadMore() async {
+    final userId = ref.read(currentUserIdProvider);
     final current = state.value;
     if (current == null || current.isLoadingMore || !current.hasMore) return;
 
@@ -284,6 +303,7 @@ class NotificationsFeedNotifier extends AsyncNotifier<NotificationsFeedState> {
     try {
       final tab = ref.read(notificationTabProvider);
       final next = await _fetch(tab, current.page + 1);
+      if (!_isCurrentUser(userId)) return;
       final known = current.items.map((e) => e.id).toSet();
       state = AsyncData(
         current.copyWith(
@@ -300,6 +320,7 @@ class NotificationsFeedNotifier extends AsyncNotifier<NotificationsFeedState> {
       );
       ref.read(unreadCountProvider.notifier).setCount(next.unreadCount);
     } catch (_) {
+      if (!_isCurrentUser(userId)) return;
       state = AsyncData(
         current.copyWith(isLoadingMore: false, loadMoreFailed: true),
       );
@@ -307,6 +328,7 @@ class NotificationsFeedNotifier extends AsyncNotifier<NotificationsFeedState> {
   }
 
   Future<void> markAsRead(String id) async {
+    final userId = ref.read(currentUserIdProvider);
     final current = state.value;
     if (current == null) return;
 
@@ -346,6 +368,7 @@ class NotificationsFeedNotifier extends AsyncNotifier<NotificationsFeedState> {
           .read(apiClientProvider)
           .patch<dynamic>(NotificationConstants.readPath(id));
     } catch (e) {
+      if (!_isCurrentUser(userId)) rethrow;
       // Revert on error
       state = AsyncData(current);
       ref.read(unreadCountProvider.notifier).setCount(current.unreadCount);
@@ -354,6 +377,7 @@ class NotificationsFeedNotifier extends AsyncNotifier<NotificationsFeedState> {
   }
 
   Future<void> markAllAsRead({String? before}) async {
+    final userId = ref.read(currentUserIdProvider);
     final current = state.value;
     if (current == null) return;
 
@@ -381,6 +405,7 @@ class NotificationsFeedNotifier extends AsyncNotifier<NotificationsFeedState> {
             queryParameters: before != null ? {'before': before} : null,
           );
     } catch (e) {
+      if (!_isCurrentUser(userId)) rethrow;
       state = AsyncData(current);
       ref.read(unreadCountProvider.notifier).setCount(current.unreadCount);
       rethrow;
@@ -388,6 +413,7 @@ class NotificationsFeedNotifier extends AsyncNotifier<NotificationsFeedState> {
   }
 
   Future<void> deleteNotification(String id) async {
+    final userId = ref.read(currentUserIdProvider);
     final current = state.value;
     if (current == null) return;
 
@@ -418,6 +444,7 @@ class NotificationsFeedNotifier extends AsyncNotifier<NotificationsFeedState> {
           .read(apiClientProvider)
           .delete<dynamic>(NotificationConstants.deletePath(id));
     } catch (e) {
+      if (!_isCurrentUser(userId)) rethrow;
       state = AsyncData(current);
       if (wasUnread) {
         ref.read(unreadCountProvider.notifier).setCount(current.unreadCount);
@@ -452,6 +479,7 @@ class NotificationsFeedNotifier extends AsyncNotifier<NotificationsFeedState> {
   }
 
   Future<void> deleteAllNotifications() async {
+    final userId = ref.read(currentUserIdProvider);
     final current = state.value;
     if (current == null) return;
 
@@ -465,6 +493,7 @@ class NotificationsFeedNotifier extends AsyncNotifier<NotificationsFeedState> {
           .read(apiClientProvider)
           .delete<dynamic>(NotificationConstants.deleteAllPath);
     } catch (e) {
+      if (!_isCurrentUser(userId)) rethrow;
       state = AsyncData(current);
       ref.read(unreadCountProvider.notifier).setCount(current.unreadCount);
       rethrow;
