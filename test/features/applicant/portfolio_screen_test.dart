@@ -87,11 +87,29 @@ void main() {
     });
 
     for (final url in const [
+      'https://fcc.gov',
+      'https://ffmpeg.org',
+      'https://fdroid.org',
+      'https://feathericons.com',
+      'https://fcbarcelona.com',
+      'https://fd.io',
+    ]) {
+      test('accepts valid domain "$url"', () {
+        expect(validatePortfolio(title: 'Site', url: url).any, isFalse);
+      });
+    }
+
+    for (final url in const [
       'javascript:alert(1)',
       'data:text/html,x',
       'ftp://me.example',
       'https://user:pw@me.example',
       'https://localhost/x',
+      'https://[::1]/x',
+      'https://[fc00::1]/x',
+      'https://[fd00::1]/x',
+      'https://[fe80::1]/x',
+      'https://[ff02::1]/x',
       'me.example',
       '',
     ]) {
@@ -303,7 +321,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(adapter.requests.where((r) => r.method == 'PATCH'), isEmpty);
-      expect(find.text('portfolio.toast.saved'), findsOneWidget);
+      expect(find.byType(PortfolioFormPage), findsNothing);
+      expect(find.text('portfolio.toast.saved'), findsNothing);
     });
 
     testWidgets('clears description with null in the partial update', (
@@ -339,14 +358,36 @@ void main() {
 
       expect(find.text('portfolio.form.loadLatest'), findsOneWidget);
       expect(find.byType(PortfolioFormPage), findsOneWidget);
+      await tester.tap(find.text('portfolio.form.save'));
+      await tester.pumpAndSettle();
+      expect(adapter.requests.where((r) => r.method == 'PATCH').length, 1);
       await tester.tap(find.text('portfolio.form.loadLatest'));
       await tester.pumpAndSettle();
       expect(find.byType(PortfolioFormPage), findsNothing);
       expect(adapter.requests.where((r) => r.method == 'GET').length, 2);
     });
 
-    testWidgets('keeps the form on an unavailable link', (tester) async {
+    testWidgets('says the link was already added on a duplicate', (
+      tester,
+    ) async {
       await _open(
+        tester,
+        onWrite: (_) => jsonBody({
+          'message': 'dup',
+          'code': 'DUPLICATE_PORTFOLIO_URL',
+        }, status: 409),
+      );
+      await openEdit(tester);
+      await tester.enterText(_fields().at(1), 'https://fcc.gov');
+      await tester.tap(find.text('portfolio.form.save'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('portfolio.form.errors.duplicate'), findsOneWidget);
+      expect(find.byType(PortfolioFormPage), findsOneWidget);
+    });
+
+    testWidgets('keeps the form on an unavailable link', (tester) async {
+      final adapter = await _open(
         tester,
         onWrite: (_) => jsonBody({'message': 'gone'}, status: 404),
       );
@@ -357,6 +398,9 @@ void main() {
 
       expect(find.text('portfolio.form.loadLatest'), findsOneWidget);
       expect(find.byType(PortfolioFormPage), findsOneWidget);
+      await tester.tap(find.text('portfolio.form.save'));
+      await tester.pumpAndSettle();
+      expect(adapter.requests.where((r) => r.method == 'PATCH').length, 1);
     });
   });
 

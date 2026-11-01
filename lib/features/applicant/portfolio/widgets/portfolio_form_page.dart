@@ -75,6 +75,7 @@ bool _isPrivateIpv4(String host) {
 
 bool _isPrivateIpv6(String host) {
   final address = host.replaceAll(RegExp(r'^\[|\]$'), '').toLowerCase();
+  if (!address.contains(':')) return false;
   return address == '::' ||
       address == '::1' ||
       address.startsWith('fc') ||
@@ -202,7 +203,7 @@ class _PortfolioFormPageState extends ConsumerState<PortfolioFormPage> {
     }
   }
 
-  Future<PortfolioLink> _update(
+  Future<PortfolioLink?> _update(
     PortfolioLink existing,
     String title,
     String url,
@@ -215,7 +216,7 @@ class _PortfolioFormPageState extends ConsumerState<PortfolioFormPage> {
     if (nextDescription != existing.description) {
       changes['description'] = nextDescription;
     }
-    if (changes.isEmpty) return Future.value(existing);
+    if (changes.isEmpty) return Future.value();
     return ref
         .read(portfolioActionsProvider)
         .update(current: existing, changes: changes);
@@ -363,7 +364,7 @@ class _PortfolioFormPageState extends ConsumerState<PortfolioFormPage> {
               ),
               size: AppButtonSize.lg,
               isFullWidth: true,
-              onPressed: _saving ? null : _save,
+              onPressed: _saving || _conflict || _unavailable ? null : _save,
             ),
           ),
         ),
