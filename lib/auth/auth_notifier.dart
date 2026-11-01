@@ -11,6 +11,12 @@ final authNotifierProvider = NotifierProvider<AuthNotifier, AuthState>(
   AuthNotifier.new,
 );
 
+final currentUserIdProvider = Provider<String?>((ref) {
+  final auth = ref.watch(authNotifierProvider);
+  final id = auth.userId;
+  return auth.isAuthenticated && id != null && id.isNotEmpty ? id : null;
+});
+
 class AuthNotifier extends Notifier<AuthState> {
   @override
   AuthState build() {

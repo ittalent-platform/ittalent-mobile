@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ittalent_mobile/api/client.dart';
+import 'package:ittalent_mobile/auth/auth_notifier.dart';
 import 'package:ittalent_mobile/theme/app_theme.dart';
 
 /// Answers every Dio request with [handler] and records it.
@@ -54,7 +55,10 @@ Future<ProviderContainer> pumpWithApi(
   final dio = Dio(BaseOptions(baseUrl: 'http://test'))
     ..httpClientAdapter = adapter;
   final container = ProviderContainer(
-    overrides: [dioProvider.overrideWithValue(dio)],
+    overrides: [
+      dioProvider.overrideWithValue(dio),
+      currentUserIdProvider.overrideWithValue('user-1'),
+    ],
   );
   addTearDown(container.dispose);
   await tester.pumpWidget(

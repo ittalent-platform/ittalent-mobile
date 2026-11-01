@@ -19,6 +19,9 @@ class AppRoutes {
   static const String documents = '/profile/documents';
   static const String portfolio = '/portfolio';
   static const String profile = '/profile';
+  static const String profileDetails = '/profile/details';
+  static const String editProfile = '/profile/details/edit';
+  static const String changePassword = '/profile/password';
 
   static String jobDetail(String jobId) => '/jobs/$jobId';
   static String applicationDetail(String applicationId) =>
