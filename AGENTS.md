@@ -29,7 +29,7 @@ lib/
 ├── app/                         # app.dart (MaterialApp), router.dart (go_router, shell, tabs)
 ├── auth/                        # auth_notifier.dart, auth_state.dart, token_storage.dart
 ├── components/
-│   ├── ui/                      # Atomic primitives (AppButton, AppCard, AppBadge, AppInput, AppSkeleton)
+│   ├── ui/                      # Atomic primitives (AppButton, AppCard, AppBadge, AppTag, AppInput, AppSkeleton)
 │   ├── common/                  # Reusable composites (AppEmptyState, AppErrorState, AppStatusPanel)
 │   └── layout/                  # ScreenScaffold (Safe area, screen padding)
 ├── config/                      # env.dart, routes.dart
@@ -39,7 +39,7 @@ lib/
 │   ├── <feature>_providers.dart # Riverpod query providers (TanStack Query equivalent)
 │   └── widgets/                 # Feature-specific subwidgets
 ├── theme/                       # app_colors.dart, app_radius.dart, app_typography.dart, app_theme.dart
-└── utils/                       # formatters.dart
+└── utils/                       # double_brace_asset_loader.dart (translations); wording/format helpers live in their feature (e.g. applicant/jobs/jobs_format.dart)
 test/                            # Unit & widget tests mirroring features
 assets/translations/             # en.json, vi.json (1:1 matching ittalent-web locales)
 ```
@@ -79,6 +79,7 @@ Before building custom widgets, always reuse existing primitives:
 | Action Button (Ember, Outline, Ghost, Destructive) | `AppButton` (`components/ui/app_button.dart`) |
 | Surface Card (16px border-first) | `AppCard` (`components/ui/app_card.dart`) |
 | Status Badge (Tint pairs) | `AppBadge` (`components/ui/app_badge.dart`) |
+| Plain Tag (type, level) | `AppTag` (`components/ui/app_tag.dart`) |
 | Form Input / Text Field | `AppInput` (`components/ui/app_input.dart`) |
 | Loading Placeholder | `AppSkeleton` (`components/ui/app_skeleton.dart`) |
 | Empty List / Empty View | `AppEmptyState` (`components/common/app_empty_state.dart`) |

@@ -1,13 +1,13 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../components/common/company_avatar.dart';
 import '../../../../components/ui/app_badge.dart';
 import '../../../../components/ui/app_card.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_typography.dart';
 import '../applications_constants.dart';
 import '../applications_providers.dart';
-import 'company_avatar.dart';
 import 'offer_notice.dart';
 
 class ApplicationCard extends StatelessWidget {
