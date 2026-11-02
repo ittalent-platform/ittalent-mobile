@@ -23,7 +23,11 @@ class AppInput extends StatelessWidget {
     this.readOnly = false,
     this.onTap,
     this.maxLines = 1,
+    this.minLines,
     this.inputFormatters,
+    this.autofocus = false,
+    this.textInputAction,
+    this.onSubmitted,
   });
 
   final TextEditingController? controller;
@@ -41,7 +45,11 @@ class AppInput extends StatelessWidget {
   final bool readOnly;
   final VoidCallback? onTap;
   final int maxLines;
+  final int? minLines;
   final List<TextInputFormatter>? inputFormatters;
+  final bool autofocus;
+  final TextInputAction? textInputAction;
+  final ValueChanged<String>? onSubmitted;
 
   @override
   Widget build(BuildContext context) {
@@ -100,6 +108,10 @@ class AppInput extends StatelessWidget {
           readOnly: readOnly,
           onTap: onTap,
           maxLines: maxLines,
+          minLines: minLines,
+          autofocus: autofocus,
+          textInputAction: textInputAction,
+          onSubmitted: onSubmitted,
           style: AppTypography.body(fontSize: 14, color: colors.foreground),
           decoration: InputDecoration(
             hintText: hintText,

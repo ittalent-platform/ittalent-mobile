@@ -74,6 +74,54 @@ void main() {
       expect(result, isNull);
     });
 
+    test('lets a guest read a job, but sends them to sign in to apply', () {
+      final container = ProviderContainer(
+        overrides: [
+          authNotifierProvider.overrideWith(
+            () => FakeTestAuthNotifier(AuthState.unauthenticated()),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final notifier = container.read(routerNotifierProvider);
+      String? redirect(String location) => notifier.redirect(
+        _FakeContext(),
+        MockGoRouterState(matchedLocation: location),
+      );
+
+      expect(redirect(AppRoutes.jobDetail('j1')), isNull);
+      expect(redirect(AppRoutes.jobApply('j1')), AppRoutes.login);
+    });
+
+    test('lets a signed-in applicant apply to a job', () {
+      final container = ProviderContainer(
+        overrides: [
+          authNotifierProvider.overrideWith(
+            () => FakeTestAuthNotifier(
+              AuthState.authenticated(
+                user: const UserDTO(
+                  id: 'usr-1',
+                  email: 'test@example.com',
+                  username: 'test',
+                  role: 'candidate',
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final notifier = container.read(routerNotifierProvider);
+      final result = notifier.redirect(
+        _FakeContext(),
+        MockGoRouterState(matchedLocation: AppRoutes.jobApply('j1')),
+      );
+
+      expect(result, isNull);
+    });
+
     test('allows unauthenticated user to access auth screens', () {
       final container = ProviderContainer(
         overrides: [

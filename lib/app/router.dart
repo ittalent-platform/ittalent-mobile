@@ -9,10 +9,15 @@ import '../auth/auth_state.dart';
 import '../config/routes.dart';
 import '../features/applicant/applications/application_detail_screen.dart';
 import '../features/applicant/applications/application_history_screen.dart';
+import '../features/applicant/applications/applications_providers.dart';
 import '../features/applicant/applications/applications_screen.dart';
+import '../features/applicant/apply/apply_providers.dart';
+import '../features/applicant/apply/apply_screen.dart';
 import '../features/applicant/certificates/certificates_screen.dart';
 import '../features/applicant/companies/companies_screen.dart';
 import '../features/applicant/companies/company_detail_screen.dart';
+import '../features/applicant/jobs/job_detail_screen.dart';
+import '../features/applicant/jobs/jobs_providers.dart';
 import '../features/applicant/jobs/jobs_screen.dart';
 import '../features/applicant/notifications/announcement_detail_screen.dart';
 import '../features/applicant/notifications/notifications_providers.dart';
@@ -59,6 +64,12 @@ class RouterNotifier extends ChangeNotifier {
         loc == AppRoutes.emailVerified ||
         loc == AppRoutes.resetPassword;
 
+    // Applying needs an account, so a guest signs in first. This comes before
+    // the guest-allowed jobs below, which the apply page is part of.
+    if (!authState.isAuthenticated && AppRoutes.isJobApply(loc)) {
+      return AppRoutes.login;
+    }
+
     final isGuestAllowed =
         isAuthRoute ||
         loc.startsWith(AppRoutes.jobs) ||
@@ -90,6 +101,15 @@ final routerNotifierProvider = Provider<RouterNotifier>((ref) {
 final routerProvider = Provider<GoRouter>((ref) {
   final notifier = ref.watch(routerNotifierProvider);
 
+  // The apply flow knows nothing of the applications slice (a slice does not
+  // import another), so the app refreshes what shows applications when one
+  // was sent: the list, and the "Apply now" / "Applied" button of each job.
+  ref.listen(applicationSubmittedProvider, (previous, next) {
+    ref.invalidate(myApplicationsProvider);
+    ref.invalidate(applicationStatusCountsProvider);
+    ref.invalidate(jobApplicationProvider);
+  });
+
   return GoRouter(
     initialLocation: AppRoutes.myApplications,
     refreshListenable: notifier,
@@ -117,6 +137,20 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '${AppRoutes.companies}/:id',
         builder: (context, state) =>
             CompanyDetailScreen(companyId: state.pathParameters['id']!),
+      ),
+      // Outside the tab bar, like the company page: the job page has its own
+      // bar with "Apply now", and the apply flow takes the whole screen.
+      GoRoute(
+        path: '${AppRoutes.jobs}/:id',
+        builder: (context, state) =>
+            JobDetailScreen(jobId: state.pathParameters['id']!),
+        routes: [
+          GoRoute(
+            path: 'apply',
+            builder: (context, state) =>
+                ApplyScreen(jobId: state.pathParameters['id']!),
+          ),
+        ],
       ),
       GoRoute(
         path: AppRoutes.welcome,

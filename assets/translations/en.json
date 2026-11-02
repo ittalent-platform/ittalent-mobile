@@ -2982,6 +2982,170 @@
       "mid": "Mid",
       "senior": "Senior",
       "lead": "Lead"
+    },
+    "matchSuffix": "match",
+    "endPartialFiltered": "Searched the newest {{count}} of {{total}} jobs. Some jobs may not appear.",
+    "noMatches": {
+      "title": "No jobs match",
+      "description": "Try fewer filters or a different keyword."
+    },
+    "filter": {
+      "title": "Filters",
+      "titleCount": "Filters · {{count}}",
+      "reset": "Reset",
+      "jobType": "Job type",
+      "level": "Level",
+      "salary": "Salary · million VND per month",
+      "min": "Min",
+      "max": "Max",
+      "any": "Any",
+      "includeNegotiable": "Include jobs with negotiable salary",
+      "show_one": "Show {{count}} job",
+      "show_other": "Show {{count}} jobs",
+      "showAll": "Show jobs",
+      "salaryOrder": "Min can’t be above max.",
+      "salaryFrom": "{{min}}M+",
+      "salaryUpTo": "Up to {{max}}M",
+      "salaryBetween": "{{min}}–{{max}}M",
+      "keyword": "“{{text}}”",
+      "hoChiMinhCity": "Ho Chi Minh City"
+    },
+    "search": {
+      "for": "Search for “{{text}}”",
+      "clearRecent": "Clear",
+      "invalid": "Use letters, numbers, spaces and - . ’ only.",
+      "popular": "Popular skills",
+      "recent": "Recent searches"
+    },
+    "sort": {
+      "label": "Sort",
+      "newest": "Newest",
+      "oldest": "Oldest",
+      "salaryHigh": "Salary: high to low",
+      "salaryLow": "Salary: low to high"
+    },
+    "detail": {
+      "about": "About the role",
+      "requirements": "Requirements",
+      "benefits": "Benefits",
+      "salary": "Salary",
+      "apply": "Apply now",
+      "applied": "Applied · View application",
+      "signInToApply": "Sign in to apply",
+      "seeSimilar": "See similar jobs",
+      "share": "Share",
+      "linkCopied": "Link copied",
+      "closed": "This job no longer accepts applications.",
+      "closesToday": "Applications close today at 23:59.",
+      "closesIn_one": "Applications close in {{count}} day · {{date}}",
+      "closesIn_other": "Applications close in {{count}} days · {{date}}",
+      "openings_one": "{{count}} opening",
+      "openings_other": "{{count}} openings",
+      "openJobs_one": "{{count}} open job",
+      "openJobs_other": "{{count}} open jobs",
+      "notAvailable": {
+        "title": "This job isn’t available",
+        "description": "It may have been removed by the company.",
+        "browse": "Browse jobs"
+      },
+      "loadError": {
+        "title": "Couldn’t load this job",
+        "description": "Check your connection and try again."
+      }
+    }
+  },
+  "apply": {
+    "title": "Apply",
+    "step": "Step {{step}} of {{total}}",
+    "cv": "CV",
+    "coverLetter": "Cover letter",
+    "noCoverLetter": "No cover letter",
+    "optional": "Optional",
+    "defaultCv": "Default CV",
+    "defaultCoverLetter": "Default",
+    "uploadCv": "Upload a new CV",
+    "uploadCoverLetter": "Upload a cover letter",
+    "uploadHint": "PDF · up to 5 MB",
+    "uploaded": "Saved to My documents",
+    "continue": "Continue",
+    "submit": "Submit application",
+    "submitting": "Submitting…",
+    "documents": "Documents",
+    "change": "Change",
+    "tagCv": "CV",
+    "tagCoverLetter": "CL",
+    "certificates": "Certificates",
+    "certificatesHint": "Suggested ones are ticked. Untick any you don’t want to send.",
+    "messageLabel": "Message to {{company}}",
+    "messageHint": "Introduce yourself in a few lines (optional)",
+    "messageCount": "{{count}} / {{max}}",
+    "thousandsSeparator": ",",
+    "footnote": "One application per job. You can withdraw while it’s Submitted or Under review.",
+    "withdrewEarlier": "You withdrew an earlier application to this job on {{date}}. This sends a new one.",
+    "noCv": {
+      "title": "Add a CV to apply",
+      "body": "Upload a PDF. It’s saved to My documents for next time.",
+      "action": "Upload a CV"
+    },
+    "submitted": {
+      "title": "Application submitted",
+      "body": "{{company}} has your application {{id}}. We’ll notify you when they update it.",
+      "bodyNoId": "{{company}} has your application. We’ll notify you when they update it.",
+      "view": "View application",
+      "browse": "Keep browsing"
+    },
+    "discard": {
+      "title": "Discard this application?",
+      "body": "Nothing has been sent to {{company}}.",
+      "confirm": "Discard",
+      "keep": "Keep applying"
+    },
+    "blocked": {
+      "emailNotVerified": {
+        "title": "Verify your email to apply",
+        "body": "We sent a link to {{email}}.",
+        "bodyNoEmail": "We sent you a verification link by email.",
+        "resend": "Resend link",
+        "resent": "Verification link sent. Check your inbox.",
+        "resendFailed": "Couldn’t send the link. Try again later."
+      },
+      "jobClosed": {
+        "title": "This job just closed",
+        "body": "The deadline passed or the company stopped accepting applications. Your application wasn’t sent.",
+        "action": "See similar jobs"
+      },
+      "alreadyApplied": {
+        "title": "You already applied",
+        "body": "Your application is {{id}}.",
+        "bodyUnknown": "You already have an application for this job.",
+        "action": "View application"
+      },
+      "limit": {
+        "title": "You can’t apply again",
+        "body": "You can’t send another application to this job."
+      }
+    },
+    "errors": {
+      "chooseCv": "Choose a CV to continue.",
+      "submitFailed": "Couldn’t send your application. Nothing was sent. Try again.",
+      "offline": "You’re offline. Your application will be ready to send when you reconnect.",
+      "positionFilled": "{{company}} isn’t accepting applications right now.",
+      "accountNotActive": "Your account can’t send applications right now.",
+      "cvUnavailable": "That CV is no longer in your documents. Choose another.",
+      "coverLetterUnavailable": "That cover letter is no longer in your documents. Choose another, or send without one.",
+      "tooManyCertificates": "You can send up to 20 certificates.",
+      "loadDocuments": "Couldn’t load your documents.",
+      "loadCertificates": "Couldn’t load your certificates. You can still send your application.",
+      "loadJobTitle": "Couldn’t load this job",
+      "loadJobBody": "Check your connection and try again."
+    },
+    "upload": {
+      "tooLarge": "“{{name}}” is {{size}}. The limit is 5 MB.",
+      "wordFile": "Only PDF files can be used. “{{name}}” is a Word file.",
+      "notPdf": "Only PDF files can be used. “{{name}}” isn’t a PDF.",
+      "empty": "“{{name}}” is empty.",
+      "unreadable": "Couldn’t read “{{name}}”. Try another file.",
+      "failed": "Couldn’t upload “{{name}}”. Try again."
     }
   },
   "notifications": {

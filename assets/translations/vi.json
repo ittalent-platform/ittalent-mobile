@@ -2961,6 +2961,170 @@
       "mid": "Mid",
       "senior": "Senior",
       "lead": "Trưởng nhóm"
+    },
+    "matchSuffix": "phù hợp",
+    "endPartialFiltered": "Đã tìm trong {{count}} việc làm mới nhất trên tổng số {{total}}. Một số việc làm có thể chưa hiển thị.",
+    "noMatches": {
+      "title": "Không có việc làm phù hợp",
+      "description": "Hãy thử bớt bộ lọc hoặc đổi từ khóa."
+    },
+    "filter": {
+      "title": "Bộ lọc",
+      "titleCount": "Bộ lọc · {{count}}",
+      "reset": "Đặt lại",
+      "jobType": "Loại hình",
+      "level": "Cấp bậc",
+      "salary": "Mức lương · triệu VND mỗi tháng",
+      "min": "Tối thiểu",
+      "max": "Tối đa",
+      "any": "Bất kỳ",
+      "includeNegotiable": "Bao gồm việc làm có mức lương thỏa thuận",
+      "show_one": "Xem {{count}} việc làm",
+      "show_other": "Xem {{count}} việc làm",
+      "showAll": "Xem việc làm",
+      "salaryOrder": "Mức tối thiểu không được lớn hơn mức tối đa.",
+      "salaryFrom": "{{min}}M+",
+      "salaryUpTo": "Đến {{max}}M",
+      "salaryBetween": "{{min}}–{{max}}M",
+      "keyword": "“{{text}}”",
+      "hoChiMinhCity": "TP. Hồ Chí Minh"
+    },
+    "search": {
+      "for": "Tìm “{{text}}”",
+      "clearRecent": "Xoá",
+      "invalid": "Chỉ dùng chữ cái, chữ số, khoảng trắng và - . ’",
+      "popular": "Kỹ năng phổ biến",
+      "recent": "Tìm kiếm gần đây"
+    },
+    "sort": {
+      "label": "Sắp xếp",
+      "newest": "Mới nhất",
+      "oldest": "Cũ nhất",
+      "salaryHigh": "Lương: cao đến thấp",
+      "salaryLow": "Lương: thấp đến cao"
+    },
+    "detail": {
+      "about": "Về vị trí này",
+      "requirements": "Yêu cầu",
+      "benefits": "Quyền lợi",
+      "salary": "Mức lương",
+      "apply": "Ứng tuyển ngay",
+      "applied": "Đã ứng tuyển · Xem đơn",
+      "signInToApply": "Đăng nhập để ứng tuyển",
+      "seeSimilar": "Xem việc làm tương tự",
+      "share": "Chia sẻ",
+      "linkCopied": "Đã sao chép liên kết",
+      "closed": "Việc làm này không còn nhận đơn ứng tuyển.",
+      "closesToday": "Hạn nộp đơn là hôm nay lúc 23:59.",
+      "closesIn_one": "Còn {{count}} ngày để nộp đơn · {{date}}",
+      "closesIn_other": "Còn {{count}} ngày để nộp đơn · {{date}}",
+      "openings_one": "{{count}} vị trí",
+      "openings_other": "{{count}} vị trí",
+      "openJobs_one": "{{count}} việc đang mở",
+      "openJobs_other": "{{count}} việc đang mở",
+      "notAvailable": {
+        "title": "Việc làm này không khả dụng",
+        "description": "Có thể công ty đã gỡ việc làm này.",
+        "browse": "Xem việc làm khác"
+      },
+      "loadError": {
+        "title": "Không tải được việc làm này",
+        "description": "Kiểm tra kết nối và thử lại."
+      }
+    }
+  },
+  "apply": {
+    "title": "Ứng tuyển",
+    "step": "Bước {{step}}/{{total}}",
+    "cv": "CV",
+    "coverLetter": "Thư xin việc",
+    "noCoverLetter": "Không dùng thư xin việc",
+    "optional": "Không bắt buộc",
+    "defaultCv": "CV mặc định",
+    "defaultCoverLetter": "Mặc định",
+    "uploadCv": "Tải lên CV mới",
+    "uploadCoverLetter": "Tải lên thư xin việc",
+    "uploadHint": "PDF · tối đa 5 MB",
+    "uploaded": "Đã lưu vào Tài liệu của tôi",
+    "continue": "Tiếp tục",
+    "submit": "Gửi đơn ứng tuyển",
+    "submitting": "Đang gửi…",
+    "documents": "Tài liệu",
+    "change": "Thay đổi",
+    "tagCv": "CV",
+    "tagCoverLetter": "TXV",
+    "certificates": "Chứng chỉ",
+    "certificatesHint": "Các chứng chỉ được gợi ý đã được chọn sẵn. Bỏ chọn những chứng chỉ bạn không muốn gửi.",
+    "messageLabel": "Lời nhắn gửi {{company}}",
+    "messageHint": "Giới thiệu bản thân trong vài dòng (không bắt buộc)",
+    "messageCount": "{{count}} / {{max}}",
+    "thousandsSeparator": ".",
+    "footnote": "Mỗi việc làm chỉ ứng tuyển một lần. Bạn có thể rút đơn khi đơn đang ở trạng thái Đã nộp hoặc Đang xem xét.",
+    "withdrewEarlier": "Bạn đã rút đơn ứng tuyển trước đó vào việc làm này ngày {{date}}. Thao tác này sẽ gửi một đơn mới.",
+    "noCv": {
+      "title": "Thêm CV để ứng tuyển",
+      "body": "Hãy tải lên một tệp PDF. CV sẽ được lưu vào Tài liệu của tôi để dùng cho lần sau.",
+      "action": "Tải lên CV"
+    },
+    "submitted": {
+      "title": "Đã gửi đơn ứng tuyển",
+      "body": "{{company}} đã nhận đơn ứng tuyển {{id}} của bạn. Chúng tôi sẽ thông báo khi họ cập nhật đơn.",
+      "bodyNoId": "{{company}} đã nhận đơn ứng tuyển của bạn. Chúng tôi sẽ thông báo khi họ cập nhật đơn.",
+      "view": "Xem đơn ứng tuyển",
+      "browse": "Tiếp tục xem việc làm"
+    },
+    "discard": {
+      "title": "Huỷ đơn ứng tuyển này?",
+      "body": "Chưa có gì được gửi tới {{company}}.",
+      "confirm": "Huỷ đơn",
+      "keep": "Tiếp tục ứng tuyển"
+    },
+    "blocked": {
+      "emailNotVerified": {
+        "title": "Xác minh email để ứng tuyển",
+        "body": "Chúng tôi đã gửi một liên kết tới {{email}}.",
+        "bodyNoEmail": "Chúng tôi đã gửi liên kết xác minh qua email của bạn.",
+        "resend": "Gửi lại liên kết",
+        "resent": "Đã gửi liên kết xác minh. Hãy kiểm tra hộp thư.",
+        "resendFailed": "Không gửi được liên kết. Hãy thử lại sau."
+      },
+      "jobClosed": {
+        "title": "Việc làm này vừa đóng",
+        "body": "Đã quá hạn nộp đơn hoặc công ty đã ngừng nhận đơn. Đơn ứng tuyển của bạn chưa được gửi.",
+        "action": "Xem việc làm tương tự"
+      },
+      "alreadyApplied": {
+        "title": "Bạn đã ứng tuyển rồi",
+        "body": "Đơn ứng tuyển của bạn là {{id}}.",
+        "bodyUnknown": "Bạn đã có một đơn ứng tuyển cho việc làm này.",
+        "action": "Xem đơn ứng tuyển"
+      },
+      "limit": {
+        "title": "Bạn không thể ứng tuyển lại",
+        "body": "Bạn không thể gửi thêm đơn ứng tuyển cho việc làm này."
+      }
+    },
+    "errors": {
+      "chooseCv": "Hãy chọn một CV để tiếp tục.",
+      "submitFailed": "Không gửi được đơn ứng tuyển. Chưa có gì được gửi. Hãy thử lại.",
+      "offline": "Bạn đang ngoại tuyến. Đơn ứng tuyển sẽ sẵn sàng để gửi khi bạn có kết nối lại.",
+      "positionFilled": "{{company}} hiện không nhận đơn ứng tuyển.",
+      "accountNotActive": "Tài khoản của bạn hiện không thể gửi đơn ứng tuyển.",
+      "cvUnavailable": "CV đó không còn trong tài liệu của bạn. Hãy chọn CV khác.",
+      "coverLetterUnavailable": "Thư xin việc đó không còn trong tài liệu của bạn. Hãy chọn thư khác, hoặc gửi mà không có thư.",
+      "tooManyCertificates": "Bạn có thể gửi tối đa 20 chứng chỉ.",
+      "loadDocuments": "Không tải được tài liệu của bạn.",
+      "loadCertificates": "Không tải được chứng chỉ của bạn. Bạn vẫn có thể gửi đơn ứng tuyển.",
+      "loadJobTitle": "Không tải được việc làm này",
+      "loadJobBody": "Kiểm tra kết nối và thử lại."
+    },
+    "upload": {
+      "tooLarge": "“{{name}}” có dung lượng {{size}}. Giới hạn là 5 MB.",
+      "wordFile": "Chỉ dùng được tệp PDF. “{{name}}” là tệp Word.",
+      "notPdf": "Chỉ dùng được tệp PDF. “{{name}}” không phải tệp PDF.",
+      "empty": "“{{name}}” là tệp trống.",
+      "unreadable": "Không đọc được “{{name}}”. Hãy thử tệp khác.",
+      "failed": "Không tải lên được “{{name}}”. Hãy thử lại."
     }
   },
   "notifications": {

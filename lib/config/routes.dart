@@ -25,6 +25,16 @@ class AppRoutes {
   static const String changePassword = '/profile/password';
 
   static String jobDetail(String jobId) => '/jobs/$jobId';
+  static String jobApply(String jobId) => '/jobs/$jobId/apply';
+
+  /// The apply flow needs an account: a guest is sent to sign in instead.
+  static bool isJobApply(String location) {
+    final segments = Uri.parse(location).pathSegments;
+    return segments.length == 3 &&
+        '/${segments[0]}' == jobs &&
+        segments[2] == 'apply';
+  }
+
   static String companyDetail(String companyId) => '/companies/$companyId';
   static String applicationDetail(String applicationId) =>
       '/my-applications/$applicationId';
