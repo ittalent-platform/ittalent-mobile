@@ -6,13 +6,19 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../auth/auth_notifier.dart';
 import '../auth/auth_state.dart';
+import '../auth/sign_in_return.dart';
 import '../config/routes.dart';
 import '../features/applicant/applications/application_detail_screen.dart';
 import '../features/applicant/applications/application_history_screen.dart';
+import '../features/applicant/applications/applications_providers.dart';
 import '../features/applicant/applications/applications_screen.dart';
+import '../features/applicant/apply/apply_providers.dart';
+import '../features/applicant/apply/apply_screen.dart';
 import '../features/applicant/certificates/certificates_screen.dart';
 import '../features/applicant/companies/companies_screen.dart';
 import '../features/applicant/companies/company_detail_screen.dart';
+import '../features/applicant/jobs/job_detail_screen.dart';
+import '../features/applicant/jobs/jobs_providers.dart';
 import '../features/applicant/jobs/jobs_screen.dart';
 import '../features/applicant/notifications/announcement_detail_screen.dart';
 import '../features/applicant/notifications/notifications_providers.dart';
@@ -35,16 +41,38 @@ import '../theme/app_colors.dart';
 
 class RouterNotifier extends ChangeNotifier {
   RouterNotifier(this._ref) {
-    _ref.listen(authNotifierProvider, (previous, next) => notifyListeners());
+    _ref.listen(authNotifierProvider, (previous, next) {
+      // A guest has just signed in: the place they were heading for is kept
+      // for the redirect that this change triggers.
+      if (next.isAuthenticated && !(previous?.isAuthenticated ?? false)) {
+        _returnTo = _ref.read(signInReturnProvider.notifier).take();
+      }
+      notifyListeners();
+    });
   }
 
   final Ref _ref;
+
+  /// Where the guest who just signed in goes back to (see [signInThen]); it
+  /// is used once, by the redirect.
+  String? _returnTo;
 
   AuthState get authState => _ref.read(authNotifierProvider);
 
   String? redirect(BuildContext context, GoRouterState state) {
     if (authState.status == AuthStatus.initial) {
       return null;
+    }
+
+    // Back to the job or the apply page the guest came from. The redirect is
+    // given the location under the pages that were pushed (the login page is
+    // one of them), so this cannot be left to the checks of the login page
+    // below: from the welcome page it would send the applicant to My
+    // applications.
+    final back = _returnTo;
+    if (authState.isAuthenticated && back != null) {
+      _returnTo = null;
+      return back;
     }
 
     final loc = state.matchedLocation;
@@ -59,6 +87,12 @@ class RouterNotifier extends ChangeNotifier {
         loc == AppRoutes.emailVerified ||
         loc == AppRoutes.resetPassword;
 
+    // Applying needs an account, so a guest signs in first. This comes before
+    // the guest-allowed jobs below, which the apply page is part of.
+    if (!authState.isAuthenticated && AppRoutes.isJobApply(loc)) {
+      return AppRoutes.loginThen(loc);
+    }
+
     final isGuestAllowed =
         isAuthRoute ||
         loc.startsWith(AppRoutes.jobs) ||
@@ -66,6 +100,15 @@ class RouterNotifier extends ChangeNotifier {
 
     if (!authState.isAuthenticated && !isGuestAllowed) {
       return AppRoutes.welcome;
+    }
+
+    // A login page that is the location itself (a link to the apply page, or
+    // a login that replaced a job page) carries where to go in its address.
+    if (authState.isAuthenticated && loc == AppRoutes.login) {
+      final target = AppRoutes.returnTarget(
+        state.uri.queryParameters[AppRoutes.fromParam],
+      );
+      if (target != null) return target;
     }
 
     if (authState.isAuthenticated &&
@@ -89,6 +132,15 @@ final routerNotifierProvider = Provider<RouterNotifier>((ref) {
 
 final routerProvider = Provider<GoRouter>((ref) {
   final notifier = ref.watch(routerNotifierProvider);
+
+  // The apply flow knows nothing of the applications slice (a slice does not
+  // import another), so the app refreshes what shows applications when one
+  // was sent: the list, and the "Apply now" / "Applied" button of each job.
+  ref.listen(applicationSubmittedProvider, (previous, next) {
+    ref.invalidate(myApplicationsProvider);
+    ref.invalidate(applicationStatusCountsProvider);
+    ref.invalidate(jobApplicationProvider);
+  });
 
   return GoRouter(
     initialLocation: AppRoutes.myApplications,
@@ -117,6 +169,20 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '${AppRoutes.companies}/:id',
         builder: (context, state) =>
             CompanyDetailScreen(companyId: state.pathParameters['id']!),
+      ),
+      // Outside the tab bar, like the company page: the job page has its own
+      // bar with "Apply now", and the apply flow takes the whole screen.
+      GoRoute(
+        path: '${AppRoutes.jobs}/:id',
+        builder: (context, state) =>
+            JobDetailScreen(jobId: state.pathParameters['id']!),
+        routes: [
+          GoRoute(
+            path: 'apply',
+            builder: (context, state) =>
+                ApplyScreen(jobId: state.pathParameters['id']!),
+          ),
+        ],
       ),
       GoRoute(
         path: AppRoutes.welcome,

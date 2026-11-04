@@ -1,11 +1,13 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../components/common/app_empty_state.dart';
 import '../../../../components/common/app_error_state.dart';
 import '../../../../components/ui/app_skeleton.dart';
+import '../../../../config/routes.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_typography.dart';
 import '../companies_models.dart';
@@ -174,7 +176,11 @@ class _CompanyJobsTabState extends ConsumerState<CompanyJobsTab> {
           child: Column(
             children: [
               for (var i = 0; i < jobs.length; i++)
-                CompanyJobRow(job: jobs[i], last: i == jobs.length - 1),
+                CompanyJobRow(
+                  job: jobs[i],
+                  last: i == jobs.length - 1,
+                  onTap: () => context.push(AppRoutes.jobDetail(jobs[i].id)),
+                ),
             ],
           ),
         ),

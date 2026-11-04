@@ -3,6 +3,16 @@ import 'package:easy_localization/easy_localization.dart';
 import 'jobs_constants.dart';
 import 'jobs_models.dart';
 
+/// Whether a job still takes applications, as the job page tells it.
+enum JobDeadlineKind { open, today, closed }
+
+class JobDeadline {
+  const JobDeadline(this.kind, this.text);
+
+  final JobDeadlineKind kind;
+  final String text;
+}
+
 /// Wording of a job for people: salary, how long ago it was posted, labels.
 class JobFormat {
   const JobFormat._();
@@ -39,6 +49,29 @@ class JobFormat {
       'jobs.salary.upTo',
       namedArgs: {'amount': '${number(max!)}$unit'},
     );
+  }
+
+  /// The salary of a job split as the job page shows it: "45–60M" large and
+  /// "VND" small, with "/ month" after it. Null when the salary is negotiable
+  /// or missing.
+  static ({String amount, String unit})? salaryParts(JobPosting job) {
+    if (!job.hasSalary) return null;
+    final min = (job.salaryMin ?? 0) > 0 ? job.salaryMin! : null;
+    final max = (job.salaryMax ?? 0) > 0 ? job.salaryMax! : null;
+    final vnd = job.currency == JobConstants.currencyVnd;
+    String plain(num value) =>
+        vnd ? _trimZero(value / JobConstants.vndPerMillion) : _grouped(value);
+    // "M" (millions) closes the amount once: "45–60M", not "45M–60M".
+    String number(num value) => vnd ? '${plain(value)}M' : plain(value);
+    final String amount;
+    if (min != null && max != null) {
+      amount = min == max ? number(min) : '${plain(min)}–${number(max)}';
+    } else if (min != null) {
+      amount = tr('jobs.salary.from', namedArgs: {'amount': number(min)});
+    } else {
+      amount = tr('jobs.salary.upTo', namedArgs: {'amount': number(max!)});
+    }
+    return (amount: amount, unit: job.currency);
   }
 
   /// "25" for 25.0 and "7.5" for 7.5.
@@ -87,6 +120,46 @@ class JobFormat {
           'home.latest.applyBy',
           namedArgs: {'date': shortDate(expiresAt, locale, now)},
         );
+
+  /// What the job page says about the deadline: how long the job stays open,
+  /// "today" on its last day, and that it is closed after it. Null for a job
+  /// without a deadline. The API keeps a deadline to the end of its day.
+  static JobDeadline? deadline(
+    DateTime? expiresAt,
+    String locale,
+    DateTime now,
+  ) {
+    if (expiresAt == null) return null;
+    final end = expiresAt.toLocal();
+    final today = now.toLocal();
+    if (end.isBefore(today)) {
+      return JobDeadline(JobDeadlineKind.closed, tr('jobs.detail.closed'));
+    }
+    final days = DateTime(
+      end.year,
+      end.month,
+      end.day,
+    ).difference(DateTime(today.year, today.month, today.day)).inDays;
+    if (days <= 0) {
+      return JobDeadline(JobDeadlineKind.today, tr('jobs.detail.closesToday'));
+    }
+    return JobDeadline(
+      JobDeadlineKind.open,
+      tr(
+        'jobs.detail.closesIn_${days == 1 ? 'one' : 'other'}',
+        namedArgs: {
+          'count': '$days',
+          'date': DateFormat('d MMM y', locale).format(end),
+        },
+      ),
+    );
+  }
+
+  /// "Ho Chi Minh City" for the quick city of the filters, the name itself
+  /// otherwise.
+  static String cityLabel(String city) => city == JobConstants.cityHoChiMinh
+      ? tr('jobs.filter.hoChiMinhCity')
+      : city;
 
   static String employmentLabel(String value) =>
       JobConstants.employmentTypes.contains(value)

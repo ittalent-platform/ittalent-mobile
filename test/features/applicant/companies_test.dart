@@ -183,6 +183,11 @@ Future<ProviderContainer> _pump(
         path: AppRoutes.jobs,
         builder: (context, state) => const Scaffold(body: Text('jobs page')),
       ),
+      GoRoute(
+        path: '${AppRoutes.jobs}/:id',
+        builder: (context, state) =>
+            Scaffold(body: Text('job page ${state.pathParameters['id']}')),
+      ),
     ],
   );
   await tester.pumpWidget(
@@ -891,6 +896,21 @@ void main() {
       // The bar belongs to the other tabs.
       expect(find.text('companies.page.seeJobs_other'), findsNothing);
       expect(find.text('nimbuspay.example'), findsNothing);
+    });
+
+    testWidgets('a job of the Jobs tab opens the job page', (tester) async {
+      final adapter = _adapter(
+        jobs: (_) =>
+            jsonBody(_jobs([_job('j1', 'Senior Flutter Developer')], total: 1)),
+      );
+      await _pump(tester, adapter, location: detailLocation);
+      await tester.tap(find.text('companies.page.seeJobs_other'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Senior Flutter Developer'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('job page j1'), findsOneWidget);
     });
 
     testWidgets('the Jobs tab loads five more with Load more', (tester) async {

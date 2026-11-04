@@ -1,8 +1,9 @@
 import 'jobs_constants.dart';
 
-/// A public job posting as a list card shows it. The long texts of a job
-/// (description, requirements, benefits) are left out on purpose: the list
-/// carries up to 2,000 jobs, and the detail screen loads them for one job.
+/// A public job posting as a list card shows it. The description and the
+/// requirements are kept only to be searched (a keyword finds a skill that
+/// the requirements name); the benefits are left out, and the detail screen
+/// loads every text of one job.
 class JobPosting {
   const JobPosting({
     required this.id,
@@ -17,6 +18,8 @@ class JobPosting {
     this.salaryNegotiable = false,
     this.currency = JobConstants.currencyVnd,
     this.openings,
+    this.description,
+    this.requirements,
     this.expiresAt,
     this.createdAt,
   });
@@ -33,6 +36,8 @@ class JobPosting {
   final bool salaryNegotiable;
   final String currency;
   final int? openings;
+  final String? description;
+  final String? requirements;
   final DateTime? expiresAt;
   final DateTime? createdAt;
 
@@ -53,6 +58,8 @@ class JobPosting {
       salaryNegotiable: json['salaryNegotiable'] as bool? ?? false,
       currency: _text(json['currency']) ?? JobConstants.currencyVnd,
       openings: (json['openings'] as num?)?.toInt(),
+      description: _text(json['description']),
+      requirements: _text(json['requirements']),
       expiresAt: DateTime.tryParse(json['expiresAt'] as String? ?? ''),
       createdAt: DateTime.tryParse(json['createdAt'] as String? ?? ''),
     );
@@ -112,19 +119,74 @@ class JobsPage {
 
 /// The open jobs the app could read, newest first.
 class PublicJobs {
-  const PublicJobs({
-    required this.jobs,
-    required this.total,
-    required this.isPartial,
-  });
+  const PublicJobs({required this.jobs, required this.total});
 
+  /// Every open job: all the pages of the API were read.
   final List<JobPosting> jobs;
 
   /// How many open jobs the API reports in all.
   final int total;
+}
 
-  /// True when the market has more pages than the app reads
-  /// (`JobConstants.maxPages`): [jobs] then holds only the newest ones, and
-  /// the screen must not say that every job was seen.
-  final bool isPartial;
+/// A job with every text of its page.
+class JobDetail {
+  const JobDetail({required this.job, this.benefits});
+
+  final JobPosting job;
+  final String? benefits;
+
+  factory JobDetail.fromJson(Map<String, dynamic> json) => JobDetail(
+    job: JobPosting.fromJson(json),
+    benefits: JobPosting._text(json['benefits']),
+  );
+}
+
+/// The company of a job as its page shows it: what it does, how big it is and
+/// how many jobs it has open.
+class JobCompany {
+  const JobCompany({
+    required this.id,
+    required this.name,
+    this.industry,
+    this.companySize,
+    this.openRoleCount = 0,
+  });
+
+  final String id;
+  final String name;
+  final String? industry;
+
+  /// A `company_size` value such as "51-200" or "1000+".
+  final String? companySize;
+  final int openRoleCount;
+
+  factory JobCompany.fromJson(Map<String, dynamic> json) => JobCompany(
+    id: json['id'] as String? ?? '',
+    name: json['name'] as String? ?? '',
+    industry: JobPosting._text(json['industry']),
+    companySize: JobPosting._text(json['companySize']),
+    openRoleCount: (json['openRoleCount'] as num?)?.toInt() ?? 0,
+  );
+}
+
+/// What the signed-in applicant already did with a job: the latest of their
+/// applications to it.
+class JobApplication {
+  const JobApplication({
+    required this.id,
+    required this.status,
+    required this.canApplyAgain,
+  });
+
+  final String id;
+  final String status;
+
+  /// The API says when a closed application leaves room for a new one.
+  final bool canApplyAgain;
+
+  factory JobApplication.fromJson(Map<String, dynamic> json) => JobApplication(
+    id: json['id'] as String? ?? '',
+    status: json['status'] as String? ?? '',
+    canApplyAgain: json['canApplyAgain'] as bool? ?? false,
+  );
 }

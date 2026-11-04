@@ -8,11 +8,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ittalent_mobile/api/client.dart';
 import 'package:ittalent_mobile/components/common/app_error_state.dart';
 import 'package:ittalent_mobile/components/ui/app_badge.dart';
+import 'package:ittalent_mobile/components/ui/app_button.dart';
 import 'package:ittalent_mobile/features/applicant/jobs/jobs_constants.dart';
 import 'package:ittalent_mobile/features/applicant/jobs/jobs_format.dart';
 import 'package:ittalent_mobile/features/applicant/jobs/jobs_models.dart';
 import 'package:ittalent_mobile/features/applicant/jobs/jobs_providers.dart';
 import 'package:ittalent_mobile/features/applicant/jobs/jobs_screen.dart';
+import 'package:ittalent_mobile/features/applicant/jobs/widgets/job_chip.dart';
 
 import '../../helpers/fake_api.dart';
 
@@ -116,6 +118,46 @@ Future<ProviderContainer> _pump(
   Size size = const Size(390, 844),
 }) => pumpWithApi(tester, adapter, const JobsScreen(), size: size);
 
+/// A Text, plain or made of spans, whose text holds [part].
+Finder _textWith(String part) => find.byWidgetPredicate(
+  (widget) =>
+      widget is Text &&
+      (widget.data ?? widget.textSpan?.toPlainText() ?? '').contains(part),
+);
+
+/// Taps a chip of the filter row. The row scrolls sideways and the labels of
+/// a test are long (untranslated keys), so a chip can start off screen.
+Future<void> _tapChip(WidgetTester tester, String label) async {
+  final chip = find.text(label);
+  await tester.ensureVisible(chip);
+  await tester.pumpAndSettle();
+  await tester.tap(chip);
+  await tester.pumpAndSettle();
+}
+
+/// Two jobs in two cities, one of them remote, one of them a junior's.
+FakeAdapter _twoJobs() => FakeAdapter(
+  (_) => jsonBody(
+    _page([
+      _job(
+        'j1',
+        'Backend Engineer',
+        location: 'Ha Noi',
+        level: 'Junior',
+        type: 'Full-time',
+      ),
+      _job(
+        'j2',
+        'Frontend Engineer',
+        company: 'Lumen Labs',
+        location: 'Ho Chi Minh City',
+        level: 'Mid',
+        type: 'Remote',
+      ),
+    ]),
+  ),
+);
+
 void main() {
   setUpAll(() async {
     EasyLocalization.logger.enableLevels = [];
@@ -191,6 +233,26 @@ void main() {
         JobFormat.salaryAmount(_posting(min: 30000000, max: 30000000)),
         '30M VND',
       );
+    });
+
+    test('the job page splits the salary into amount and currency', () {
+      final range = JobFormat.salaryParts(_posting());
+      expect(range?.amount, '45–60M');
+      expect(range?.unit, 'VND');
+      expect(
+        JobFormat.salaryParts(_posting(min: 7500000, max: 10000000))?.amount,
+        '7.5–10M',
+      );
+      expect(
+        JobFormat.salaryParts(_posting(min: 30000000, max: 30000000))?.amount,
+        '30M',
+      );
+      expect(
+        JobFormat.salaryParts(_posting(min: 1000, max: 2500, currency: 'USD'))
+            ?.amount,
+        '1,000–2,500',
+      );
+      expect(JobFormat.salaryParts(_posting(negotiable: true)), isNull);
     });
 
     test('open-ended and foreign salaries', () {
@@ -287,58 +349,58 @@ void main() {
         final result = await container.read(publicJobsProvider.future);
 
         expect(result.jobs.map((j) => j.id), ['j3', 'j1']);
-        expect(result.isPartial, isFalse);
         expect(adapter.requests.length, 2);
         expect(adapter.requests.first.path, '/api/v1/job-postings');
         expect(adapter.requests.first.queryParameters['limit'], 100);
       },
     );
 
-    test('reads a few pages at a time and never beyond the cap', () async {
+    test('reads every page, a few at a time, however many there are', () async {
+      // 25 pages: more than the old cap of 20 would have read.
+      const pages = 25;
       final adapter = _CountingAdapter(
         (page) => _page(
           [_job('p$page', 'Job $page', createdAt: _daysAgo(page))],
           page: page,
-          totalPages: 25,
+          totalPages: pages,
           total: 2400,
         ),
       );
       final container = containerFor(adapter);
 
       final result = await container.read(publicJobsProvider.future);
-      final jobs = result.jobs;
 
-      expect(adapter.pages.length, JobConstants.maxPages);
-      expect(adapter.pages, containsAll([1, JobConstants.maxPages]));
-      expect(adapter.pages, isNot(contains(JobConstants.maxPages + 1)));
+      expect(adapter.pages.length, pages);
+      expect(adapter.pages, containsAll([1, 20, 21, pages]));
       expect(
         adapter.mostAtOnce,
         lessThanOrEqualTo(JobConstants.fetchConcurrency),
       );
       expect(adapter.mostAtOnce, greaterThan(1));
-      expect(jobs.first.id, 'p1');
-      expect(jobs.length, JobConstants.maxPages);
-      // The cap left jobs out, and the result says so (and how many exist).
-      expect(result.isPartial, isTrue);
+      expect(result.jobs.first.id, 'p1');
+      expect(result.jobs.length, pages);
       expect(result.total, 2400);
     });
 
-    test('is complete when the market fits exactly in the cap', () async {
-      final adapter = _CountingAdapter(
-        (page) => _page(
-          [_job('p$page', 'Job $page', createdAt: _daysAgo(page))],
-          page: page,
-          totalPages: JobConstants.maxPages,
-          total: JobConstants.maxPages,
-        ),
-      );
+    test('a page that fails fails the list, it is never shown short', () async {
+      final adapter = FakeAdapter((options) {
+        final page = options.queryParameters['page'] as int;
+        if (page == 7) return jsonBody({'message': 'Boom'}, status: 500);
+        return jsonBody(
+          _page(
+            [_job('p$page', 'Job $page', createdAt: _daysAgo(page))],
+            page: page,
+            totalPages: 9,
+            total: 900,
+          ),
+        );
+      });
       final container = containerFor(adapter);
 
-      final result = await container.read(publicJobsProvider.future);
-
-      expect(adapter.pages.length, JobConstants.maxPages);
-      expect(result.jobs.length, JobConstants.maxPages);
-      expect(result.isPartial, isFalse);
+      await expectLater(
+        container.read(publicJobsProvider.future),
+        throwsA(anything),
+      );
     });
 
     test('fails at once, without retrying behind the scenes', () async {
@@ -356,7 +418,9 @@ void main() {
   });
 
   group('JobsScreen', () {
-    for (final size in const [Size(360, 800), Size(390, 844)]) {
+    // Tall enough for the three cards to be built, below the search box and
+    // the filter row.
+    for (final size in const [Size(360, 1400), Size(390, 1400)]) {
       testWidgets('renders the list without overflow at ${size.width}px', (
         tester,
       ) async {
@@ -403,7 +467,7 @@ void main() {
       expect(find.text('jobs.end_one'), findsOneWidget);
     });
 
-    testWidgets('does not say "all" when the page cap left jobs out', (
+    testWidgets('ends the list with the count even past the old page cap', (
       tester,
     ) async {
       // Every page repeats one job, so the list stays short enough to show
@@ -413,16 +477,14 @@ void main() {
           _page(
             [_job('only', 'Only job')],
             page: options.queryParameters['page'] as int,
-            totalPages: JobConstants.maxPages + 1,
+            totalPages: 21,
             total: 2345,
           ),
         ),
       );
       await _pump(tester, adapter);
 
-      expect(find.text('jobs.endPartial'), findsOneWidget);
-      expect(find.text('jobs.end_one'), findsNothing);
-      expect(find.text('jobs.end_other'), findsNothing);
+      expect(find.text('jobs.end_one'), findsOneWidget);
     });
 
     testWidgets('hides the salary line for a job with no salary at all', (
@@ -480,6 +542,226 @@ void main() {
       expect(adapter.requests.length, 2);
       expect(find.text('jobs.empty.title'), findsNothing);
       expect(find.text('Fresh job'), findsOneWidget);
+    });
+
+    testWidgets('a quick filter narrows the list, and its chip removes it', (
+      tester,
+    ) async {
+      await _pump(tester, _twoJobs());
+      expect(find.text('Backend Engineer'), findsOneWidget);
+      expect(find.text('Frontend Engineer'), findsOneWidget);
+
+      await _tapChip(tester, 'jobs.filter.hoChiMinhCity');
+
+      expect(find.text('Backend Engineer'), findsNothing);
+      expect(find.text('Frontend Engineer'), findsOneWidget);
+      expect(_textWith('jobs.count_one'), findsOneWidget);
+      expect(_textWith('jobs.matchSuffix'), findsOneWidget);
+      // The applied filter is the chip now; the quick ones are gone.
+      expect(find.text('jobs.filter.hoChiMinhCity'), findsOneWidget);
+      expect(find.text('jobs.level.senior'), findsNothing);
+
+      await _tapChip(tester, 'jobs.filter.hoChiMinhCity');
+
+      expect(find.text('Backend Engineer'), findsOneWidget);
+      expect(find.text('Frontend Engineer'), findsOneWidget);
+      expect(find.text('jobs.level.senior'), findsOneWidget);
+    });
+
+    testWidgets('no match offers to clear the filters', (tester) async {
+      await _pump(tester, _twoJobs());
+
+      await _tapChip(tester, 'jobs.level.senior');
+
+      expect(find.text('jobs.noMatches.title'), findsOneWidget);
+      expect(find.text('Backend Engineer'), findsNothing);
+
+      await tester.tap(find.text('actions.clear'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('jobs.noMatches.title'), findsNothing);
+      expect(find.text('Backend Engineer'), findsOneWidget);
+      expect(find.text('Frontend Engineer'), findsOneWidget);
+    });
+
+    testWidgets('searching by keyword narrows the list, its chip clears it', (
+      tester,
+    ) async {
+      await _pump(tester, _twoJobs());
+
+      await tester.tap(find.text('home.search.keywordPlaceholder'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'front');
+      await tester.pump();
+      await tester.testTextInput.receiveAction(TextInputAction.search);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Backend Engineer'), findsNothing);
+      expect(find.text('Frontend Engineer'), findsOneWidget);
+      expect(find.text('jobs.filter.keyword'), findsOneWidget);
+
+      await _tapChip(tester, 'jobs.filter.keyword');
+
+      expect(find.text('Backend Engineer'), findsOneWidget);
+      expect(find.text('Frontend Engineer'), findsOneWidget);
+    });
+
+    testWidgets('a keyword with a symbol is not searched', (tester) async {
+      await _pump(tester, _twoJobs());
+
+      await tester.tap(find.text('home.search.keywordPlaceholder'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'front<script>');
+      await tester.pump();
+
+      expect(find.text('jobs.search.invalid'), findsOneWidget);
+      await tester.testTextInput.receiveAction(TextInputAction.search);
+      await tester.pumpAndSettle();
+      // Still on the search page: nothing was applied.
+      expect(find.text('jobs.search.invalid'), findsOneWidget);
+    });
+
+    for (final (name, opener) in [
+      ('the search page', 'home.search.keywordPlaceholder'),
+      ('the filters', 'jobs.filter.title'),
+    ]) {
+      testWidgets('$name covers the tab bar, as a full screen', (tester) async {
+        // The jobs list lives in a tab: its own navigator is under the bar.
+        await pumpWithApi(
+          tester,
+          _twoJobs(),
+          Scaffold(
+            body: Navigator(
+              onGenerateRoute: (_) =>
+                  MaterialPageRoute(builder: (_) => const JobsScreen()),
+            ),
+            bottomNavigationBar: const Text('tab bar'),
+          ),
+        );
+        expect(find.text('tab bar'), findsOneWidget);
+
+        await tester.tap(find.text(opener));
+        await tester.pumpAndSettle();
+
+        expect(find.text('tab bar'), findsNothing);
+      });
+    }
+
+    testWidgets('Filters picks a type, and shows how many jobs it matches', (
+      tester,
+    ) async {
+      await _pump(tester, _twoJobs());
+
+      await tester.tap(find.text('jobs.filter.title'));
+      await tester.pumpAndSettle();
+      expect(find.text('jobs.filter.show_other'), findsOneWidget);
+
+      await tester.tap(find.text('jobPostings.employmentTypes.Remote'));
+      await tester.pumpAndSettle();
+      expect(find.text('jobs.filter.show_one'), findsOneWidget);
+
+      await tester.tap(find.text('jobs.filter.show_one'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Backend Engineer'), findsNothing);
+      expect(find.text('Frontend Engineer'), findsOneWidget);
+      expect(find.text('jobs.filter.titleCount'), findsOneWidget);
+    });
+
+    testWidgets('Reset in Filters clears the choices', (tester) async {
+      await _pump(tester, _twoJobs());
+
+      await tester.tap(find.text('jobs.filter.title'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('jobPostings.employmentTypes.Remote'));
+      await tester.pumpAndSettle();
+      expect(find.text('jobs.filter.show_one'), findsOneWidget);
+
+      await tester.tap(find.text('jobs.filter.reset'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('jobs.filter.show_other'), findsOneWidget);
+    });
+
+    testWidgets(
+      'a salary range with the minimum above the maximum is refused',
+      (tester) async {
+        await _pump(tester, _twoJobs());
+
+        await tester.tap(find.text('jobs.filter.title'));
+        await tester.pumpAndSettle();
+        final fields = find.byType(TextField);
+        await tester.ensureVisible(fields.first);
+        await tester.enterText(fields.first, '50');
+        await tester.enterText(fields.last, '20');
+        await tester.pumpAndSettle();
+
+        expect(find.text('jobs.filter.salaryOrder'), findsOneWidget);
+        // The button that applies the filters is off while the range is empty.
+        expect(
+          tester.widget<AppButton>(find.byType(AppButton)).onPressed,
+          isNull,
+        );
+      },
+    );
+
+    testWidgets('filter choices are chips side by side', (tester) async {
+      // Untranslated labels are long, so the screen is wide enough for two.
+      await _pump(tester, _twoJobs(), size: const Size(900, 1400));
+      await tester.tap(find.text('jobs.filter.title'));
+      await tester.pumpAndSettle();
+
+      expect(
+        tester.getTopLeft(find.text('jobs.level.junior')).dy,
+        tester.getTopLeft(find.text('jobs.level.intern')).dy,
+      );
+      // A chip is as wide as its text, not as wide as the screen.
+      final chip = find.ancestor(
+        of: find.text('jobs.level.junior'),
+        matching: find.byType(JobChip),
+      );
+      expect(tester.getSize(chip).width, lessThan(400));
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('the sort menu orders by salary', (tester) async {
+      await _pump(
+        tester,
+        FakeAdapter(
+          (_) => jsonBody(
+            _page([
+              _job(
+                'j1',
+                'Low pay',
+                min: 10000000,
+                max: 12000000,
+                createdAt: _daysAgo(1),
+              ),
+              _job(
+                'j2',
+                'High pay',
+                min: 70000000,
+                max: 90000000,
+                createdAt: _daysAgo(2),
+              ),
+            ]),
+          ),
+        ),
+      );
+      expect(
+        tester.getTopLeft(find.text('Low pay')).dy,
+        lessThan(tester.getTopLeft(find.text('High pay')).dy),
+      );
+
+      await tester.tap(find.text('jobs.sort.newest'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('jobs.sort.salaryHigh'));
+      await tester.pumpAndSettle();
+
+      expect(
+        tester.getTopLeft(find.text('High pay')).dy,
+        lessThan(tester.getTopLeft(find.text('Low pay')).dy),
+      );
     });
 
     testWidgets('shows a retryable error and never fake data', (tester) async {
