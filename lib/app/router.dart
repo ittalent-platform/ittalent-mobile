@@ -6,6 +6,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../auth/auth_notifier.dart';
 import '../auth/auth_state.dart';
+import '../auth/sign_in_return.dart';
 import '../config/routes.dart';
 import '../features/applicant/applications/application_detail_screen.dart';
 import '../features/applicant/applications/application_history_screen.dart';
@@ -40,16 +41,38 @@ import '../theme/app_colors.dart';
 
 class RouterNotifier extends ChangeNotifier {
   RouterNotifier(this._ref) {
-    _ref.listen(authNotifierProvider, (previous, next) => notifyListeners());
+    _ref.listen(authNotifierProvider, (previous, next) {
+      // A guest has just signed in: the place they were heading for is kept
+      // for the redirect that this change triggers.
+      if (next.isAuthenticated && !(previous?.isAuthenticated ?? false)) {
+        _returnTo = _ref.read(signInReturnProvider.notifier).take();
+      }
+      notifyListeners();
+    });
   }
 
   final Ref _ref;
+
+  /// Where the guest who just signed in goes back to (see [signInThen]); it
+  /// is used once, by the redirect.
+  String? _returnTo;
 
   AuthState get authState => _ref.read(authNotifierProvider);
 
   String? redirect(BuildContext context, GoRouterState state) {
     if (authState.status == AuthStatus.initial) {
       return null;
+    }
+
+    // Back to the job or the apply page the guest came from. The redirect is
+    // given the location under the pages that were pushed (the login page is
+    // one of them), so this cannot be left to the checks of the login page
+    // below: from the welcome page it would send the applicant to My
+    // applications.
+    final back = _returnTo;
+    if (authState.isAuthenticated && back != null) {
+      _returnTo = null;
+      return back;
     }
 
     final loc = state.matchedLocation;
@@ -79,13 +102,13 @@ class RouterNotifier extends ChangeNotifier {
       return AppRoutes.welcome;
     }
 
-    // Signing in from a job or its apply page brings the applicant back to
-    // it, not to the list of their applications.
+    // A login page that is the location itself (a link to the apply page, or
+    // a login that replaced a job page) carries where to go in its address.
     if (authState.isAuthenticated && loc == AppRoutes.login) {
-      final back = AppRoutes.returnTarget(
+      final target = AppRoutes.returnTarget(
         state.uri.queryParameters[AppRoutes.fromParam],
       );
-      if (back != null) return back;
+      if (target != null) return target;
     }
 
     if (authState.isAuthenticated &&

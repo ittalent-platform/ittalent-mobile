@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -8,6 +10,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../api/api_error.dart';
 import '../../../api/client.dart';
 import '../../../auth/auth_notifier.dart';
+import '../../../auth/sign_in_return.dart';
 import '../../../components/common/app_empty_state.dart';
 import '../../../components/common/app_error_state.dart';
 import '../../../components/common/app_toast.dart';
@@ -81,7 +84,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
         context.push(AppRoutes.jobApply(jobId));
       case JobAction.signIn:
         // Back to the apply page once signed in, not to the applications.
-        context.push(AppRoutes.loginThen(AppRoutes.jobApply(jobId)));
+        unawaited(signInThen(context, ref, AppRoutes.jobApply(jobId)));
       case JobAction.applied:
         if (application != null) {
           context.go(AppRoutes.applicationDetail(application.id));
@@ -96,7 +99,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
   /// ones, and is told so.
   Future<void> _toggleSave(String jobId, bool saved) async {
     if (!ref.read(authNotifierProvider).isAuthenticated) {
-      await context.push<void>(AppRoutes.loginThen(AppRoutes.jobDetail(jobId)));
+      await signInThen(context, ref, AppRoutes.jobDetail(jobId));
       return;
     }
     if (_saving) return;

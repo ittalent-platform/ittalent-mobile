@@ -256,6 +256,30 @@ void main() {
         expect(wishlistCalls(adapter), isEmpty);
       });
 
+      testWidgets('TalkBack can activate the bookmark, not only a touch', (
+        tester,
+      ) async {
+        await _pump(tester, _adapter(), auth: _signedIn);
+
+        // The bookmark's own node carries the tap (the InkWell inside is
+        // excluded from semantics, or the node would be "not clickable").
+        final nodes = tester.widgetList<Semantics>(
+          find.descendant(
+            of: find.byTooltip('jobs.detail.save'),
+            matching: find.byType(Semantics),
+          ),
+        );
+        expect(
+          nodes.any(
+            (node) =>
+                node.properties.button == true &&
+                node.properties.label == 'jobs.detail.save' &&
+                node.properties.onTap != null,
+          ),
+          isTrue,
+        );
+      });
+
       testWidgets('an applicant saves the job, and is told so', (tester) async {
         final adapter = _adapter();
         await _pump(tester, adapter, auth: _signedIn);

@@ -40,12 +40,18 @@ class JobDetailBar extends StatelessWidget {
 
   Widget _save(BuildContext context) {
     final colors = context.colors;
+    final label = tr(saved ? 'jobs.detail.unsave' : 'jobs.detail.save');
     return Tooltip(
-      message: tr(saved ? 'jobs.detail.unsave' : 'jobs.detail.save'),
+      message: label,
+      excludeFromSemantics: true,
+      // The node says what the bookmark is and that it can be activated: with
+      // the children excluded, the tap of the InkWell would not reach
+      // TalkBack ("clickable" off) unless it is given here.
       child: Semantics(
         button: true,
         selected: saved,
-        label: tr(saved ? 'jobs.detail.unsave' : 'jobs.detail.save'),
+        label: label,
+        onTap: saving ? null : onSave,
         excludeSemantics: true,
         child: Material(
           color: saved ? colors.muted : Colors.transparent,
