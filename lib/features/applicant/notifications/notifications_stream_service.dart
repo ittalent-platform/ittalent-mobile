@@ -2,11 +2,13 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../api/client.dart';
 import '../../../auth/auth_notifier.dart';
 import '../../../auth/auth_state.dart';
+import '../../../auth/token_storage.dart';
 import 'notifications_constants.dart';
 import 'notifications_providers.dart';
 
@@ -33,11 +35,17 @@ class NotificationSseParser {
         }
         currentEvent = null;
         buffer.clear();
+      } else if (line.startsWith(':')) {
+        // SSE comment or keep-alive ping; ignore and preserve current buffer
+        continue;
       } else if (line.startsWith('event:')) {
         currentEvent = line.substring(6).trim();
       } else if (line.startsWith('data:')) {
         if (buffer.isNotEmpty) buffer.writeln();
-        buffer.write(line.substring(5).trim());
+        final content = line.length > 5 && line[5] == ' '
+            ? line.substring(6)
+            : line.substring(5);
+        buffer.write(content);
       }
     }
   }
@@ -84,22 +92,40 @@ class NotificationStreamManager {
       _isConnecting = true;
       try {
         final dio = ref.read(dioProvider);
+        final token = await ref.read(tokenStorageProvider).getAccessToken();
+
+        debugPrint('[NotificationStream] Initiating SSE connection...');
         final response = await dio.get<ResponseBody>(
           NotificationConstants.streamPath,
+          queryParameters: (token != null && token.isNotEmpty)
+              ? {'token': token}
+              : null,
           options: Options(
             responseType: ResponseType.stream,
+            receiveTimeout: Duration.zero,
+            sendTimeout: Duration.zero,
             headers: {
               'Accept': 'text/event-stream',
               'Cache-Control': 'no-cache',
+              if (token != null && token.isNotEmpty)
+                'Authorization': 'Bearer $token',
             },
           ),
           cancelToken: _cancelToken,
+        );
+
+        debugPrint(
+          '[NotificationStream] Connected. StatusCode: ${response.statusCode}',
         );
 
         final stream = response.data?.stream;
         if (stream != null) {
           await for (final event in NotificationSseParser.parse(stream)) {
             if (_isDisposed || _cancelToken?.isCancelled == true) break;
+
+            debugPrint(
+              '[NotificationStream] Received event: ${event['event']}',
+            );
 
             if (event['event'] == 'notification' &&
                 event['data'] is Map<String, dynamic>) {
@@ -117,7 +143,7 @@ class NotificationStreamManager {
           }
         }
       } catch (e) {
-        // Ignored or backoff
+        debugPrint('[NotificationStream] Connection error/closed: $e');
       } finally {
         _isConnecting = false;
       }
