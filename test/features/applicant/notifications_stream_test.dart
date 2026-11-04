@@ -62,6 +62,25 @@ void main() {
       expect(events[0]['event'], 'notification');
       expect(events[0]['data']['id'], 'notif-split');
     });
+
+    test('ignores comments interspersed within an event stream', () async {
+      final controller = StreamController<List<int>>();
+
+      final parsedEventsFuture = NotificationSseParser.parse(controller.stream)
+          .toList();
+
+      controller.add(utf8.encode(': keepalive\n'));
+      controller.add(utf8.encode('event: notification\n'));
+      controller.add(utf8.encode(': intermediate comment\n'));
+      controller.add(utf8.encode('data:{"id":"notif-no-space"}\n\n'));
+
+      await controller.close();
+
+      final events = await parsedEventsFuture;
+      expect(events.length, 1);
+      expect(events[0]['event'], 'notification');
+      expect(events[0]['data']['id'], 'notif-no-space');
+    });
   });
 
   group('NotificationsFeedNotifier.addLiveNotification', () {

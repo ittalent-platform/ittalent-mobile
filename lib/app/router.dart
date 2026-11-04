@@ -309,7 +309,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                         LucideIcons.user,
                         color: colors.primary,
                       ),
-                      label: 'Me',
+                      label: tr('profile.me.title'),
                     ),
                   ],
                 );
