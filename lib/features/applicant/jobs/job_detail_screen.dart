@@ -96,7 +96,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
   /// ones, and is told so.
   Future<void> _toggleSave(String jobId, bool saved) async {
     if (!ref.read(authNotifierProvider).isAuthenticated) {
-      context.push(AppRoutes.loginThen(AppRoutes.jobDetail(jobId)));
+      await context.push<void>(AppRoutes.loginThen(AppRoutes.jobDetail(jobId)));
       return;
     }
     if (_saving) return;
