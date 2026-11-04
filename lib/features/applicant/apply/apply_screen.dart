@@ -15,6 +15,7 @@ import '../../../config/routes.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_radius.dart';
 import '../../../theme/app_typography.dart';
+import 'apply_attempts.dart';
 import 'apply_constants.dart';
 import 'apply_files.dart';
 import 'apply_models.dart';
@@ -285,19 +286,35 @@ class _ApplyScreenState extends ConsumerState<ApplyScreen> {
     if (_submitting) return;
     FocusScope.of(context).unfocus();
     final repository = ref.read(applyRepositoryProvider);
+    final attempts = ref.read(applyAttemptsProvider);
     final submitted = ref.read(applicationSubmittedProvider.notifier);
     setState(() {
       _submitting = true;
       _notice = null;
     });
     try {
+      // One key names this attempt for as long as its outcome is unknown, so
+      // that sending again (after a lost answer, even after the app was
+      // closed) gets the application the first send created, not a second.
+      final key = await attempts.keyFor(
+        jobId: job.id,
+        fingerprint: applyFingerprint(
+          jobId: job.id,
+          cvId: cvId,
+          coverLetterId: coverLetterId,
+          message: _message.text,
+          certificateIds: certificateIds,
+        ),
+      );
       final id = await repository.submit(
         jobId: job.id,
         cvId: cvId,
         coverLetterId: coverLetterId,
         message: _message.text,
         certificateIds: certificateIds,
+        idempotencyKey: key,
       );
+      await attempts.done(job.id);
       // The lists that show applications must read again, even if this
       // screen has gone by now.
       submitted.signal();
@@ -308,6 +325,10 @@ class _ApplyScreenState extends ConsumerState<ApplyScreen> {
         _submittedId = id;
       });
     } on Object catch (error) {
+      // A clear refusal means nothing was created, so this attempt is over.
+      // Any other failure may hide an application that was created: the key
+      // stays for the next send.
+      if (_isRefusal(error)) await attempts.done(job.id);
       if (!mounted) return;
       final earlier = await _sentEarlier(error, job.id);
       if (!mounted) return;
@@ -325,6 +346,18 @@ class _ApplyScreenState extends ConsumerState<ApplyScreen> {
       }
       _submitFailed(error, job);
     }
+  }
+
+  /// Whether the API answered "no" for good: a 4xx, other than a timeout. A
+  /// 5xx, a timeout or no answer at all leaves it open whether the
+  /// application was created.
+  bool _isRefusal(Object error) {
+    if (error is! ApiError) return false;
+    final status = error.statusCode;
+    return status != null &&
+        status >= ApplyConstants.statusBadRequest &&
+        status < ApplyConstants.statusServerError &&
+        status != ApplyConstants.statusRequestTimeout;
   }
 
   /// The application that an earlier attempt, whose answer never came, did

@@ -119,13 +119,16 @@ class ApplyRepository {
     return document;
   }
 
-  /// Sends the application and returns its id.
+  /// Sends the application and returns its id. With an [idempotencyKey], a
+  /// second send of the same attempt (after a lost answer) returns the
+  /// application the first one created, not a new one.
   Future<String> submit({
     required String jobId,
     required String cvId,
     String? coverLetterId,
     String? message,
     List<String> certificateIds = const [],
+    String? idempotencyKey,
   }) async {
     final response = await client.post<Map<String, dynamic>>(
       ApplyConstants.submitPath,
@@ -137,6 +140,11 @@ class ApplyRepository {
           'message': message.trim(),
         if (certificateIds.isNotEmpty) 'certificateLinkIds': certificateIds,
       },
+      options: idempotencyKey == null
+          ? null
+          : Options(
+              headers: {ApplyConstants.idempotencyHeader: idempotencyKey},
+            ),
     );
     return (response.data?['id'] as String?) ?? '';
   }

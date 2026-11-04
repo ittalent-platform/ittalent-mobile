@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../../auth/auth_notifier.dart';
+import 'apply_attempts.dart';
 import 'apply_constants.dart';
 import 'apply_models.dart';
 import 'apply_repository.dart';
@@ -25,13 +27,44 @@ final applyCertificatesProvider =
       retry: (_, _) => null,
     );
 
+/// Keeps the attempt that is waiting for an answer in the secure storage of
+/// the device, so that it is still there after the app was closed.
+class _SecureAttemptStore implements AttemptStore {
+  const _SecureAttemptStore();
+
+  static const FlutterSecureStorage _storage = FlutterSecureStorage();
+
+  @override
+  Future<String?> read(String name) => _storage.read(key: name);
+
+  @override
+  Future<void> write(String name, String value) =>
+      _storage.write(key: name, value: value);
+
+  @override
+  Future<void> delete(String name) => _storage.delete(key: name);
+}
+
+/// The `Idempotency-Key` of the application being sent, kept until the
+/// applicant knows what became of it (BR-APP-009).
+final applyAttemptsProvider = Provider<ApplyAttempts>(
+  (ref) => ApplyAttempts(const _SecureAttemptStore()),
+);
+
 /// What the applicant did before on a job. A failure counts as "nothing":
 /// the API still refuses a second application, and the screen then says so.
+///
+/// An application that is found settles any attempt that was waiting for an
+/// answer: the outcome is known now.
 final previousApplicationProvider = FutureProvider.autoDispose
     .family<PreviousApplication?, String>((ref, jobId) async {
       if (!ref.watch(authNotifierProvider).isAuthenticated) return null;
+      final repository = ref.watch(applyRepositoryProvider);
+      final attempts = ref.read(applyAttemptsProvider);
       try {
-        return await ref.watch(applyRepositoryProvider).previous(jobId);
+        final previous = await repository.previous(jobId);
+        if (previous != null) await attempts.done(jobId);
+        return previous;
       } on Object {
         return null;
       }

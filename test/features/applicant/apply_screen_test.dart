@@ -12,6 +12,7 @@ import 'package:ittalent_mobile/auth/auth_notifier.dart';
 import 'package:ittalent_mobile/auth/auth_state.dart';
 import 'package:ittalent_mobile/components/ui/app_button.dart';
 import 'package:ittalent_mobile/config/routes.dart';
+import 'package:ittalent_mobile/features/applicant/apply/apply_attempts.dart';
 import 'package:ittalent_mobile/features/applicant/apply/apply_files.dart';
 import 'package:ittalent_mobile/features/applicant/apply/apply_providers.dart';
 import 'package:ittalent_mobile/features/applicant/apply/apply_screen.dart';
@@ -23,6 +24,24 @@ class _FakeAuth extends AuthNotifier {
   @override
   AuthState build() =>
       AuthState.authenticated(userId: 'u1', email: 'an@example.com');
+}
+
+/// The device store of the attempt that waits for an answer, in memory.
+class _MemoryStore implements AttemptStore {
+  final Map<String, String> data = {};
+
+  @override
+  Future<String?> read(String name) async => data[name];
+
+  @override
+  Future<void> write(String name, String value) async {
+    data[name] = value;
+  }
+
+  @override
+  Future<void> delete(String name) async {
+    data.remove(name);
+  }
 }
 
 /// A picker that answers with [file] without opening anything.
@@ -122,6 +141,7 @@ Future<ProviderContainer> _pump(
   FakeAdapter adapter, {
   Size size = const Size(390, 844),
   ApplyFiles? files,
+  AttemptStore? attempts,
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1.0;
@@ -136,6 +156,9 @@ Future<ProviderContainer> _pump(
       dioProvider.overrideWithValue(dio),
       authNotifierProvider.overrideWith(_FakeAuth.new),
       if (files != null) applyFilesProvider.overrideWithValue(files),
+      applyAttemptsProvider.overrideWithValue(
+        ApplyAttempts(attempts ?? _MemoryStore()),
+      ),
     ],
   );
   addTearDown(container.dispose);
@@ -983,6 +1006,149 @@ void main() {
       await _tap(tester, 'errorState.retry');
 
       expect(find.text('apply.continue'), findsOneWidget);
+    });
+  });
+
+  group('sending again (BR-APP-009)', () {
+    /// The key that the [index]th application was sent with.
+    String? keyOf(FakeAdapter adapter, int index) =>
+        _posts(adapter)[index].headers['Idempotency-Key'] as String?;
+
+    testWidgets('an application is sent with a key that names the attempt', (
+      tester,
+    ) async {
+      final adapter = _adapter();
+      await _pump(tester, adapter);
+      await _continue(tester);
+
+      await _tap(tester, 'apply.submit');
+
+      expect(keyOf(adapter, 0), matches(RegExp(r'^[0-9a-f]{32}$')));
+    });
+
+    testWidgets('after a lost answer the same key is sent again, and the API '
+        'gives back the application the first send created', (tester) async {
+      final created = <String, String>{};
+      final adapter = _adapter(
+        submit: (options) {
+          final key = options.headers['Idempotency-Key'] as String;
+          final known = created[key];
+          // The API knows this attempt: it returns that application.
+          if (known != null) return jsonBody({'id': known});
+          // The first send is committed, and only its answer is lost.
+          created[key] = _submittedId;
+          return _noAnswer(options);
+        },
+      );
+      final container = await _pump(tester, adapter);
+      await _continue(tester);
+
+      await _tap(tester, 'apply.submit');
+      expect(find.text('apply.errors.offline'), findsOneWidget);
+      await _tap(tester, 'apply.submit');
+
+      expect(_posts(adapter), hasLength(2));
+      expect(keyOf(adapter, 1), keyOf(adapter, 0));
+      expect(find.text('apply.submitted.title'), findsOneWidget);
+      expect(container.read(applicationSubmittedProvider), 1);
+      await _tap(tester, 'apply.submitted.view');
+      expect(find.text('application page $_submittedId'), findsOneWidget);
+    });
+
+    testWidgets('the key survives the app being closed between two sends', (
+      tester,
+    ) async {
+      final device = _MemoryStore();
+      final first = _adapter(submit: _noAnswer);
+      await _pump(tester, first, attempts: device);
+      await _continue(tester);
+      await _tap(tester, 'apply.submit');
+      expect(find.text('apply.errors.offline'), findsOneWidget);
+
+      // The app is closed and opened again: only the device store is left.
+      await tester.pumpWidget(const SizedBox.shrink());
+      final second = _adapter();
+      await _pump(tester, second, attempts: device);
+      await _continue(tester);
+      await _tap(tester, 'apply.submit');
+
+      expect(keyOf(second, 0), keyOf(first, 0));
+      expect(find.text('apply.submitted.title'), findsOneWidget);
+    });
+
+    testWidgets('a server error keeps the attempt, but a changed note starts '
+        'a new one', (tester) async {
+      final adapter = _adapter(
+        submit: (_) => jsonBody({'message': 'Gateway'}, status: 502),
+      );
+      await _pump(tester, adapter);
+      await _continue(tester);
+
+      await _tap(tester, 'apply.submit');
+      await _tap(tester, 'apply.submit');
+      expect(keyOf(adapter, 1), keyOf(adapter, 0));
+
+      await tester.enterText(find.byType(TextField), 'A new note');
+      await _tap(tester, 'apply.submit');
+
+      expect(keyOf(adapter, 2), isNot(keyOf(adapter, 0)));
+    });
+
+    testWidgets('a clear refusal ends the attempt: the next send is a new '
+        'one', (tester) async {
+      var attempt = 0;
+      final adapter = _adapter(
+        submit: (options) {
+          attempt++;
+          return attempt == 1
+              ? jsonBody({'message': 'No'}, status: 400)
+              : _created(options);
+        },
+      );
+      await _pump(tester, adapter);
+      await _continue(tester);
+
+      await _tap(tester, 'apply.submit');
+      expect(find.text('apply.errors.submitFailed'), findsOneWidget);
+      await _tap(tester, 'apply.submit');
+
+      expect(keyOf(adapter, 1), isNot(keyOf(adapter, 0)));
+      expect(find.text('apply.submitted.title'), findsOneWidget);
+    });
+
+    testWidgets('an accepted application ends the attempt', (tester) async {
+      final device = _MemoryStore();
+      await _pump(tester, _adapter(), attempts: device);
+      await _continue(tester);
+
+      await _tap(tester, 'apply.submit');
+
+      expect(find.text('apply.submitted.title'), findsOneWidget);
+      expect(device.data, isEmpty);
+    });
+
+    testWidgets('an application found on the job settles the attempt that '
+        'was waiting', (tester) async {
+      final device = _MemoryStore();
+      await _pump(tester, _adapter(submit: _noAnswer), attempts: device);
+      await _continue(tester);
+      await _tap(tester, 'apply.submit');
+      expect(device.data, isNotEmpty);
+
+      // It was created after all: the next time the job is opened, it is found.
+      await tester.pumpWidget(const SizedBox.shrink());
+      await _pump(
+        tester,
+        _adapter(
+          applications: [
+            {'id': _submittedId, 'status': 'submitted', 'canApplyAgain': false},
+          ],
+        ),
+        attempts: device,
+      );
+
+      expect(find.text('apply.blocked.alreadyApplied.title'), findsOneWidget);
+      expect(device.data, isEmpty);
     });
   });
 }

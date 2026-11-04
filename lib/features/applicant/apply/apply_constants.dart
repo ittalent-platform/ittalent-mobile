@@ -56,6 +56,10 @@ class ApplyConstants {
   static const String codeApplyAgainNotAllowed = 'APPLY_AGAIN_NOT_ALLOWED';
   static const String codeCertificateUnavailable = 'CERTIFICATE_UNAVAILABLE';
 
+  /// Names one attempt to send an application (BR-APP-009): sending the same
+  /// key again returns the application that attempt created.
+  static const String idempotencyHeader = 'Idempotency-Key';
+
   /// An application in one of these statuses is over: the applicant may send
   /// a new one (twice at most, as the API counts).
   static const String statusWithdrawn = 'withdrawn';
@@ -64,4 +68,6 @@ class ApplyConstants {
 
   static const int statusNotFound = 404;
   static const int statusBadRequest = 400;
+  static const int statusRequestTimeout = 408;
+  static const int statusServerError = 500;
 }
