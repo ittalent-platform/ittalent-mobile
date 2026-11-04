@@ -23,6 +23,7 @@ class NotificationConstants {
   static const String groupThisMonth = 'this_month';
 
   static const String listPath = '/api/v1/notifications';
+  static const String streamPath = '/api/v1/notifications/stream';
   static const String unreadCountPath = '/api/v1/notifications/unread-count';
   static String readPath(String id) => '/api/v1/notifications/$id/read';
   static const String readAllPath = '/api/v1/notifications/read-all';

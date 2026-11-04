@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../config/env.dart';
+import '../features/applicant/notifications/notifications_stream_service.dart';
 import '../theme/app_theme.dart';
 import 'router.dart';
 
@@ -11,6 +12,7 @@ class ItTalentApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(notificationStreamManagerProvider);
     final router = ref.watch(routerProvider);
 
     return MaterialApp.router(

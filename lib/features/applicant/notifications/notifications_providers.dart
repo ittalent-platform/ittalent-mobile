@@ -499,6 +499,39 @@ class NotificationsFeedNotifier extends AsyncNotifier<NotificationsFeedState> {
       rethrow;
     }
   }
+
+  void addLiveNotification(NotificationItem item) {
+    final current = state.value;
+    if (current == null) return;
+    if (current.items.any((e) => e.id == item.id)) return;
+
+    final tab = ref.read(notificationTabProvider);
+    bool shouldDisplay = false;
+    if (tab == NotificationConstants.tabAll) {
+      shouldDisplay = true;
+    } else if (tab == NotificationConstants.tabUnread && !item.isRead) {
+      shouldDisplay = true;
+    } else if (tab == NotificationConstants.tabAnnouncements &&
+        item.type == NotificationConstants.typeSystemAnnouncement) {
+      shouldDisplay = true;
+    }
+
+    final newUnread = !item.isRead
+        ? current.unreadCount + 1
+        : current.unreadCount;
+
+    if (shouldDisplay) {
+      state = AsyncData(
+        current.copyWith(
+          items: [item, ...current.items],
+          total: current.total + 1,
+          unreadCount: newUnread,
+        ),
+      );
+    } else {
+      state = AsyncData(current.copyWith(unreadCount: newUnread));
+    }
+  }
 }
 
 final notificationsFeedProvider =
