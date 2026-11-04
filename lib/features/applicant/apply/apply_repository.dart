@@ -22,6 +22,41 @@ class ApplyRepository {
       if (item is Map<String, dynamic>) item,
   ];
 
+  /// Every item of a paged list, page after page, so that an applicant with
+  /// more than one page of CVs or certificate links still sees them all.
+  ///
+  /// It stops at a short page, once [total] items are read, or when a page
+  /// brings nothing new (a server that ignores `page` must not loop for ever).
+  Future<List<Map<String, dynamic>>> _allPages(
+    String path, {
+    Map<String, dynamic> query = const {},
+  }) async {
+    final items = <Map<String, dynamic>>[];
+    final seen = <Object?>{};
+    for (var page = 1; ; page++) {
+      final response = await client.get<Map<String, dynamic>>(
+        path,
+        queryParameters: {
+          ...query,
+          'page': page,
+          'limit': ApplyConstants.listLimit,
+        },
+      );
+      final received = _items(response.data);
+      final fresh = [
+        for (final item in received)
+          if (seen.add(item['id'])) item,
+      ];
+      items.addAll(fresh);
+      final total = response.data?['total'];
+      final isLast =
+          fresh.isEmpty ||
+          received.length < ApplyConstants.listLimit ||
+          (total is int && items.length >= total);
+      if (isLast) return items;
+    }
+  }
+
   Future<ApplyJob> job(String id) async {
     final response = await client.get<Map<String, dynamic>>(
       ApplyConstants.jobPath(id),
@@ -29,32 +64,22 @@ class ApplyRepository {
     return ApplyJob.fromJson(response.data ?? const {});
   }
 
-  /// The CVs or cover letters of the applicant (first page of up to 100):
-  /// the default one first, then the newest.
+  /// All the CVs or cover letters of the applicant: the default one first,
+  /// then the newest.
   Future<List<ApplyDocument>> documents(String type) async {
-    final response = await client.get<Map<String, dynamic>>(
+    final items = await _allPages(
       ApplyConstants.documentsPath,
-      queryParameters: {
-        'type': type,
-        'page': 1,
-        'limit': ApplyConstants.listLimit,
-      },
+      query: {'type': type},
     );
-    return [
-      for (final item in _items(response.data))
-        ?ApplyDocument.tryFromJson(item),
-    ]..sort(ApplyDocument.defaultFirst);
+    return [for (final item in items) ?ApplyDocument.tryFromJson(item)]
+      ..sort(ApplyDocument.defaultFirst);
   }
 
+  /// All the certificate links of the applicant. The choice is final only
+  /// when every page was read, so a failure on any page fails the list.
   Future<List<ApplyCertificate>> certificates() async {
-    final response = await client.get<Map<String, dynamic>>(
-      ApplyConstants.certificatesPath,
-      queryParameters: {'page': 1, 'limit': ApplyConstants.listLimit},
-    );
-    return [
-      for (final item in _items(response.data))
-        ?ApplyCertificate.tryFromJson(item),
-    ];
+    final items = await _allPages(ApplyConstants.certificatesPath);
+    return [for (final item in items) ?ApplyCertificate.tryFromJson(item)];
   }
 
   /// The latest application of the applicant to the job, or null.

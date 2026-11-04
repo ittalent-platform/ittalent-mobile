@@ -2948,7 +2948,6 @@
     "count_other": "{{count}} jobs",
     "end_one": "You've seen all {{count}} job.",
     "end_other": "You've seen all {{count}} jobs.",
-    "endPartial": "Showing the newest {{count}} of {{total}} jobs.",
     "empty": {
       "title": "No open jobs right now",
       "description": "Check back soon for new roles."
@@ -2984,7 +2983,6 @@
       "lead": "Lead"
     },
     "matchSuffix": "match",
-    "endPartialFiltered": "Searched the newest {{count}} of {{total}} jobs. Some jobs may not appear.",
     "noMatches": {
       "title": "No jobs match",
       "description": "Try fewer filters or a different keyword."
@@ -3035,6 +3033,11 @@
       "seeSimilar": "See similar jobs",
       "share": "Share",
       "linkCopied": "Link copied",
+      "save": "Save job",
+      "unsave": "Remove from saved jobs",
+      "saved": "Saved to your list",
+      "unsaved": "Removed from your list",
+      "saveFailed": "Couldn’t update your saved jobs. Try again.",
       "closed": "This job no longer accepts applications.",
       "closesToday": "Applications close today at 23:59.",
       "closesIn_one": "Applications close in {{count}} day · {{date}}",
@@ -3128,6 +3131,7 @@
     "errors": {
       "chooseCv": "Choose a CV to continue.",
       "submitFailed": "Couldn’t send your application. Nothing was sent. Try again.",
+      "unconfirmed": "We couldn’t confirm that your application was sent. Try again: if it already went through, we’ll show it instead of sending it twice.",
       "offline": "You’re offline. Your application will be ready to send when you reconnect.",
       "positionFilled": "{{company}} isn’t accepting applications right now.",
       "accountNotActive": "Your account can’t send applications right now.",
@@ -3135,7 +3139,7 @@
       "coverLetterUnavailable": "That cover letter is no longer in your documents. Choose another, or send without one.",
       "tooManyCertificates": "You can send up to 20 certificates.",
       "loadDocuments": "Couldn’t load your documents.",
-      "loadCertificates": "Couldn’t load your certificates. You can still send your application.",
+      "loadCertificates": "Couldn’t load your certificates, so your application can’t be sent yet. Try again.",
       "loadJobTitle": "Couldn’t load this job",
       "loadJobBody": "Check your connection and try again."
     },

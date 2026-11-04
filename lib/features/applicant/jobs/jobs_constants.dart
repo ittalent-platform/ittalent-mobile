@@ -15,14 +15,19 @@ class JobConstants {
   /// signed-in applicant already applied to it.
   static const String applicationsPath = '/api/v1/me/applications';
 
+  /// The applicant's saved jobs: `POST` saves one (`{jobId}`), and
+  /// `GET`/`DELETE` on `/jobs/:id` tell whether it is saved and take it out.
+  static const String wishlistPath = '/api/v1/me/wishlist';
+  static String wishlistJobPath(String id) => '$wishlistPath/jobs/$id';
+
   /// The API serves at most 100 jobs a page. Every page is read once, so that
   /// the counts, search and filters work on the whole market as on the web.
   static const int fetchPageSize = 100;
 
-  /// Pages are requested a few at a time, not all at once, and never beyond
-  /// [maxPages] (2,000 jobs): a guard against an endless or runaway listing.
+  /// Pages are requested a few at a time, not all at once. There is no cap on
+  /// their number: the list, its counts and its filters are complete or they
+  /// fail, never silently short.
   static const int fetchConcurrency = 4;
-  static const int maxPages = 20;
 
   /// A posting younger than this many days wears the "New" badge.
   static const int newBadgeDays = 5;

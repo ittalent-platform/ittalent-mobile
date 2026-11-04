@@ -67,7 +67,7 @@ class RouterNotifier extends ChangeNotifier {
     // Applying needs an account, so a guest signs in first. This comes before
     // the guest-allowed jobs below, which the apply page is part of.
     if (!authState.isAuthenticated && AppRoutes.isJobApply(loc)) {
-      return AppRoutes.login;
+      return AppRoutes.loginThen(loc);
     }
 
     final isGuestAllowed =
@@ -77,6 +77,15 @@ class RouterNotifier extends ChangeNotifier {
 
     if (!authState.isAuthenticated && !isGuestAllowed) {
       return AppRoutes.welcome;
+    }
+
+    // Signing in from a job or its apply page brings the applicant back to
+    // it, not to the list of their applications.
+    if (authState.isAuthenticated && loc == AppRoutes.login) {
+      final back = AppRoutes.returnTarget(
+        state.uri.queryParameters[AppRoutes.fromParam],
+      );
+      if (back != null) return back;
     }
 
     if (authState.isAuthenticated &&

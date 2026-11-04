@@ -72,6 +72,13 @@ class _ApplyScreenState extends ConsumerState<ApplyScreen> {
   /// The kind of document being uploaded.
   String? _uploading;
   bool _submitting = false;
+
+  /// True once an attempt got no answer (no connection, a timeout, a 5xx): the
+  /// application may or may not have been created. If the next attempt is then
+  /// refused as "already applied", the API is asked what became of the first
+  /// one (see [_sentEarlier]) rather than telling the applicant they applied
+  /// twice. It is never reset: a later error does not undo the doubt.
+  bool _outcomeUnknown = false;
   bool _resending = false;
   String? _submittedId;
   bool _submitted = false;
@@ -302,7 +309,41 @@ class _ApplyScreenState extends ConsumerState<ApplyScreen> {
       });
     } on Object catch (error) {
       if (!mounted) return;
+      final earlier = await _sentEarlier(error, job.id);
+      if (!mounted) return;
+      if (earlier != null) {
+        // The first attempt did reach the API, only its answer was lost: the
+        // application exists, so this ends as a success, as the first one
+        // would have.
+        submitted.signal();
+        setState(() {
+          _submitting = false;
+          _submitted = true;
+          _submittedId = earlier.id;
+        });
+        return;
+      }
       _submitFailed(error, job);
+    }
+  }
+
+  /// The application that an earlier attempt, whose answer never came, did
+  /// create: set when this attempt is refused as "already applied" and the
+  /// applicant has a live application for the job (they could not have opened
+  /// this page with one). Null for any other failure.
+  Future<PreviousApplication?> _sentEarlier(Object error, String jobId) async {
+    if (!_outcomeUnknown ||
+        error is! ApiError ||
+        error.code != ApplyConstants.codeAlreadyApplied) {
+      return null;
+    }
+    try {
+      final previous = await ref.read(applyRepositoryProvider).previous(jobId);
+      return applyBlockFor(previous) == ApplyBlock.alreadyApplied
+          ? previous
+          : null;
+    } on Object {
+      return null;
     }
   }
 
@@ -310,6 +351,10 @@ class _ApplyScreenState extends ConsumerState<ApplyScreen> {
     final api = error is ApiError ? error : null;
     final code = api?.code;
     final block = applyBlockOf(code);
+    final status = api?.statusCode;
+    if (api == null || status == null || status >= 500) {
+      _outcomeUnknown = true;
+    }
     setState(() => _submitting = false);
     if (block != null) {
       if (block == ApplyBlock.alreadyApplied ||
@@ -347,9 +392,16 @@ class _ApplyScreenState extends ConsumerState<ApplyScreen> {
       case ApplyConstants.codeAccountNotActive:
         notice = const ApplyNotice('apply.errors.accountNotActive');
       default:
-        notice = api != null && api.statusCode == null
-            ? const ApplyNotice('apply.errors.offline', offline: true)
-            : const ApplyNotice('apply.errors.submitFailed');
+        // "Nothing was sent" is only true of a clear refusal. After a 5xx
+        // the application may exist, so the notice does not claim otherwise
+        // (a retry then finds it, see [_sentEarlier]).
+        if (api != null && status == null) {
+          notice = const ApplyNotice('apply.errors.offline', offline: true);
+        } else if (status != null && status >= 500) {
+          notice = const ApplyNotice('apply.errors.unconfirmed');
+        } else {
+          notice = const ApplyNotice('apply.errors.submitFailed');
+        }
     }
     setState(() => _notice = notice);
   }
@@ -817,7 +869,13 @@ class _ApplyScreenState extends ConsumerState<ApplyScreen> {
         ],
       ),
     );
-    final ready = !certificates.isLoading || certificates.hasValue;
+    // The links that go with the application are a choice the applicant made
+    // on what they saw: nothing is sent until that list is read (again, after
+    // a failure or a refresh), or a link could be dropped without a word.
+    final ready =
+        certificates.hasValue &&
+        !certificates.hasError &&
+        !certificates.isLoading;
     return _frame(
       header: _closeHeader(
         step: 2,

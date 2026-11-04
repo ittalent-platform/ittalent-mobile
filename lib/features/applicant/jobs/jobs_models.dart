@@ -119,21 +119,13 @@ class JobsPage {
 
 /// The open jobs the app could read, newest first.
 class PublicJobs {
-  const PublicJobs({
-    required this.jobs,
-    required this.total,
-    required this.isPartial,
-  });
+  const PublicJobs({required this.jobs, required this.total});
 
+  /// Every open job: all the pages of the API were read.
   final List<JobPosting> jobs;
 
   /// How many open jobs the API reports in all.
   final int total;
-
-  /// True when the market has more pages than the app reads
-  /// (`JobConstants.maxPages`): [jobs] then holds only the newest ones, and
-  /// the screen must not say that every job was seen.
-  final bool isPartial;
 }
 
 /// A job with every text of its page.

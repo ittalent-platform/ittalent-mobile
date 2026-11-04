@@ -121,28 +121,11 @@ class JobsScreen extends ConsumerWidget {
   Widget _footer(
     BuildContext context,
     WidgetRef ref,
-    PublicJobs data,
     int shown,
     JobsQuery query,
   ) {
     final colors = context.colors;
-    final String text;
-    if (data.isPartial) {
-      text = query.isFiltered
-          ? tr(
-              'jobs.endPartialFiltered',
-              namedArgs: {
-                'count': '${data.jobs.length}',
-                'total': '${data.total}',
-              },
-            )
-          : tr(
-              'jobs.endPartial',
-              namedArgs: {'count': '$shown', 'total': '${data.total}'},
-            );
-    } else {
-      text = JobFormat.countText('jobs.end', shown);
-    }
+    final text = JobFormat.countText('jobs.end', shown);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Column(
@@ -187,7 +170,7 @@ class JobsScreen extends ConsumerWidget {
         itemBuilder: (context, index) {
           if (index == 0) return _header(context, ref, jobs.length, query);
           if (index == jobs.length + 1) {
-            return _footer(context, ref, data, jobs.length, query);
+            return _footer(context, ref, jobs.length, query);
           }
           final job = jobs[index - 1];
           return JobCard(

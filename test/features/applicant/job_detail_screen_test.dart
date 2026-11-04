@@ -69,12 +69,24 @@ const _company = {
 FakeAdapter _adapter({
   ResponseBody Function(RequestOptions options)? job,
   List<Map<String, dynamic>> applications = const [],
+  bool saved = false,
+  ResponseBody Function(RequestOptions options)? wishlist,
 }) => FakeAdapter((options) {
   final path = options.path;
   if (path == '/api/v1/job-postings/j1/public') {
     return (job ?? (_) => jsonBody(_job()))(options);
   }
   if (path == '/api/v1/enterprises/e1/public') return jsonBody(_company);
+  // The saved jobs: read (GET), save (POST) and remove (DELETE).
+  if (path == '/api/v1/me/wishlist/jobs/j1' && options.method == 'GET') {
+    return jsonBody({'isSaved': saved, 'wishlistId': saved ? 'w1' : null});
+  }
+  if (path == '/api/v1/me/wishlist' || path == '/api/v1/me/wishlist/jobs/j1') {
+    return (wishlist ??
+        (o) => o.method == 'POST'
+            ? jsonBody({'saved': true, 'message': 'Saved'}, status: 201)
+            : jsonBody({'removed': true, 'message': 'Removed'}))(options);
+  }
   if (path == '/api/v1/me/applications') {
     return jsonBody({'items': applications, 'total': applications.length});
   }
@@ -126,7 +138,9 @@ Future<void> _pump(
       ),
       GoRoute(
         path: AppRoutes.login,
-        builder: (context, state) => const Scaffold(body: Text('login page')),
+        builder: (context, state) => Scaffold(
+          body: Text('login page from ${state.uri.queryParameters['from']}'),
+        ),
       ),
       GoRoute(
         path: '${AppRoutes.companies}/:id',
@@ -219,7 +233,118 @@ void main() {
 
       await tester.tap(find.text('jobs.detail.signInToApply'));
       await tester.pumpAndSettle();
-      expect(find.text('login page'), findsOneWidget);
+      // The login page knows where to bring the applicant back to.
+      expect(find.text('login page from /jobs/j1/apply'), findsOneWidget);
+    });
+
+    group('the bookmark of the bar', () {
+      List<RequestOptions> wishlistCalls(FakeAdapter adapter) => [
+        for (final r in adapter.requests)
+          if (r.path.startsWith('/api/v1/me/wishlist')) r,
+      ];
+
+      testWidgets('a guest is sent to sign in, and brought back here', (
+        tester,
+      ) async {
+        final adapter = _adapter();
+        await _pump(tester, adapter);
+
+        await tester.tap(find.byTooltip('jobs.detail.save'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('login page from /jobs/j1'), findsOneWidget);
+        expect(wishlistCalls(adapter), isEmpty);
+      });
+
+      testWidgets('an applicant saves the job, and is told so', (tester) async {
+        final adapter = _adapter();
+        await _pump(tester, adapter, auth: _signedIn);
+        expect(find.byTooltip('jobs.detail.save'), findsOneWidget);
+
+        await tester.tap(find.byTooltip('jobs.detail.save'));
+        await tester.pumpAndSettle();
+
+        final post = wishlistCalls(adapter)
+            .singleWhere((r) => r.method == 'POST');
+        expect(post.path, '/api/v1/me/wishlist');
+        expect(post.data, {'jobId': 'j1'});
+        expect(find.text('jobs.detail.saved'), findsOneWidget);
+        expect(find.byTooltip('jobs.detail.unsave'), findsOneWidget);
+        expect(find.byTooltip('jobs.detail.save'), findsNothing);
+      });
+
+      testWidgets('a saved job shows so, and a tap takes it out', (
+        tester,
+      ) async {
+        final adapter = _adapter(saved: true);
+        await _pump(tester, adapter, auth: _signedIn);
+        expect(find.byTooltip('jobs.detail.unsave'), findsOneWidget);
+
+        await tester.tap(find.byTooltip('jobs.detail.unsave'));
+        await tester.pumpAndSettle();
+
+        final delete = wishlistCalls(adapter)
+            .singleWhere((r) => r.method == 'DELETE');
+        expect(delete.path, '/api/v1/me/wishlist/jobs/j1');
+        expect(find.text('jobs.detail.unsaved'), findsOneWidget);
+        expect(find.byTooltip('jobs.detail.save'), findsOneWidget);
+      });
+
+      testWidgets('a failure says so and leaves the bookmark as it was', (
+        tester,
+      ) async {
+        await _pump(
+          tester,
+          _adapter(wishlist: (_) => jsonBody({'message': 'Boom'}, status: 500)),
+          auth: _signedIn,
+        );
+
+        await tester.tap(find.byTooltip('jobs.detail.save'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('jobs.detail.saveFailed'), findsOneWidget);
+        expect(find.byTooltip('jobs.detail.save'), findsOneWidget);
+      });
+
+      testWidgets('a closed job cannot be saved any more', (tester) async {
+        final closed = _job(expiresAt: _daysAhead(-2));
+        await _pump(
+          tester,
+          _adapter(job: (_) => jsonBody(closed)),
+          auth: _signedIn,
+        );
+
+        expect(find.byTooltip('jobs.detail.save'), findsNothing);
+        expect(find.byTooltip('jobs.detail.unsave'), findsNothing);
+      });
+
+      testWidgets('a closed job that was saved can still be taken out', (
+        tester,
+      ) async {
+        final closed = _job(expiresAt: _daysAhead(-2));
+        await _pump(
+          tester,
+          _adapter(job: (_) => jsonBody(closed), saved: true),
+          auth: _signedIn,
+        );
+
+        expect(find.byTooltip('jobs.detail.unsave'), findsOneWidget);
+      });
+
+      testWidgets('fits a 360px screen beside the longest button', (
+        tester,
+      ) async {
+        await _pump(
+          tester,
+          _adapter(applications: const []),
+          auth: _signedIn,
+          size: const Size(360, 800),
+        );
+
+        expect(find.byTooltip('jobs.detail.save'), findsOneWidget);
+        expect(find.text('jobs.detail.apply'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      });
     });
 
     testWidgets('an applicant applies from the bar', (tester) async {

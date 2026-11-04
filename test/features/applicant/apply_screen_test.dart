@@ -10,6 +10,7 @@ import 'package:go_router/go_router.dart';
 import 'package:ittalent_mobile/api/client.dart';
 import 'package:ittalent_mobile/auth/auth_notifier.dart';
 import 'package:ittalent_mobile/auth/auth_state.dart';
+import 'package:ittalent_mobile/components/ui/app_button.dart';
 import 'package:ittalent_mobile/config/routes.dart';
 import 'package:ittalent_mobile/features/applicant/apply/apply_files.dart';
 import 'package:ittalent_mobile/features/applicant/apply/apply_providers.dart';
@@ -71,6 +72,8 @@ FakeAdapter _adapter({
   List<Map<String, dynamic>>? cvs,
   List<Map<String, dynamic>> letters = const [],
   List<Map<String, dynamic>> certificates = const [],
+  ResponseBody Function(RequestOptions options)? certificateLinks,
+  ResponseBody Function(RequestOptions options)? documentList,
   List<Map<String, dynamic>> applications = const [],
   ResponseBody Function(RequestOptions options)? submit,
   ResponseBody Function(RequestOptions options)? upload,
@@ -85,6 +88,9 @@ FakeAdapter _adapter({
       options,
     );
   }
+  if (path == '/api/v1/documents' && documentList != null) {
+    return documentList(options);
+  }
   if (path == '/api/v1/documents') {
     final items = options.queryParameters['type'] == 'cv'
         ? (cvs ??
@@ -95,14 +101,18 @@ FakeAdapter _adapter({
         : letters;
     return jsonBody({'items': items, 'total': items.length});
   }
+  if (path == '/api/v1/me/certificate-links' && certificateLinks != null) {
+    return certificateLinks(options);
+  }
   if (path == '/api/v1/me/certificate-links') {
     return jsonBody({'items': certificates, 'total': certificates.length});
   }
+  // The same path lists the applications (GET) and sends one (POST).
+  if (path == '/api/v1/me/applications' && post) {
+    return (submit ?? _created)(options);
+  }
   if (path == '/api/v1/me/applications') {
     return jsonBody({'items': applications, 'total': applications.length});
-  }
-  if (path == '/api/v1/applications' && post) {
-    return (submit ?? _created)(options);
   }
   throw StateError('Unexpected request to $path');
 });
@@ -173,10 +183,34 @@ Future<ProviderContainer> _pump(
 /// The body of the application that was sent.
 Map<String, dynamic> _sent(FakeAdapter adapter) {
   final request = adapter.requests.lastWhere(
-    (r) => r.path == '/api/v1/applications' && r.method == 'POST',
+    (r) => r.path == '/api/v1/me/applications' && r.method == 'POST',
   );
   return request.data as Map<String, dynamic>;
 }
+
+/// The applications that were sent (the POSTs, not the lists).
+List<RequestOptions> _posts(FakeAdapter adapter) => [
+  for (final r in adapter.requests)
+    if (r.path == '/api/v1/me/applications' && r.method == 'POST') r,
+];
+
+/// Whether the button with [text] can be pressed.
+bool _enabled(WidgetTester tester, String text) =>
+    tester.widget<AppButton>(find.widgetWithText(AppButton, text)).onPressed !=
+    null;
+
+/// A request that gets no answer at all: no connection, or a lost response.
+ResponseBody _noAnswer(RequestOptions options) => throw DioException(
+  requestOptions: options,
+  type: DioExceptionType.connectionError,
+);
+
+Map<String, dynamic> _certificate(String id, String name) => {
+  'id': id,
+  'name': name,
+  'url': 'https://www.credly.com/badges/$id',
+  'suggested': true,
+};
 
 Future<void> _tap(WidgetTester tester, String text) async {
   final target = find.text(text);
@@ -233,6 +267,36 @@ void main() {
         expect(tester.takeException(), isNull);
       });
     }
+
+    testWidgets('reads every page of the CVs, so the default one is found', (
+      tester,
+    ) async {
+      final adapter = _adapter(
+        documentList: (options) {
+          if (options.queryParameters['type'] != 'cv') {
+            return jsonBody({'items': <Object>[], 'total': 0});
+          }
+          final first = options.queryParameters['page'] == 1;
+          return jsonBody({
+            'items': first
+                ? [for (var i = 0; i < 100; i++) _doc('cv$i', 'CV $i.pdf')]
+                : [_doc('cvLast', 'Default CV.pdf', isDefault: true)],
+            'total': 101,
+          });
+        },
+      );
+      await _pump(tester, adapter);
+
+      final pages = [
+        for (final r in adapter.requests)
+          if (r.path == '/api/v1/documents' &&
+              r.queryParameters['type'] == 'cv')
+            r.queryParameters['page'],
+      ];
+      expect(pages, [1, 2]);
+      await _continue(tester);
+      expect(find.text('Default CV.pdf'), findsOneWidget);
+    });
 
     testWidgets('Continue asks to choose a CV when none is the default', (
       tester,
@@ -487,6 +551,63 @@ void main() {
       expect(_sent(adapter).containsKey('certificateLinkIds'), isFalse);
     });
 
+    testWidgets(
+      'a certificate list that failed blocks Submit until it is read',
+      (tester) async {
+        var failing = true;
+        final adapter = _adapter(
+          certificateLinks: (_) => failing
+              ? jsonBody({'message': 'Boom'}, status: 500)
+              : jsonBody({
+                  'items': [_certificate('k1', 'AWS')],
+                  'total': 1,
+                }),
+        );
+        await _pump(tester, adapter);
+        await _continue(tester);
+
+        // The choice of links is unknown: it must not be sent as "none".
+        expect(find.text('apply.errors.loadCertificates'), findsOneWidget);
+        expect(_enabled(tester, 'apply.submit'), isFalse);
+        await tester.tap(find.text('apply.submit'), warnIfMissed: false);
+        await tester.pumpAndSettle();
+        expect(_posts(adapter), isEmpty);
+
+        failing = false;
+        await _tap(tester, 'errorState.retry');
+
+        expect(find.text('apply.errors.loadCertificates'), findsNothing);
+        expect(find.text('AWS'), findsOneWidget);
+        expect(_enabled(tester, 'apply.submit'), isTrue);
+        await _tap(tester, 'apply.submit');
+        expect(_sent(adapter)['certificateLinkIds'], ['k1']);
+      },
+    );
+
+    testWidgets('a failing second page of certificates fails the whole list', (
+      tester,
+    ) async {
+      final adapter = _adapter(
+        certificateLinks: (options) {
+          if (options.queryParameters['page'] == 1) {
+            return jsonBody({
+              'items': [
+                for (var i = 0; i < 100; i++) _certificate('k$i', 'Cert $i'),
+              ],
+              'total': 130,
+            });
+          }
+          return jsonBody({'message': 'Boom'}, status: 500);
+        },
+      );
+      await _pump(tester, adapter);
+      await _continue(tester);
+
+      expect(find.text('apply.errors.loadCertificates'), findsOneWidget);
+      expect(_enabled(tester, 'apply.submit'), isFalse);
+      expect(_posts(adapter), isEmpty);
+    });
+
     testWidgets('sends the cover letter that was chosen', (tester) async {
       final adapter = _adapter(letters: [_doc('cl1', 'Letter.pdf')]);
       await _pump(tester, adapter);
@@ -578,9 +699,163 @@ void main() {
 
       await _tap(tester, 'apply.submit');
 
-      expect(find.text('apply.errors.submitFailed'), findsOneWidget);
+      // After a 5xx the application may exist: no claim that nothing was sent.
+      expect(find.text('apply.errors.unconfirmed'), findsOneWidget);
+      expect(find.text('apply.errors.submitFailed'), findsNothing);
       expect(find.text('Boom'), findsNothing);
       expect(find.text('apply.submit'), findsOneWidget);
+    });
+
+    testWidgets('an answer that never came is retried, and a second refusal '
+        'as already applied is the first one succeeding', (tester) async {
+      final applications = <Map<String, dynamic>>[];
+      var attempt = 0;
+      final adapter = _adapter(
+        applications: applications,
+        submit: (options) {
+          attempt++;
+          if (attempt == 1) {
+            // The API created the application; only its answer was lost.
+            applications.add({
+              'id': _submittedId,
+              'status': 'submitted',
+              'canApplyAgain': false,
+            });
+            return _noAnswer(options);
+          }
+          return jsonBody({
+            'code': 'ALREADY_APPLIED',
+            'message': 'Applied',
+          }, status: 409);
+        },
+      );
+      final container = await _pump(tester, adapter);
+      await _continue(tester);
+
+      await _tap(tester, 'apply.submit');
+      expect(find.text('apply.errors.offline'), findsOneWidget);
+      expect(find.text('apply.submitted.title'), findsNothing);
+
+      await _tap(tester, 'apply.submit');
+
+      expect(_posts(adapter), hasLength(2));
+      expect(find.text('apply.submitted.title'), findsOneWidget);
+      expect(find.text('apply.blocked.alreadyApplied.title'), findsNothing);
+      expect(container.read(applicationSubmittedProvider), 1);
+      await _tap(tester, 'apply.submitted.view');
+      expect(find.text('application page $_submittedId'), findsOneWidget);
+    });
+
+    testWidgets('a 5xx is doubtful too: its retry is reconciled the same way', (
+      tester,
+    ) async {
+      final applications = <Map<String, dynamic>>[];
+      var attempt = 0;
+      await _pump(
+        tester,
+        _adapter(
+          applications: applications,
+          submit: (_) {
+            attempt++;
+            if (attempt == 1) {
+              applications.add({
+                'id': _submittedId,
+                'status': 'submitted',
+                'canApplyAgain': false,
+              });
+              return jsonBody({'message': 'Gateway'}, status: 502);
+            }
+            return jsonBody({
+              'code': 'ALREADY_APPLIED',
+              'message': 'Applied',
+            }, status: 409);
+          },
+        ),
+      );
+      await _continue(tester);
+
+      await _tap(tester, 'apply.submit');
+      expect(find.text('apply.errors.unconfirmed'), findsOneWidget);
+      await _tap(tester, 'apply.submit');
+
+      expect(find.text('apply.submitted.title'), findsOneWidget);
+    });
+
+    testWidgets('already applied after a clear refusal is still the old page', (
+      tester,
+    ) async {
+      // The first answer was a clear "no" (a 400): nothing doubtful, so the
+      // second "already applied" is somebody else's application.
+      var attempt = 0;
+      await _pump(
+        tester,
+        _adapter(
+          submit: (_) {
+            attempt++;
+            return attempt == 1
+                ? jsonBody({
+                    'code': 'INVALID_COVER_LETTER',
+                    'message': 'Gone',
+                  }, status: 400)
+                : jsonBody({
+                    'code': 'ALREADY_APPLIED',
+                    'message': 'Applied',
+                  }, status: 409);
+          },
+        ),
+      );
+      await _continue(tester);
+      await _tap(tester, 'apply.submit');
+      await _continue(tester);
+      await _tap(tester, 'apply.submit');
+
+      expect(find.text('apply.blocked.alreadyApplied.title'), findsOneWidget);
+      expect(find.text('apply.submitted.title'), findsNothing);
+    });
+
+    testWidgets('a retry that is refused for another reason stays an error', (
+      tester,
+    ) async {
+      var attempt = 0;
+      await _pump(
+        tester,
+        _adapter(
+          submit: (options) {
+            attempt++;
+            return attempt == 1
+                ? _noAnswer(options)
+                : jsonBody({
+                    'code': 'POSITION_FILLED',
+                    'message': 'Filled',
+                  }, status: 409);
+          },
+        ),
+      );
+      await _continue(tester);
+
+      await _tap(tester, 'apply.submit');
+      await _tap(tester, 'apply.submit');
+
+      expect(find.text('apply.errors.positionFilled'), findsOneWidget);
+      expect(find.text('apply.submitted.title'), findsNothing);
+    });
+
+    testWidgets('a clear refusal says that nothing was sent', (tester) async {
+      await _pump(
+        tester,
+        _adapter(
+          submit: (_) => jsonBody({
+            'code': 'VALIDATION_ERROR',
+            'message': 'Bad',
+          }, status: 400),
+        ),
+      );
+      await _continue(tester);
+
+      await _tap(tester, 'apply.submit');
+
+      expect(find.text('apply.errors.submitFailed'), findsOneWidget);
+      expect(find.text('apply.errors.unconfirmed'), findsNothing);
     });
 
     testWidgets('an email that is not verified takes the place of the steps', (

@@ -349,58 +349,58 @@ void main() {
         final result = await container.read(publicJobsProvider.future);
 
         expect(result.jobs.map((j) => j.id), ['j3', 'j1']);
-        expect(result.isPartial, isFalse);
         expect(adapter.requests.length, 2);
         expect(adapter.requests.first.path, '/api/v1/job-postings');
         expect(adapter.requests.first.queryParameters['limit'], 100);
       },
     );
 
-    test('reads a few pages at a time and never beyond the cap', () async {
+    test('reads every page, a few at a time, however many there are', () async {
+      // 25 pages: more than the old cap of 20 would have read.
+      const pages = 25;
       final adapter = _CountingAdapter(
         (page) => _page(
           [_job('p$page', 'Job $page', createdAt: _daysAgo(page))],
           page: page,
-          totalPages: 25,
+          totalPages: pages,
           total: 2400,
         ),
       );
       final container = containerFor(adapter);
 
       final result = await container.read(publicJobsProvider.future);
-      final jobs = result.jobs;
 
-      expect(adapter.pages.length, JobConstants.maxPages);
-      expect(adapter.pages, containsAll([1, JobConstants.maxPages]));
-      expect(adapter.pages, isNot(contains(JobConstants.maxPages + 1)));
+      expect(adapter.pages.length, pages);
+      expect(adapter.pages, containsAll([1, 20, 21, pages]));
       expect(
         adapter.mostAtOnce,
         lessThanOrEqualTo(JobConstants.fetchConcurrency),
       );
       expect(adapter.mostAtOnce, greaterThan(1));
-      expect(jobs.first.id, 'p1');
-      expect(jobs.length, JobConstants.maxPages);
-      // The cap left jobs out, and the result says so (and how many exist).
-      expect(result.isPartial, isTrue);
+      expect(result.jobs.first.id, 'p1');
+      expect(result.jobs.length, pages);
       expect(result.total, 2400);
     });
 
-    test('is complete when the market fits exactly in the cap', () async {
-      final adapter = _CountingAdapter(
-        (page) => _page(
-          [_job('p$page', 'Job $page', createdAt: _daysAgo(page))],
-          page: page,
-          totalPages: JobConstants.maxPages,
-          total: JobConstants.maxPages,
-        ),
-      );
+    test('a page that fails fails the list, it is never shown short', () async {
+      final adapter = FakeAdapter((options) {
+        final page = options.queryParameters['page'] as int;
+        if (page == 7) return jsonBody({'message': 'Boom'}, status: 500);
+        return jsonBody(
+          _page(
+            [_job('p$page', 'Job $page', createdAt: _daysAgo(page))],
+            page: page,
+            totalPages: 9,
+            total: 900,
+          ),
+        );
+      });
       final container = containerFor(adapter);
 
-      final result = await container.read(publicJobsProvider.future);
-
-      expect(adapter.pages.length, JobConstants.maxPages);
-      expect(result.jobs.length, JobConstants.maxPages);
-      expect(result.isPartial, isFalse);
+      await expectLater(
+        container.read(publicJobsProvider.future),
+        throwsA(anything),
+      );
     });
 
     test('fails at once, without retrying behind the scenes', () async {
@@ -467,7 +467,7 @@ void main() {
       expect(find.text('jobs.end_one'), findsOneWidget);
     });
 
-    testWidgets('does not say "all" when the page cap left jobs out', (
+    testWidgets('ends the list with the count even past the old page cap', (
       tester,
     ) async {
       // Every page repeats one job, so the list stays short enough to show
@@ -477,16 +477,14 @@ void main() {
           _page(
             [_job('only', 'Only job')],
             page: options.queryParameters['page'] as int,
-            totalPages: JobConstants.maxPages + 1,
+            totalPages: 21,
             total: 2345,
           ),
         ),
       );
       await _pump(tester, adapter);
 
-      expect(find.text('jobs.endPartial'), findsOneWidget);
-      expect(find.text('jobs.end_one'), findsNothing);
-      expect(find.text('jobs.end_other'), findsNothing);
+      expect(find.text('jobs.end_one'), findsOneWidget);
     });
 
     testWidgets('hides the salary line for a job with no salary at all', (
@@ -622,6 +620,32 @@ void main() {
       // Still on the search page: nothing was applied.
       expect(find.text('jobs.search.invalid'), findsOneWidget);
     });
+
+    for (final (name, opener) in [
+      ('the search page', 'home.search.keywordPlaceholder'),
+      ('the filters', 'jobs.filter.title'),
+    ]) {
+      testWidgets('$name covers the tab bar, as a full screen', (tester) async {
+        // The jobs list lives in a tab: its own navigator is under the bar.
+        await pumpWithApi(
+          tester,
+          _twoJobs(),
+          Scaffold(
+            body: Navigator(
+              onGenerateRoute: (_) =>
+                  MaterialPageRoute(builder: (_) => const JobsScreen()),
+            ),
+            bottomNavigationBar: const Text('tab bar'),
+          ),
+        );
+        expect(find.text('tab bar'), findsOneWidget);
+
+        await tester.tap(find.text(opener));
+        await tester.pumpAndSettle();
+
+        expect(find.text('tab bar'), findsNothing);
+      });
+    }
 
     testWidgets('Filters picks a type, and shows how many jobs it matches', (
       tester,

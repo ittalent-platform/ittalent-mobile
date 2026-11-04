@@ -22,8 +22,10 @@ class JobSearchScreen extends ConsumerStatefulWidget {
 
   final String initial;
 
+  /// Opens the screen above the tab bar, as the filters, and returns the
+  /// keyword that was chosen, or null when it was closed.
   static Future<String?> open(BuildContext context, {String initial = ''}) =>
-      Navigator.of(context).push<String>(
+      Navigator.of(context, rootNavigator: true).push<String>(
         MaterialPageRoute(builder: (_) => JobSearchScreen(initial: initial)),
       );
 

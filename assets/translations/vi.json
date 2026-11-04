@@ -2927,7 +2927,6 @@
     "count_other": "{{count}} việc làm",
     "end_one": "Bạn đã xem hết {{count}} việc làm.",
     "end_other": "Bạn đã xem hết {{count}} việc làm.",
-    "endPartial": "Đang hiển thị {{count}} việc làm mới nhất trong tổng số {{total}}.",
     "empty": {
       "title": "Hiện chưa có việc làm nào đang mở",
       "description": "Hãy quay lại sau để xem các vị trí mới."
@@ -2963,7 +2962,6 @@
       "lead": "Trưởng nhóm"
     },
     "matchSuffix": "phù hợp",
-    "endPartialFiltered": "Đã tìm trong {{count}} việc làm mới nhất trên tổng số {{total}}. Một số việc làm có thể chưa hiển thị.",
     "noMatches": {
       "title": "Không có việc làm phù hợp",
       "description": "Hãy thử bớt bộ lọc hoặc đổi từ khóa."
@@ -3014,6 +3012,11 @@
       "seeSimilar": "Xem việc làm tương tự",
       "share": "Chia sẻ",
       "linkCopied": "Đã sao chép liên kết",
+      "save": "Lưu việc làm",
+      "unsave": "Bỏ lưu việc làm",
+      "saved": "Đã lưu vào danh sách của bạn",
+      "unsaved": "Đã xoá khỏi danh sách của bạn",
+      "saveFailed": "Không cập nhật được việc làm đã lưu. Vui lòng thử lại.",
       "closed": "Việc làm này không còn nhận đơn ứng tuyển.",
       "closesToday": "Hạn nộp đơn là hôm nay lúc 23:59.",
       "closesIn_one": "Còn {{count}} ngày để nộp đơn · {{date}}",
@@ -3107,6 +3110,7 @@
     "errors": {
       "chooseCv": "Hãy chọn một CV để tiếp tục.",
       "submitFailed": "Không gửi được đơn ứng tuyển. Chưa có gì được gửi. Hãy thử lại.",
+      "unconfirmed": "Chúng tôi chưa xác nhận được đơn ứng tuyển đã được gửi. Hãy thử lại: nếu đơn đã được gửi, chúng tôi sẽ hiển thị đơn đó thay vì gửi lần hai.",
       "offline": "Bạn đang ngoại tuyến. Đơn ứng tuyển sẽ sẵn sàng để gửi khi bạn có kết nối lại.",
       "positionFilled": "{{company}} hiện không nhận đơn ứng tuyển.",
       "accountNotActive": "Tài khoản của bạn hiện không thể gửi đơn ứng tuyển.",
@@ -3114,7 +3118,7 @@
       "coverLetterUnavailable": "Thư xin việc đó không còn trong tài liệu của bạn. Hãy chọn thư khác, hoặc gửi mà không có thư.",
       "tooManyCertificates": "Bạn có thể gửi tối đa 20 chứng chỉ.",
       "loadDocuments": "Không tải được tài liệu của bạn.",
-      "loadCertificates": "Không tải được chứng chỉ của bạn. Bạn vẫn có thể gửi đơn ứng tuyển.",
+      "loadCertificates": "Không tải được chứng chỉ của bạn nên chưa thể gửi đơn ứng tuyển. Hãy thử lại.",
       "loadJobTitle": "Không tải được việc làm này",
       "loadJobBody": "Kiểm tra kết nối và thử lại."
     },

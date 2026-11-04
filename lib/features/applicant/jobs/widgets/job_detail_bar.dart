@@ -4,22 +4,72 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../components/ui/app_button.dart';
 import '../../../../theme/app_colors.dart';
+import '../../../../theme/app_radius.dart';
 
 /// What the sticky bar of a job page offers.
 enum JobAction { apply, signIn, applied, closed }
 
 /// The bar at the bottom of a job page: one button that says what the
-/// applicant can do with the job. A job that no longer takes applications
-/// has no Apply button, and sends the applicant to similar jobs.
+/// applicant can do with the job, and the bookmark that saves it. A job that
+/// no longer takes applications has no Apply button, and sends the applicant
+/// to similar jobs.
 class JobDetailBar extends StatelessWidget {
   const JobDetailBar({
     super.key,
     required this.action,
     required this.onPressed,
+    this.onSave,
+    this.saved = false,
+    this.saving = false,
   });
 
   final JobAction action;
   final VoidCallback onPressed;
+
+  /// Saves the job, or takes it out of the saved ones; null leaves the
+  /// bookmark out.
+  final VoidCallback? onSave;
+  final bool saved;
+
+  /// A save or removal is on its way: the bookmark waits for it.
+  final bool saving;
+
+  /// The bookmark is a square as high as the button next to it.
+  static const double saveSize = 50;
+  static const double saveGap = 12;
+
+  Widget _save(BuildContext context) {
+    final colors = context.colors;
+    return Tooltip(
+      message: tr(saved ? 'jobs.detail.unsave' : 'jobs.detail.save'),
+      child: Semantics(
+        button: true,
+        selected: saved,
+        label: tr(saved ? 'jobs.detail.unsave' : 'jobs.detail.save'),
+        excludeSemantics: true,
+        child: Material(
+          color: saved ? colors.muted : Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: AppRadius.buttonRadius,
+            side: BorderSide(color: colors.border),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: saving ? null : onSave,
+            child: SizedBox(
+              width: saveSize,
+              height: saveSize,
+              child: Icon(
+                saved ? LucideIcons.bookmarkCheck : LucideIcons.bookmark,
+                size: 20,
+                color: saved ? colors.primary : colors.foreground,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -60,7 +110,18 @@ class JobDetailBar extends StatelessWidget {
         color: colors.card,
         border: Border(top: BorderSide(color: colors.border)),
       ),
-      child: SafeArea(top: false, child: button),
+      child: SafeArea(
+        top: false,
+        child: onSave == null
+            ? button
+            : Row(
+                children: [
+                  _save(context),
+                  const SizedBox(width: saveGap),
+                  Expanded(child: button),
+                ],
+              ),
+      ),
     );
   }
 }

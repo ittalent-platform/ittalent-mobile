@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../api/api_error.dart';
+import '../../../api/client.dart';
 import '../../../auth/auth_notifier.dart';
 import '../../../components/common/app_empty_state.dart';
 import '../../../components/common/app_error_state.dart';
@@ -45,6 +46,13 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
 
   bool _aboutExpanded = false;
 
+  /// A save or a removal is on its way.
+  bool _saving = false;
+
+  /// Whether the job is saved, once the applicant changed it here; until
+  /// then it is what the API said (see [jobSavedProvider]).
+  bool? _saved;
+
   /// Back to where the applicant came from; a link that opened the page
   /// straight has nowhere to go back to, so it goes to the list.
   void _back() {
@@ -72,13 +80,53 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
       case JobAction.apply:
         context.push(AppRoutes.jobApply(jobId));
       case JobAction.signIn:
-        context.push(AppRoutes.login);
+        // Back to the apply page once signed in, not to the applications.
+        context.push(AppRoutes.loginThen(AppRoutes.jobApply(jobId)));
       case JobAction.applied:
         if (application != null) {
           context.go(AppRoutes.applicationDetail(application.id));
         }
       case JobAction.closed:
         context.go(AppRoutes.jobs);
+    }
+  }
+
+  /// The bookmark of the bar. A guest signs in first, and comes back to this
+  /// page; a signed-in applicant saves the job, or takes it out of the saved
+  /// ones, and is told so.
+  Future<void> _toggleSave(String jobId, bool saved) async {
+    if (!ref.read(authNotifierProvider).isAuthenticated) {
+      context.push(AppRoutes.loginThen(AppRoutes.jobDetail(jobId)));
+      return;
+    }
+    if (_saving) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final client = ref.read(apiClientProvider);
+    setState(() => _saving = true);
+    try {
+      if (saved) {
+        await client.delete<Map<String, dynamic>>(
+          JobConstants.wishlistJobPath(jobId),
+        );
+      } else {
+        await client.post<Map<String, dynamic>>(
+          JobConstants.wishlistPath,
+          data: {'jobId': jobId},
+        );
+      }
+      if (!mounted) return;
+      setState(() {
+        _saving = false;
+        _saved = !saved;
+      });
+      showAppToast(
+        messenger,
+        tr(saved ? 'jobs.detail.unsaved' : 'jobs.detail.saved'),
+      );
+    } on Object {
+      if (!mounted) return;
+      setState(() => _saving = false);
+      showAppToast(messenger, tr('jobs.detail.saveFailed'), error: true);
     }
   }
 
@@ -393,6 +441,11 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
         ? ref.watch(jobApplicationProvider(job.id)).value
         : null;
 
+    final saved =
+        _saved ??
+        (authenticated ? ref.watch(jobSavedProvider(job.id)).value : null) ??
+        false;
+
     final JobAction action;
     if (deadline?.kind == JobDeadlineKind.closed) {
       action = JobAction.closed;
@@ -416,6 +469,8 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
             onRefresh: () async {
               ref.invalidate(jobDetailProvider(widget.jobId));
               ref.invalidate(jobApplicationProvider(widget.jobId));
+              ref.invalidate(jobSavedProvider(widget.jobId));
+              _saved = null;
               await ref.read(jobDetailProvider(widget.jobId).future);
             },
             child: SingleChildScrollView(
@@ -458,6 +513,12 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
         JobDetailBar(
           action: action,
           onPressed: () => _act(action, job.id, application),
+          // A job that closed cannot be saved any more, only taken out.
+          onSave: action == JobAction.closed && !saved
+              ? null
+              : () => _toggleSave(job.id, saved),
+          saved: saved,
+          saving: _saving,
         ),
       ],
     );

@@ -4,16 +4,20 @@ class ApplyConstants {
   const ApplyConstants._();
 
   static String jobPath(String id) => '/api/v1/job-postings/$id/public';
-  static const String submitPath = '/api/v1/applications';
   static const String applicationsPath = '/api/v1/me/applications';
+
+  /// An application is sent to the applicant's own list: the API registers
+  /// `POST /api/v1/me/applications` (and no other path) for it.
+  static const String submitPath = applicationsPath;
   static const String documentsPath = '/api/v1/documents';
   static const String certificatesPath = '/api/v1/me/certificate-links';
 
   static const String typeCv = 'cv';
   static const String typeCoverLetter = 'cover_letter';
 
-  /// The API serves at most 100 items a page; the first page of each list is
-  /// what the applicant chooses from.
+  /// The API serves at most 100 items a page. Every page of the CVs, cover
+  /// letters and certificate links is read (see `ApplyRepository`), so that
+  /// nothing the applicant owns is missing from the choice.
   static const int listLimit = 100;
 
   static const int totalSteps = 2;

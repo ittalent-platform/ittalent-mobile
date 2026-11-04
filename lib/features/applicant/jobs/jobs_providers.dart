@@ -9,10 +9,10 @@ import 'jobs_models.dart';
 import 'jobs_query.dart';
 
 /// Every open public job, newest first (the order of the API is not relied
-/// on). The first page says how many more there are; those are read a few at a
-/// time, up to `JobConstants.maxPages`, and [PublicJobs.isPartial] tells when
-/// that cap left some out. A job that moved between pages while they were read
-/// is kept once.
+/// on). The first page says how many more there are; all of them are read, a
+/// few at a time, so that search and filters see every job. A page that fails
+/// fails the whole list: a partial list is never shown as the market. A job
+/// that moved between pages while they were read is kept once.
 ///
 /// A failure is shown at once, with a retry button: Riverpod's automatic retry
 /// is off, or the skeleton would stay for a minute before the error appears.
@@ -30,7 +30,7 @@ final publicJobsProvider = FutureProvider.autoDispose<PublicJobs>(
     }
 
     final first = await fetch(1);
-    final lastPage = min(first.totalPages, JobConstants.maxPages);
+    final lastPage = first.totalPages;
     final pages = [first];
     for (
       var from = 2;
@@ -52,11 +52,7 @@ final publicJobsProvider = FutureProvider.autoDispose<PublicJobs>(
         for (final job in page.items)
           if (job.isOpen(now) && seen.add(job.id)) job,
     ]..sort(JobPosting.newestFirst);
-    return PublicJobs(
-      jobs: jobs,
-      total: first.total,
-      isPartial: first.totalPages > JobConstants.maxPages,
-    );
+    return PublicJobs(jobs: jobs, total: first.total);
   },
 );
 
@@ -142,3 +138,21 @@ final jobApplicationProvider = FutureProvider.autoDispose
         return null;
       }
     }, retry: (_, _) => null);
+
+/// Whether the signed-in applicant saved a job (false for a guest). A failure
+/// counts as "not saved": the button still offers to save, and the API answers
+/// "already saved" if it was.
+final jobSavedProvider = FutureProvider.autoDispose.family<bool, String>((
+  ref,
+  jobId,
+) async {
+  if (!ref.watch(authNotifierProvider).isAuthenticated) return false;
+  try {
+    final response = await ref
+        .watch(apiClientProvider)
+        .get<Map<String, dynamic>>(JobConstants.wishlistJobPath(jobId));
+    return response.data?['isSaved'] == true;
+  } on Object {
+    return false;
+  }
+}, retry: (_, _) => null);

@@ -35,6 +35,37 @@ class AppRoutes {
         segments[2] == 'apply';
   }
 
+  /// The query parameter of the login page that says where to go once signed
+  /// in.
+  static const String fromParam = 'from';
+
+  /// The login page, which brings the applicant back to [location] after
+  /// they sign in (a job they were reading, the apply page they were sent
+  /// away from). Without a [location] it is the plain login page.
+  static String loginThen(String? location) {
+    final target = returnTarget(location);
+    return target == null
+        ? login
+        : Uri(path: login, queryParameters: {fromParam: target}).toString();
+  }
+
+  /// [from] if it is a place a guest may have come from, else null. Only a
+  /// job or a company page of this app qualifies: a `from` is read from a
+  /// link, so a full address ("https://…", "//host"), an auth page (a loop)
+  /// or any other page never passes.
+  static String? returnTarget(String? from) {
+    if (from == null || from.isEmpty || !from.startsWith('/')) return null;
+    if (from.startsWith('//') || from.contains('\\')) return null;
+    final uri = Uri.tryParse(from);
+    if (uri == null || uri.hasScheme || uri.hasAuthority) return null;
+    final segments = uri.pathSegments;
+    if (segments.length < 2 || segments.any((segment) => segment.isEmpty)) {
+      return null;
+    }
+    final area = '/${segments.first}';
+    return area == jobs || area == companies ? from : null;
+  }
+
   static String companyDetail(String companyId) => '/companies/$companyId';
   static String applicationDetail(String applicationId) =>
       '/my-applications/$applicationId';
