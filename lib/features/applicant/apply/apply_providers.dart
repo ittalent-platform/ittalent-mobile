@@ -55,19 +55,23 @@ final applyAttemptsProvider = Provider<ApplyAttempts>(
 /// the API still refuses a second application, and the screen then says so.
 ///
 /// It also settles the attempt that waits for an answer (see
-/// [_settleAttempt]).
+/// [_settleAttempt]). When an attempt is waiting and the applications cannot
+/// be listed, the provider fails instead: it is not known whether that attempt
+/// created one, and the screen must not take it for "none".
 final previousApplicationProvider = FutureProvider.autoDispose
     .family<PreviousApplication?, String>((ref, jobId) async {
       if (!ref.watch(authNotifierProvider).isAuthenticated) return null;
       final repository = ref.watch(applyRepositoryProvider);
       final attempts = ref.read(applyAttemptsProvider);
+      final PreviousApplication? previous;
       try {
-        final previous = await repository.previous(jobId);
-        if (previous == null) return null;
-        return await _settleAttempt(repository, attempts, jobId, previous);
+        previous = await repository.previous(jobId);
       } on Object {
+        if (await attempts.waitingFingerprint(jobId) != null) rethrow;
         return null;
       }
+      if (previous == null) return null;
+      return _settleAttempt(repository, attempts, jobId, previous);
     }, retry: (_, _) => null);
 
 /// Settles the attempt that was waiting for an answer, now that the job has
@@ -79,8 +83,9 @@ final previousApplicationProvider = FutureProvider.autoDispose
 ///   was lost, and the result says so ([PreviousApplication.sentByAttempt]);
 /// - it holds something else: the attempt did not create it, the application
 ///   is somebody else's and the screen says so;
-/// - what it holds cannot be read now: the attempt stays, and is settled the
-///   next time the job is opened.
+/// - what it holds cannot be read now: the attempt stays and the result is
+///   [PreviousApplication.undecided]; it is settled the next time the lookup
+///   is made.
 Future<PreviousApplication> _settleAttempt(
   ApplyRepository repository,
   ApplyAttempts attempts,
@@ -93,9 +98,9 @@ Future<PreviousApplication> _settleAttempt(
     await attempts.done(jobId);
     return previous;
   }
-  if (previous.id.isEmpty) return previous;
+  if (previous.id.isEmpty) return previous.asUndecided();
   final held = await _fingerprintOrNull(repository, previous.id, jobId);
-  if (held == null) return previous;
+  if (held == null) return previous.asUndecided();
   await attempts.done(jobId);
   return held == waiting ? previous.asSentByAttempt() : previous;
 }

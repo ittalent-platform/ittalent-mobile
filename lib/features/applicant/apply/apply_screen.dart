@@ -973,6 +973,39 @@ class _ApplyScreenState extends ConsumerState<ApplyScreen> {
     body: const ApplySkeleton(),
   );
 
+  /// Reads the job and what the applicant sent before again.
+  void _reload() {
+    ref.invalidate(applyJobProvider(widget.jobId));
+    ref.invalidate(previousApplicationProvider(widget.jobId));
+  }
+
+  /// The page for a job that cannot be applied to any more, when it is not
+  /// known whether an application that the applicant sent earlier (and never
+  /// got the answer to) went through, because the API could not be asked
+  /// (BR-APP-009). Saying "closed" alone would leave them with no way to find
+  /// out, so they can ask again, or look at their applications.
+  Widget _undecidedPage() => _frame(
+    header: _closeHeader(onBack: _close),
+    body: Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: ApplyStatusView(
+          icon: LucideIcons.circleAlert,
+          tone: BadgeTone.warning,
+          title: tr('apply.undecided.title'),
+          body: TextSpan(text: tr('apply.undecided.body')),
+          actions: [
+            _outlineButton(tr('apply.undecided.retry'), _reload),
+            _outlineButton(
+              tr('apply.undecided.view'),
+              () => context.go(AppRoutes.myApplications),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+
   @override
   Widget build(BuildContext context) {
     final jobAsync = ref.watch(applyJobProvider(widget.jobId));
@@ -992,6 +1025,11 @@ class _ApplyScreenState extends ConsumerState<ApplyScreen> {
     final loaded = jobAsync.value;
     final foundSent = previous.value?.sentByAttempt ?? false;
     final lookingUp = previous.isLoading && !previous.hasValue;
+    // An attempt is waiting and the API could not say whether it created an
+    // application (it failed, or what the application holds could not be read).
+    final undecided =
+        !lookingUp &&
+        (previous.hasError || (previous.value?.undecided ?? false));
     if (_submitted || foundSent) {
       // An application that was sent is a fact about the application, not
       // about the job: it is reported even when the job cannot be read any
@@ -1013,6 +1051,8 @@ class _ApplyScreenState extends ConsumerState<ApplyScreen> {
         // The applicant may have sent this application before the job
         // closed: not "closed" until the application was looked up.
         page = _loading();
+      } else if (closed && undecided) {
+        page = _undecidedPage();
       } else if (closed) {
         page = _blockedPage(ApplyBlock.jobClosed, null);
       } else {
@@ -1022,13 +1062,9 @@ class _ApplyScreenState extends ConsumerState<ApplyScreen> {
             title: tr('apply.errors.loadJobTitle'),
             message: tr('apply.errors.loadJobBody'),
             retryText: tr('errorState.retry'),
-            onRetry: () {
-              ref.invalidate(applyJobProvider(widget.jobId));
-              // What the applicant sent before is looked up again too: it
-              // could not be, if the job could not be read for want of a
-              // connection.
-              ref.invalidate(previousApplicationProvider(widget.jobId));
-            },
+            // What the applicant sent before is read again too: it could not
+            // be, if the job could not be read for want of a connection.
+            onRetry: _reload,
           ),
         );
       }
@@ -1037,7 +1073,11 @@ class _ApplyScreenState extends ConsumerState<ApplyScreen> {
       page = _loading();
     } else {
       final block = _block ?? applyBlockFor(previous.value);
-      if (block != null || !loaded.isOpen(DateTime.now())) {
+      final pastDeadline = !loaded.isOpen(DateTime.now());
+      if (block == null && pastDeadline && undecided) {
+        inFlow = false;
+        page = _undecidedPage();
+      } else if (block != null || pastDeadline) {
         inFlow = false;
         page = _blockedPage(block ?? ApplyBlock.jobClosed, previous.value);
       } else {

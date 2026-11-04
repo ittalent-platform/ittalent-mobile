@@ -1431,22 +1431,129 @@ void main() {
       expect(device.data, isEmpty);
     });
 
-    testWidgets('a closed job whose application cannot be read keeps the '
-        'attempt, and does not report it as sent', (tester) async {
+    testWidgets('a closed job whose application cannot be read says that it '
+        'could not check, and looks again on request', (tester) async {
       final device = await lostAnswer(tester);
+      var down = true;
 
-      await _pump(
+      final container = await _pump(
         tester,
         _adapter(
           job: closedJob,
           applications: [created],
-          detail: (_) => jsonBody({'message': 'Down'}, status: 503),
+          detail: (_) => down
+              ? jsonBody({'message': 'Down'}, status: 503)
+              : jsonBody(_held()),
         ),
         attempts: device,
       );
 
-      expect(find.text('apply.blocked.jobClosed.title'), findsOneWidget);
+      // Nothing is concluded: not "sent", and not plainly "closed" either,
+      // which would leave the applicant no way to find out.
+      expect(find.text('apply.undecided.title'), findsOneWidget);
+      expect(find.text('apply.blocked.jobClosed.title'), findsNothing);
       expect(find.text('apply.submitted.title'), findsNothing);
+      expect(device.data, isNotEmpty);
+
+      // Still down: asking again changes nothing, and nothing is lost.
+      await _tap(tester, 'apply.undecided.retry');
+      expect(find.text('apply.undecided.title'), findsOneWidget);
+      expect(device.data, isNotEmpty);
+
+      // The API is back: the application is found and reported.
+      down = false;
+      await _tap(tester, 'apply.undecided.retry');
+      expect(find.text('apply.submitted.title'), findsOneWidget);
+      expect(find.text('apply.undecided.title'), findsNothing);
+      expect(device.data, isEmpty);
+      expect(container.read(applicationSubmittedProvider), 1);
+    });
+
+    // The API, except that the list of the applicant's applications answers
+    // 503 for as long as [down] says so.
+    FakeAdapter listDown(FakeAdapter api, bool Function() down) => FakeAdapter(
+      (options) =>
+          down() &&
+              options.method == 'GET' &&
+              options.path == '/api/v1/me/applications'
+          ? jsonBody({'message': 'Down'}, status: 503)
+          : api.handler(options),
+    );
+
+    testWidgets('a closed job whose applications cannot be listed says that '
+        'it could not check, and looks again on request', (tester) async {
+      final device = await lostAnswer(tester);
+      var down = true;
+
+      await _pump(
+        tester,
+        listDown(_adapter(job: closedJob, applications: [created]), () => down),
+        attempts: device,
+      );
+
+      expect(find.text('apply.undecided.title'), findsOneWidget);
+      expect(find.text('apply.blocked.jobClosed.title'), findsNothing);
+      expect(device.data, isNotEmpty);
+
+      down = false;
+      await _tap(tester, 'apply.undecided.retry');
+
+      expect(find.text('apply.submitted.title'), findsOneWidget);
+      expect(device.data, isEmpty);
+    });
+
+    testWidgets('a job past its deadline whose applications cannot be listed '
+        'says that it could not check, and can open My applications', (
+      tester,
+    ) async {
+      final device = await lostAnswer(tester);
+
+      await _pump(
+        tester,
+        listDown(
+          _adapter(
+            job: (_) => jsonBody(
+              _job(
+                expiresAt: DateTime.now()
+                    .subtract(const Duration(days: 1))
+                    .toUtc()
+                    .toIso8601String(),
+              ),
+            ),
+            applications: [created],
+          ),
+          () => true,
+        ),
+        attempts: device,
+      );
+
+      expect(find.text('apply.undecided.title'), findsOneWidget);
+      expect(find.text('apply.blocked.jobClosed.title'), findsNothing);
+
+      await _tap(tester, 'apply.undecided.view');
+      expect(find.text('applications page'), findsOneWidget);
+    });
+
+    testWidgets('without an attempt waiting, a closed job is just closed even '
+        'when the applications cannot be listed', (tester) async {
+      await _pump(
+        tester,
+        listDown(_adapter(job: closedJob), () => true),
+        attempts: _MemoryStore(),
+      );
+
+      expect(find.text('apply.blocked.jobClosed.title'), findsOneWidget);
+      expect(find.text('apply.undecided.title'), findsNothing);
+    });
+
+    testWidgets('an open job whose applications cannot be listed still lets '
+        'the applicant apply, with the attempt kept', (tester) async {
+      final device = await lostAnswer(tester);
+
+      await _pump(tester, listDown(_adapter(), () => true), attempts: device);
+
+      expect(find.text('apply.continue'), findsOneWidget);
+      expect(find.text('apply.undecided.title'), findsNothing);
       expect(device.data, isNotEmpty);
     });
 

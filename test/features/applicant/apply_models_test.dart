@@ -145,6 +145,28 @@ void main() {
       );
     });
 
+    test('an application is sent by the attempt or undecided, never both', () {
+      const previous = PreviousApplication(
+        id: 'p',
+        canApplyAgain: false,
+        status: 'submitted',
+        companyName: 'Nimbus Pay',
+      );
+      expect(previous.sentByAttempt, isFalse);
+      expect(previous.undecided, isFalse);
+
+      final sent = previous.asSentByAttempt();
+      expect(sent.sentByAttempt, isTrue);
+      expect(sent.undecided, isFalse);
+
+      final undecided = previous.asUndecided();
+      expect(undecided.sentByAttempt, isFalse);
+      expect(undecided.undecided, isTrue);
+      expect(undecided.id, 'p');
+      expect(undecided.status, 'submitted');
+      expect(undecided.companyName, 'Nimbus Pay');
+    });
+
     test('firstNonBlank takes the first name there is', () {
       expect(
         firstNonBlank([null, '', '  ', ' Nimbus Pay ', 'Other']),

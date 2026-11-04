@@ -157,6 +157,7 @@ class PreviousApplication {
     this.withdrawnAt,
     this.companyName,
     this.sentByAttempt = false,
+    this.undecided = false,
   });
 
   final String id;
@@ -174,15 +175,28 @@ class PreviousApplication {
   /// applicant is then told it was sent, as the answer would have said.
   final bool sentByAttempt;
 
+  /// True when an attempt that lost its answer is waiting on the job and what
+  /// this application holds could not be read, so it is not known whether the
+  /// application is that attempt's (BR-APP-009). Nothing is concluded: the
+  /// attempt stays, and the lookup can be made again.
+  final bool undecided;
+
+  PreviousApplication _as({required bool sent, required bool undecided}) =>
+      PreviousApplication(
+        id: id,
+        canApplyAgain: canApplyAgain,
+        status: status,
+        withdrawnAt: withdrawnAt,
+        companyName: companyName,
+        sentByAttempt: sent,
+        undecided: undecided,
+      );
+
   /// The same application, known to be the one the waiting attempt created.
-  PreviousApplication asSentByAttempt() => PreviousApplication(
-    id: id,
-    canApplyAgain: canApplyAgain,
-    status: status,
-    withdrawnAt: withdrawnAt,
-    companyName: companyName,
-    sentByAttempt: true,
-  );
+  PreviousApplication asSentByAttempt() => _as(sent: true, undecided: false);
+
+  /// The same application, not known to be the waiting attempt's or not.
+  PreviousApplication asUndecided() => _as(sent: false, undecided: true);
 
   factory PreviousApplication.fromJson(Map<String, dynamic> json) {
     final job = json['job'];

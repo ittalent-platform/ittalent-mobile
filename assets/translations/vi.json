@@ -3077,6 +3077,12 @@
       "view": "Xem đơn ứng tuyển",
       "browse": "Tiếp tục xem việc làm"
     },
+    "undecided": {
+      "title": "Chưa kiểm tra được đơn ứng tuyển",
+      "body": "Việc làm này đã đóng, và chúng tôi chưa xác nhận được đơn bạn gửi trước đó đã được ghi nhận hay chưa. Hãy kiểm tra kết nối rồi thử lại, hoặc xem trong Đơn ứng tuyển của tôi.",
+      "retry": "Thử lại",
+      "view": "Đơn ứng tuyển của tôi"
+    },
     "discard": {
       "title": "Huỷ đơn ứng tuyển này?",
       "body": "Chưa có gì được gửi tới {{company}}.",
