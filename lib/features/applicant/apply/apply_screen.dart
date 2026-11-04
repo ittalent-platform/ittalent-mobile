@@ -650,10 +650,12 @@ class _ApplyScreenState extends ConsumerState<ApplyScreen> {
 
   /// The page that says the application was sent. [id] is the application the
   /// API answered with, or the one found for an attempt whose answer was lost.
-  Widget _successPage(ApplyJob job, String? id) {
+  /// [company] may be blank, when neither the job nor the application names it.
+  Widget _successPage(String company, String? id) {
     final reference = id == null || id.isEmpty
         ? null
         : ApplyConstants.displayId(id);
+    final who = company.isEmpty ? tr('apply.submitted.employer') : company;
     return Scaffold(
       backgroundColor: context.colors.background,
       body: SafeArea(
@@ -667,7 +669,7 @@ class _ApplyScreenState extends ConsumerState<ApplyScreen> {
                     icon: LucideIcons.circleCheck,
                     tone: BadgeTone.success,
                     title: tr('apply.submitted.title'),
-                    body: _successBody(job.companyName, reference),
+                    body: _successBody(who, reference),
                   ),
                 ),
               ),
@@ -989,9 +991,17 @@ class _ApplyScreenState extends ConsumerState<ApplyScreen> {
     final bool inFlow;
     final loaded = jobAsync.value;
     final foundSent = previous.value?.sentByAttempt ?? false;
-    if ((_submitted || foundSent) && loaded != null) {
+    final lookingUp = previous.isLoading && !previous.hasValue;
+    if (_submitted || foundSent) {
+      // An application that was sent is a fact about the application, not
+      // about the job: it is reported even when the job cannot be read any
+      // more because it closed since (BR-APP-009). The company then comes
+      // from the application itself.
       inFlow = false;
-      page = _successPage(loaded, _submittedId ?? previous.value?.id);
+      page = _successPage(
+        firstNonBlank([loaded?.companyName, previous.value?.companyName]),
+        _submittedId ?? previous.value?.id,
+      );
     } else if (jobAsync.hasError && loaded == null) {
       inFlow = false;
       final error = jobAsync.error;
@@ -999,18 +1009,30 @@ class _ApplyScreenState extends ConsumerState<ApplyScreen> {
           error is ApiError &&
           (error.statusCode == ApplyConstants.statusNotFound ||
               error.statusCode == ApplyConstants.statusBadRequest);
-      page = closed
-          ? _blockedPage(ApplyBlock.jobClosed, null)
-          : _frame(
-              header: _closeHeader(onBack: _close),
-              body: AppErrorState(
-                title: tr('apply.errors.loadJobTitle'),
-                message: tr('apply.errors.loadJobBody'),
-                retryText: tr('errorState.retry'),
-                onRetry: () => ref.invalidate(applyJobProvider(widget.jobId)),
-              ),
-            );
-    } else if (loaded == null || (previous.isLoading && !previous.hasValue)) {
+      if (closed && lookingUp) {
+        // The applicant may have sent this application before the job
+        // closed: not "closed" until the application was looked up.
+        page = _loading();
+      } else if (closed) {
+        page = _blockedPage(ApplyBlock.jobClosed, null);
+      } else {
+        page = _frame(
+          header: _closeHeader(onBack: _close),
+          body: AppErrorState(
+            title: tr('apply.errors.loadJobTitle'),
+            message: tr('apply.errors.loadJobBody'),
+            retryText: tr('errorState.retry'),
+            onRetry: () {
+              ref.invalidate(applyJobProvider(widget.jobId));
+              // What the applicant sent before is looked up again too: it
+              // could not be, if the job could not be read for want of a
+              // connection.
+              ref.invalidate(previousApplicationProvider(widget.jobId));
+            },
+          ),
+        );
+      }
+    } else if (loaded == null || lookingUp) {
       inFlow = false;
       page = _loading();
     } else {

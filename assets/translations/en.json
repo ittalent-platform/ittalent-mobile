@@ -3094,6 +3094,7 @@
       "title": "Application submitted",
       "body": "{{company}} has your application {{id}}. We’ll notify you when they update it.",
       "bodyNoId": "{{company}} has your application. We’ll notify you when they update it.",
+      "employer": "The employer",
       "view": "View application",
       "browse": "Keep browsing"
     },

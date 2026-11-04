@@ -3073,6 +3073,7 @@
       "title": "Đã gửi đơn ứng tuyển",
       "body": "{{company}} đã nhận đơn ứng tuyển {{id}} của bạn. Chúng tôi sẽ thông báo khi họ cập nhật đơn.",
       "bodyNoId": "{{company}} đã nhận đơn ứng tuyển của bạn. Chúng tôi sẽ thông báo khi họ cập nhật đơn.",
+      "employer": "Nhà tuyển dụng",
       "view": "Xem đơn ứng tuyển",
       "browse": "Tiếp tục xem việc làm"
     },

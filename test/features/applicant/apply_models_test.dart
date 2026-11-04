@@ -121,6 +121,39 @@ void main() {
       expect(previous.withdrawnAt?.month, 9);
     });
 
+    test('names the company the application went to', () {
+      final previous = PreviousApplication.fromJson({
+        'id': 'p',
+        'job': {'title': 'Backend', 'companyName': ' Nimbus Pay '},
+      });
+      expect(previous.companyName, 'Nimbus Pay');
+      expect(previous.asSentByAttempt().companyName, 'Nimbus Pay');
+    });
+
+    test('an application whose job is missing or unnamed has no company', () {
+      expect(PreviousApplication.fromJson({'id': 'p'}).companyName, isNull);
+      expect(
+        PreviousApplication.fromJson({
+          'id': 'p',
+          'job': {'companyName': ' '},
+        }).companyName,
+        isNull,
+      );
+      expect(
+        PreviousApplication.fromJson({'id': 'p', 'job': 'oops'}).companyName,
+        isNull,
+      );
+    });
+
+    test('firstNonBlank takes the first name there is', () {
+      expect(
+        firstNonBlank([null, '', '  ', ' Nimbus Pay ', 'Other']),
+        'Nimbus Pay',
+      );
+      expect(firstNonBlank([null, ' ']), '');
+      expect(firstNonBlank(const []), '');
+    });
+
     test('a job is open until its deadline', () {
       final job = ApplyJob.fromJson({
         'id': 'j',

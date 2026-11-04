@@ -6,6 +6,15 @@ String? _text(Object? value) {
   return text.isEmpty ? null : text;
 }
 
+/// The first of [names] that is not blank; empty when none is.
+String firstNonBlank(Iterable<String?> names) {
+  for (final name in names) {
+    final text = _text(name);
+    if (text != null) return text;
+  }
+  return '';
+}
+
 /// The job being applied to, as the top of every step shows it.
 class ApplyJob {
   const ApplyJob({
@@ -146,6 +155,7 @@ class PreviousApplication {
     required this.canApplyAgain,
     this.status,
     this.withdrawnAt,
+    this.companyName,
     this.sentByAttempt = false,
   });
 
@@ -153,6 +163,11 @@ class PreviousApplication {
   final bool canApplyAgain;
   final String? status;
   final DateTime? withdrawnAt;
+
+  /// The company the application went to, as the application itself names it.
+  /// It stays known when the job does not: once a job is closed the API no
+  /// longer returns it, but the application still says whose it is.
+  final String? companyName;
 
   /// True when this application is what an attempt that lost its answer
   /// created: it holds exactly what that attempt sent (BR-APP-009). The
@@ -165,16 +180,22 @@ class PreviousApplication {
     canApplyAgain: canApplyAgain,
     status: status,
     withdrawnAt: withdrawnAt,
+    companyName: companyName,
     sentByAttempt: true,
   );
 
-  factory PreviousApplication.fromJson(Map<String, dynamic> json) =>
-      PreviousApplication(
-        id: json['id'] as String? ?? '',
-        canApplyAgain: json['canApplyAgain'] as bool? ?? false,
-        status: _text(json['status']),
-        withdrawnAt: DateTime.tryParse(json['withdrawnAt'] as String? ?? ''),
-      );
+  factory PreviousApplication.fromJson(Map<String, dynamic> json) {
+    final job = json['job'];
+    return PreviousApplication(
+      id: json['id'] as String? ?? '',
+      canApplyAgain: json['canApplyAgain'] as bool? ?? false,
+      status: _text(json['status']),
+      withdrawnAt: DateTime.tryParse(json['withdrawnAt'] as String? ?? ''),
+      companyName: job is Map<String, dynamic>
+          ? _text(job['companyName'])
+          : null,
+    );
+  }
 }
 
 /// Why the flow stops before an application is sent. Each one has its own

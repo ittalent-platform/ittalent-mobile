@@ -1170,6 +1170,7 @@ void main() {
       'id': _submittedId,
       'status': 'submitted',
       'canApplyAgain': false,
+      'job': {'companyName': 'Nimbus Pay'},
     };
 
     testWidgets('opening the job again after a lost answer shows the '
@@ -1328,6 +1329,188 @@ void main() {
 
       expect(find.text('apply.submitted.title'), findsOneWidget);
       expect(find.text('apply.blocked.alreadyApplied.title'), findsNothing);
+    });
+
+    // The job closed between the lost answer and the applicant coming back,
+    // so the API no longer returns it (404). The application is still there.
+    ResponseBody closedJob(RequestOptions options) =>
+        jsonBody({'message': 'Gone'}, status: 404);
+
+    for (final status in [404, 400]) {
+      testWidgets('a job that closed after a lost answer (answered $status) '
+          'still shows the application that first send created', (
+        tester,
+      ) async {
+        final device = await lostAnswer(tester);
+
+        final container = await _pump(
+          tester,
+          _adapter(
+            job: (_) => jsonBody({'message': 'Gone'}, status: status),
+            applications: [created],
+          ),
+          attempts: device,
+        );
+
+        expect(find.text('apply.submitted.title'), findsOneWidget);
+        expect(find.text('apply.blocked.jobClosed.title'), findsNothing);
+        // The attempt is over, and the lists that show applications read again.
+        expect(device.data, isEmpty);
+        expect(container.read(applicationSubmittedProvider), 1);
+        await _tap(tester, 'apply.submitted.view');
+        expect(find.text('application page $_submittedId'), findsOneWidget);
+      });
+    }
+
+    testWidgets('a job past its deadline after a lost answer shows the '
+        'application too', (tester) async {
+      final device = await lostAnswer(tester);
+
+      await _pump(
+        tester,
+        _adapter(
+          job: (_) => jsonBody(
+            _job(
+              expiresAt: DateTime.now()
+                  .subtract(const Duration(days: 1))
+                  .toUtc()
+                  .toIso8601String(),
+            ),
+          ),
+          applications: [created],
+        ),
+        attempts: device,
+      );
+
+      expect(find.text('apply.submitted.title'), findsOneWidget);
+      expect(find.text('apply.blocked.jobClosed.title'), findsNothing);
+      expect(device.data, isEmpty);
+    });
+
+    testWidgets('an application that does not name its company is still '
+        'reported as sent', (tester) async {
+      final device = await lostAnswer(tester);
+
+      await _pump(
+        tester,
+        _adapter(
+          job: closedJob,
+          applications: [
+            {
+              'id': _submittedId,
+              'status': 'submitted',
+              'canApplyAgain': false,
+              'job': {'companyName': ''},
+            },
+          ],
+        ),
+        attempts: device,
+      );
+
+      expect(find.text('apply.submitted.title'), findsOneWidget);
+      expect(find.text('apply.blocked.jobClosed.title'), findsNothing);
+    });
+
+    testWidgets('a closed job whose application holds something else is just '
+        'closed', (tester) async {
+      final device = await lostAnswer(tester);
+
+      await _pump(
+        tester,
+        _adapter(
+          job: closedJob,
+          applications: [created],
+          detail: (_) => jsonBody(_held(cv: 'cv2')),
+        ),
+        attempts: device,
+      );
+
+      expect(find.text('apply.blocked.jobClosed.title'), findsOneWidget);
+      expect(find.text('apply.submitted.title'), findsNothing);
+      // It was not this attempt's application, so the attempt is over.
+      expect(device.data, isEmpty);
+    });
+
+    testWidgets('a closed job whose application cannot be read keeps the '
+        'attempt, and does not report it as sent', (tester) async {
+      final device = await lostAnswer(tester);
+
+      await _pump(
+        tester,
+        _adapter(
+          job: closedJob,
+          applications: [created],
+          detail: (_) => jsonBody({'message': 'Down'}, status: 503),
+        ),
+        attempts: device,
+      );
+
+      expect(find.text('apply.blocked.jobClosed.title'), findsOneWidget);
+      expect(find.text('apply.submitted.title'), findsNothing);
+      expect(device.data, isNotEmpty);
+    });
+
+    testWidgets('a closed job whose application is over ends the attempt', (
+      tester,
+    ) async {
+      final device = await lostAnswer(tester);
+
+      await _pump(
+        tester,
+        _adapter(
+          job: closedJob,
+          applications: [
+            {
+              'id': _submittedId,
+              'status': 'withdrawn',
+              'canApplyAgain': true,
+              'withdrawnAt': '2026-11-01T08:00:00.000Z',
+              'job': {'companyName': 'Nimbus Pay'},
+            },
+          ],
+        ),
+        attempts: device,
+      );
+
+      expect(find.text('apply.blocked.jobClosed.title'), findsOneWidget);
+      expect(find.text('apply.submitted.title'), findsNothing);
+      expect(device.data, isEmpty);
+    });
+
+    testWidgets('a closed job with an application and no attempt waiting is '
+        'just closed', (tester) async {
+      await _pump(
+        tester,
+        _adapter(job: closedJob, applications: [created]),
+        attempts: _MemoryStore(),
+      );
+
+      expect(find.text('apply.blocked.jobClosed.title'), findsOneWidget);
+      expect(find.text('apply.submitted.title'), findsNothing);
+    });
+
+    testWidgets('a connection that failed on opening is tried again for the '
+        'application too, so a closed job still shows it', (tester) async {
+      final device = await lostAnswer(tester);
+      var offline = true;
+      final api = _adapter(job: closedJob, applications: [created]);
+
+      await _pump(
+        tester,
+        FakeAdapter(
+          (options) => offline ? _noAnswer(options) : api.handler(options),
+        ),
+        attempts: device,
+      );
+      expect(find.text('apply.errors.loadJobTitle'), findsOneWidget);
+      expect(device.data, isNotEmpty);
+
+      offline = false;
+      await _tap(tester, 'errorState.retry');
+
+      expect(find.text('apply.submitted.title'), findsOneWidget);
+      expect(find.text('apply.blocked.jobClosed.title'), findsNothing);
+      expect(device.data, isEmpty);
     });
   });
 }
