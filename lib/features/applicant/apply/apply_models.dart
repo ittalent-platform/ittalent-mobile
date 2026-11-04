@@ -146,12 +146,27 @@ class PreviousApplication {
     required this.canApplyAgain,
     this.status,
     this.withdrawnAt,
+    this.sentByAttempt = false,
   });
 
   final String id;
   final bool canApplyAgain;
   final String? status;
   final DateTime? withdrawnAt;
+
+  /// True when this application is what an attempt that lost its answer
+  /// created: it holds exactly what that attempt sent (BR-APP-009). The
+  /// applicant is then told it was sent, as the answer would have said.
+  final bool sentByAttempt;
+
+  /// The same application, known to be the one the waiting attempt created.
+  PreviousApplication asSentByAttempt() => PreviousApplication(
+    id: id,
+    canApplyAgain: canApplyAgain,
+    status: status,
+    withdrawnAt: withdrawnAt,
+    sentByAttempt: true,
+  );
 
   factory PreviousApplication.fromJson(Map<String, dynamic> json) =>
       PreviousApplication(

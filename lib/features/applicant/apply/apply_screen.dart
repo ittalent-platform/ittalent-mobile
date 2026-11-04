@@ -288,6 +288,14 @@ class _ApplyScreenState extends ConsumerState<ApplyScreen> {
     final repository = ref.read(applyRepositoryProvider);
     final attempts = ref.read(applyAttemptsProvider);
     final submitted = ref.read(applicationSubmittedProvider.notifier);
+    // What is being sent, as an application is later recognised by.
+    final fingerprint = applyFingerprint(
+      jobId: job.id,
+      cvId: cvId,
+      coverLetterId: coverLetterId,
+      message: _message.text,
+      certificateIds: certificateIds,
+    );
     setState(() {
       _submitting = true;
       _notice = null;
@@ -298,13 +306,7 @@ class _ApplyScreenState extends ConsumerState<ApplyScreen> {
       // closed) gets the application the first send created, not a second.
       final key = await attempts.keyFor(
         jobId: job.id,
-        fingerprint: applyFingerprint(
-          jobId: job.id,
-          cvId: cvId,
-          coverLetterId: coverLetterId,
-          message: _message.text,
-          certificateIds: certificateIds,
-        ),
+        fingerprint: fingerprint,
       );
       final id = await repository.submit(
         jobId: job.id,
@@ -330,12 +332,12 @@ class _ApplyScreenState extends ConsumerState<ApplyScreen> {
       // stays for the next send.
       if (_isRefusal(error)) await attempts.done(job.id);
       if (!mounted) return;
-      final earlier = await _sentEarlier(error, job.id);
+      final earlier = await _sentEarlier(error, job.id, fingerprint);
       if (!mounted) return;
       if (earlier != null) {
         // The first attempt did reach the API, only its answer was lost: the
-        // application exists, so this ends as a success, as the first one
-        // would have.
+        // application exists and holds what is being sent now, so this ends
+        // as a success, as the first one would have.
         submitted.signal();
         setState(() {
           _submitting = false;
@@ -361,20 +363,33 @@ class _ApplyScreenState extends ConsumerState<ApplyScreen> {
   }
 
   /// The application that an earlier attempt, whose answer never came, did
-  /// create: set when this attempt is refused as "already applied" and the
+  /// create: set when this attempt is refused as "already applied", the
   /// applicant has a live application for the job (they could not have opened
-  /// this page with one). Null for any other failure.
-  Future<PreviousApplication?> _sentEarlier(Object error, String jobId) async {
+  /// this page with one) and that application holds exactly what is being
+  /// sent now ([fingerprint]). An application that holds something else, for
+  /// instance the CV or the note as they were before the applicant changed
+  /// them, is not what they just sent, and is not reported as such. Null for
+  /// any other failure.
+  Future<PreviousApplication?> _sentEarlier(
+    Object error,
+    String jobId,
+    String fingerprint,
+  ) async {
     if (!_outcomeUnknown ||
         error is! ApiError ||
         error.code != ApplyConstants.codeAlreadyApplied) {
       return null;
     }
     try {
-      final previous = await ref.read(applyRepositoryProvider).previous(jobId);
-      return applyBlockFor(previous) == ApplyBlock.alreadyApplied
-          ? previous
-          : null;
+      final repository = ref.read(applyRepositoryProvider);
+      final previous = await repository.previous(jobId);
+      if (previous == null ||
+          previous.id.isEmpty ||
+          applyBlockFor(previous) != ApplyBlock.alreadyApplied) {
+        return null;
+      }
+      final held = await repository.fingerprintOf(previous.id, jobId);
+      return held == fingerprint ? previous : null;
     } on Object {
       return null;
     }
@@ -633,8 +648,9 @@ class _ApplyScreenState extends ConsumerState<ApplyScreen> {
     );
   }
 
-  Widget _successPage(ApplyJob job) {
-    final id = _submittedId;
+  /// The page that says the application was sent. [id] is the application the
+  /// API answered with, or the one found for an attempt whose answer was lost.
+  Widget _successPage(ApplyJob job, String? id) {
     final reference = id == null || id.isEmpty
         ? null
         : ApplyConstants.displayId(id);
@@ -959,14 +975,23 @@ class _ApplyScreenState extends ConsumerState<ApplyScreen> {
   Widget build(BuildContext context) {
     final jobAsync = ref.watch(applyJobProvider(widget.jobId));
     final previous = ref.watch(previousApplicationProvider(widget.jobId));
+    // An application found for an attempt whose answer was lost ends as that
+    // attempt would have (BR-APP-009): the lists that show applications must
+    // read again.
+    ref.listen(previousApplicationProvider(widget.jobId), (_, next) {
+      if (next.value?.sentByAttempt ?? false) {
+        ref.read(applicationSubmittedProvider.notifier).signal();
+      }
+    });
     final company = jobAsync.value?.companyName ?? '';
 
     final Widget page;
     final bool inFlow;
     final loaded = jobAsync.value;
-    if (_submitted && loaded != null) {
+    final foundSent = previous.value?.sentByAttempt ?? false;
+    if ((_submitted || foundSent) && loaded != null) {
       inFlow = false;
-      page = _successPage(loaded);
+      page = _successPage(loaded, _submittedId ?? previous.value?.id);
     } else if (jobAsync.hasError && loaded == null) {
       inFlow = false;
       final error = jobAsync.error;

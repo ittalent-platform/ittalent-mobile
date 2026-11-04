@@ -5,6 +5,7 @@ class ApplyConstants {
 
   static String jobPath(String id) => '/api/v1/job-postings/$id/public';
   static const String applicationsPath = '/api/v1/me/applications';
+  static String applicationPath(String id) => '$applicationsPath/$id';
 
   /// An application is sent to the applicant's own list: the API registers
   /// `POST /api/v1/me/applications` (and no other path) for it.

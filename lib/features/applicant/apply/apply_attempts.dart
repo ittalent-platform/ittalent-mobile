@@ -19,11 +19,13 @@ const int _otherPrime = 0x85ebca6b;
 
 String _hex(int value) => value.toRadixString(16).padLeft(8, '0');
 
-/// A short stand-in for "this application, as it will be sent", so that a
-/// changed CV, note or certificate starts a new attempt instead of reusing
-/// the key of the old one. It hides the note rather than keeping its text on
-/// the device. It is not a security measure: a collision only makes the API
-/// refuse the key (409), and the next try starts a new attempt.
+/// A short stand-in for "this application, as it was sent", so that a changed
+/// CV, note or certificate starts a new attempt instead of reusing the key of
+/// the old one, and so that an application the API holds can be told apart
+/// from the attempt that is waiting for an answer. It hides the note rather
+/// than keeping its text on the device. It is not a security measure: a
+/// collision only makes the API refuse the key (409), and the next try starts
+/// a new attempt.
 String applyFingerprint({
   required String jobId,
   required String cvId,
@@ -48,25 +50,19 @@ String applyFingerprint({
 }
 
 class _Attempt {
-  const _Attempt(this.key, this.fingerprint, this.savedAt);
+  const _Attempt(this.key, this.fingerprint);
 
   final String key;
   final String fingerprint;
-  final DateTime savedAt;
 
-  String get encoded =>
-      [key, fingerprint, savedAt.millisecondsSinceEpoch].join('|');
+  String get encoded => '$key|$fingerprint';
 
+  /// A value with more after the fingerprint (an older version also kept the
+  /// time it was saved) is read for its first two parts.
   static _Attempt? tryParse(String raw) {
     final parts = raw.split('|');
-    if (parts.length != 3 || parts[0].isEmpty || parts[1].isEmpty) return null;
-    final millis = int.tryParse(parts[2]);
-    if (millis == null) return null;
-    return _Attempt(
-      parts[0],
-      parts[1],
-      DateTime.fromMillisecondsSinceEpoch(millis),
-    );
+    if (parts.length < 2 || parts[0].isEmpty || parts[1].isEmpty) return null;
+    return _Attempt(parts[0], parts[1]);
   }
 }
 
@@ -77,23 +73,22 @@ class _Attempt {
 /// closed in between, asks the API for the same application instead of
 /// creating a second one.
 ///
+/// There is no time limit: the API keeps a key for good, so a late send must
+/// still find it. An old key cannot name anything but the application it
+/// created, and `previousApplicationProvider` settles the attempt (and so
+/// ends it) as soon as the job is opened and that application is found.
+///
 /// It never throws: if the device cannot keep the attempt, the key still
 /// works for as long as the app runs.
 class ApplyAttempts {
-  ApplyAttempts(this._store, {DateTime Function()? now, Random? random})
-    : _now = now ?? DateTime.now,
-      _random = random ?? Random.secure();
-
-  /// An attempt that nobody sends again within this time is forgotten. It
-  /// keeps an old key from naming an application that was dealt with since.
-  static const Duration lifetime = Duration(hours: 1);
+  ApplyAttempts(this._store, {Random? random})
+    : _random = random ?? Random.secure();
 
   static const String _prefix = 'ittalent_apply_attempt_';
   static const int _keyBytes = 16;
   static const int _byteValues = 256;
 
   final AttemptStore _store;
-  final DateTime Function() _now;
   final Random _random;
   final Map<String, _Attempt> _kept = {};
 
@@ -118,20 +113,17 @@ class ApplyAttempts {
   }
 
   /// The key to send for this application: the one of the attempt that is
-  /// still waiting for an answer, if it is the same content and recent
-  /// enough, otherwise a new one (which is kept at once).
+  /// still waiting for an answer, if it is the same content, otherwise a new
+  /// one (which is kept at once).
   Future<String> keyFor({
     required String jobId,
     required String fingerprint,
   }) async {
-    final now = _now();
     final waiting = await _load(jobId);
-    if (waiting != null &&
-        waiting.fingerprint == fingerprint &&
-        now.difference(waiting.savedAt) < lifetime) {
+    if (waiting != null && waiting.fingerprint == fingerprint) {
       return waiting.key;
     }
-    final attempt = _Attempt(_newKey(), fingerprint, now);
+    final attempt = _Attempt(_newKey(), fingerprint);
     _kept[jobId] = attempt;
     try {
       await _store.write(_name(jobId), attempt.encoded);
@@ -140,6 +132,11 @@ class ApplyAttempts {
     }
     return attempt.key;
   }
+
+  /// The [applyFingerprint] of the attempt that is waiting for an answer on
+  /// this job, or null when none is.
+  Future<String?> waitingFingerprint(String jobId) async =>
+      (await _load(jobId))?.fingerprint;
 
   /// The outcome is known (the application was accepted, refused, or found
   /// to exist): the next attempt for this job is a new one.

@@ -29,17 +29,15 @@ class _MemoryStore implements AttemptStore {
 final RegExp _key = RegExp(r'^[0-9a-f]{32}$');
 
 void main() {
-  late DateTime clock;
   late _MemoryStore store;
   var seed = 0;
 
   /// An instance over [over]: what a new run of the app has, since only the
   /// store is shared between runs.
   ApplyAttempts attempts([_MemoryStore? over]) =>
-      ApplyAttempts(over ?? store, now: () => clock, random: Random(seed++));
+      ApplyAttempts(over ?? store, random: Random(seed++));
 
   setUp(() {
-    clock = DateTime(2026, 11, 4, 12);
     store = _MemoryStore();
   });
 
@@ -152,23 +150,60 @@ void main() {
       );
     });
 
-    test('is forgotten when nobody sent again within an hour', () async {
+    test('is kept until its outcome is known, however late the next send '
+        'comes', () async {
       final key = await attempts().keyFor(
         jobId: 'j1',
         fingerprint: fingerprint,
       );
 
-      clock = clock.add(const Duration(minutes: 59));
+      // There is no time limit: the API keeps a key for good. What an old
+      // value on the device also carried (the time it was saved) is ignored.
+      store.data['ittalent_apply_attempt_j1'] =
+          '$key|$fingerprint|${DateTime(2020).millisecondsSinceEpoch}';
+
       expect(
         await attempts().keyFor(jobId: 'j1', fingerprint: fingerprint),
         key,
       );
+    });
 
-      clock = clock.add(const Duration(minutes: 2));
-      expect(
-        await attempts().keyFor(jobId: 'j1', fingerprint: fingerprint),
-        isNot(key),
-      );
+    group('waitingFingerprint', () {
+      test('is null while nothing waits for an answer', () async {
+        expect(await attempts().waitingFingerprint('j1'), isNull);
+      });
+
+      test('is what the waiting attempt sent, also after the app was '
+          'closed', () async {
+        await attempts().keyFor(jobId: 'j1', fingerprint: fingerprint);
+
+        expect(await attempts().waitingFingerprint('j1'), fingerprint);
+        expect(await attempts().waitingFingerprint('j2'), isNull);
+      });
+
+      test('is null once the attempt is done', () async {
+        final run = attempts();
+        await run.keyFor(jobId: 'j1', fingerprint: fingerprint);
+        await run.done('j1');
+
+        expect(await run.waitingFingerprint('j1'), isNull);
+        expect(await attempts().waitingFingerprint('j1'), isNull);
+      });
+
+      test('follows the application when it changes', () async {
+        final run = attempts();
+        await run.keyFor(jobId: 'j1', fingerprint: fingerprint);
+        await run.keyFor(jobId: 'j1', fingerprint: 'other');
+
+        expect(await run.waitingFingerprint('j1'), 'other');
+      });
+
+      test('is null when the device cannot be read', () async {
+        await attempts().keyFor(jobId: 'j1', fingerprint: fingerprint);
+        store.broken = true;
+
+        expect(await attempts().waitingFingerprint('j1'), isNull);
+      });
     });
 
     test('never throws when the device cannot keep it, and still serves a '

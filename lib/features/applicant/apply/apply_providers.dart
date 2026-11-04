@@ -54,8 +54,8 @@ final applyAttemptsProvider = Provider<ApplyAttempts>(
 /// What the applicant did before on a job. A failure counts as "nothing":
 /// the API still refuses a second application, and the screen then says so.
 ///
-/// An application that is found settles any attempt that was waiting for an
-/// answer: the outcome is known now.
+/// It also settles the attempt that waits for an answer (see
+/// [_settleAttempt]).
 final previousApplicationProvider = FutureProvider.autoDispose
     .family<PreviousApplication?, String>((ref, jobId) async {
       if (!ref.watch(authNotifierProvider).isAuthenticated) return null;
@@ -63,12 +63,54 @@ final previousApplicationProvider = FutureProvider.autoDispose
       final attempts = ref.read(applyAttemptsProvider);
       try {
         final previous = await repository.previous(jobId);
-        if (previous != null) await attempts.done(jobId);
-        return previous;
+        if (previous == null) return null;
+        return await _settleAttempt(repository, attempts, jobId, previous);
       } on Object {
         return null;
       }
     }, retry: (_, _) => null);
+
+/// Settles the attempt that was waiting for an answer, now that the job has
+/// an application (BR-APP-009). The attempt is forgotten only once it is known
+/// what became of it, never merely because an application exists:
+///
+/// - the application is over (withdrawn, rejected): so is the attempt;
+/// - it holds exactly what the attempt sent: it is the attempt, whose answer
+///   was lost, and the result says so ([PreviousApplication.sentByAttempt]);
+/// - it holds something else: the attempt did not create it, the application
+///   is somebody else's and the screen says so;
+/// - what it holds cannot be read now: the attempt stays, and is settled the
+///   next time the job is opened.
+Future<PreviousApplication> _settleAttempt(
+  ApplyRepository repository,
+  ApplyAttempts attempts,
+  String jobId,
+  PreviousApplication previous,
+) async {
+  final waiting = await attempts.waitingFingerprint(jobId);
+  if (waiting == null) return previous;
+  if (applyBlockFor(previous) != ApplyBlock.alreadyApplied) {
+    await attempts.done(jobId);
+    return previous;
+  }
+  if (previous.id.isEmpty) return previous;
+  final held = await _fingerprintOrNull(repository, previous.id, jobId);
+  if (held == null) return previous;
+  await attempts.done(jobId);
+  return held == waiting ? previous.asSentByAttempt() : previous;
+}
+
+Future<String?> _fingerprintOrNull(
+  ApplyRepository repository,
+  String applicationId,
+  String jobId,
+) async {
+  try {
+    return await repository.fingerprintOf(applicationId, jobId);
+  } on Object {
+    return null;
+  }
+}
 
 /// Counts the applications sent in this session. The app listens to it to
 /// refresh the lists that show applications (`router.dart`), which keeps this

@@ -83,6 +83,27 @@ const _submittedId = '65f0a1b2c3d4e5f6a7b89011';
 ResponseBody _created(RequestOptions options) =>
     jsonBody({'id': _submittedId}, status: 201);
 
+/// What the application [_submittedId] holds, as the API returns it. By
+/// default it is what the usual flow sends: the default CV, no cover letter,
+/// no note and no certificate.
+Map<String, dynamic> _held({
+  String cv = 'cv1',
+  String? letter,
+  String? message,
+  List<String> certificates = const [],
+}) => {
+  'id': _submittedId,
+  'status': 'submitted',
+  'message': message,
+  'attachments': [
+    {'documentId': cv, 'type': 'cv'},
+    if (letter != null) {'documentId': letter, 'type': 'cover_letter'},
+  ],
+  'certificates': [
+    for (final id in certificates) {'id': id},
+  ],
+};
+
 /// The API of the apply flow. What a test does not set is the usual case: an
 /// open job, a default CV and another one, no cover letter, no certificate,
 /// and an application that is accepted.
@@ -95,6 +116,7 @@ FakeAdapter _adapter({
   ResponseBody Function(RequestOptions options)? documentList,
   List<Map<String, dynamic>> applications = const [],
   ResponseBody Function(RequestOptions options)? submit,
+  ResponseBody Function(RequestOptions options)? detail,
   ResponseBody Function(RequestOptions options)? upload,
 }) => FakeAdapter((options) {
   final path = options.path;
@@ -125,6 +147,9 @@ FakeAdapter _adapter({
   }
   if (path == '/api/v1/me/certificate-links') {
     return jsonBody({'items': certificates, 'total': certificates.length});
+  }
+  if (path == '/api/v1/me/applications/$_submittedId') {
+    return (detail ?? (_) => jsonBody(_held()))(options);
   }
   // The same path lists the applications (GET) and sends one (POST).
   if (path == '/api/v1/me/applications' && post) {
@@ -1127,28 +1152,182 @@ void main() {
       expect(device.data, isEmpty);
     });
 
-    testWidgets('an application found on the job settles the attempt that '
-        'was waiting', (tester) async {
+    /// A device that holds an attempt whose answer was lost: the first send
+    /// reached no one, as far as the app knows.
+    Future<_MemoryStore> lostAnswer(WidgetTester tester) async {
       final device = _MemoryStore();
       await _pump(tester, _adapter(submit: _noAnswer), attempts: device);
       await _continue(tester);
       await _tap(tester, 'apply.submit');
+      expect(find.text('apply.errors.offline'), findsOneWidget);
       expect(device.data, isNotEmpty);
-
-      // It was created after all: the next time the job is opened, it is found.
+      // The app is closed: only the device store is left.
       await tester.pumpWidget(const SizedBox.shrink());
+      return device;
+    }
+
+    final Map<String, dynamic> created = {
+      'id': _submittedId,
+      'status': 'submitted',
+      'canApplyAgain': false,
+    };
+
+    testWidgets('opening the job again after a lost answer shows the '
+        'application that first send created', (tester) async {
+      final device = await lostAnswer(tester);
+
+      // The API had created it after all. It holds what the attempt sent.
+      final container = await _pump(
+        tester,
+        _adapter(applications: [created]),
+        attempts: device,
+      );
+
+      expect(find.text('apply.submitted.title'), findsOneWidget);
+      expect(find.text('apply.blocked.alreadyApplied.title'), findsNothing);
+      // The attempt is over, and the lists that show applications read again.
+      expect(device.data, isEmpty);
+      expect(container.read(applicationSubmittedProvider), 1);
+      await _tap(tester, 'apply.submitted.view');
+      expect(find.text('application page $_submittedId'), findsOneWidget);
+    });
+
+    testWidgets('an application that holds something else is not the '
+        'attempt: it belongs to somebody else', (tester) async {
+      final device = await lostAnswer(tester);
+
       await _pump(
         tester,
         _adapter(
-          applications: [
-            {'id': _submittedId, 'status': 'submitted', 'canApplyAgain': false},
-          ],
+          applications: [created],
+          detail: (_) => jsonBody(_held(cv: 'cv2')),
         ),
         attempts: device,
       );
 
       expect(find.text('apply.blocked.alreadyApplied.title'), findsOneWidget);
+      expect(find.text('apply.submitted.title'), findsNothing);
       expect(device.data, isEmpty);
+    });
+
+    testWidgets('the attempt waits while what the application holds cannot '
+        'be read', (tester) async {
+      final device = await lostAnswer(tester);
+
+      await _pump(
+        tester,
+        _adapter(
+          applications: [created],
+          detail: (_) => jsonBody({'message': 'Down'}, status: 503),
+        ),
+        attempts: device,
+      );
+
+      // Nothing is concluded: the key is not thrown away merely because an
+      // application exists, and the applicant is not told they sent it.
+      expect(find.text('apply.blocked.alreadyApplied.title'), findsOneWidget);
+      expect(find.text('apply.submitted.title'), findsNothing);
+      expect(device.data, isNotEmpty);
+    });
+
+    testWidgets('an application that is over ends the attempt', (tester) async {
+      final device = await lostAnswer(tester);
+
+      await _pump(
+        tester,
+        _adapter(
+          applications: [
+            {
+              'id': _submittedId,
+              'status': 'withdrawn',
+              'canApplyAgain': true,
+              'withdrawnAt': '2026-11-01T08:00:00.000Z',
+            },
+          ],
+        ),
+        attempts: device,
+      );
+
+      expect(find.text('apply.continue'), findsOneWidget);
+      expect(find.text('apply.submitted.title'), findsNothing);
+      expect(device.data, isEmpty);
+    });
+
+    testWidgets('an application found on the job with no attempt waiting is '
+        'just the application page', (tester) async {
+      final device = _MemoryStore();
+
+      await _pump(tester, _adapter(applications: [created]), attempts: device);
+
+      expect(find.text('apply.blocked.alreadyApplied.title'), findsOneWidget);
+      expect(find.text('apply.submitted.title'), findsNothing);
+    });
+
+    testWidgets('after a doubtful send, an edit is not reported as sent when '
+        'the application holds the old version', (tester) async {
+      final applications = <Map<String, dynamic>>[];
+      var attempt = 0;
+      final adapter = _adapter(
+        applications: applications,
+        submit: (options) {
+          attempt++;
+          if (attempt == 1) {
+            // Created with no note, and the answer is lost.
+            applications.add(created);
+            return _noAnswer(options);
+          }
+          return jsonBody({
+            'code': 'ALREADY_APPLIED',
+            'message': 'Applied',
+          }, status: 409);
+        },
+      );
+      await _pump(tester, adapter);
+      await _continue(tester);
+      await _tap(tester, 'apply.submit');
+      expect(find.text('apply.errors.offline'), findsOneWidget);
+
+      // The applicant adds a note and sends again.
+      await tester.enterText(find.byType(TextField), 'A new note');
+      await _tap(tester, 'apply.submit');
+
+      // The application that exists has no note: the note was not sent, and
+      // the applicant is told they already applied, not that it went through.
+      expect(_posts(adapter), hasLength(2));
+      expect(keyOf(adapter, 1), isNot(keyOf(adapter, 0)));
+      expect(find.text('apply.blocked.alreadyApplied.title'), findsOneWidget);
+      expect(find.text('apply.submitted.title'), findsNothing);
+    });
+
+    testWidgets('after a doubtful send, the same application sent again is '
+        'reported as sent when the application holds it', (tester) async {
+      final applications = <Map<String, dynamic>>[];
+      var attempt = 0;
+      final adapter = _adapter(
+        applications: applications,
+        detail: (_) => jsonBody(_held(message: 'My note')),
+        submit: (options) {
+          attempt++;
+          if (attempt == 1) {
+            applications.add(created);
+            return _noAnswer(options);
+          }
+          return jsonBody({
+            'code': 'ALREADY_APPLIED',
+            'message': 'Applied',
+          }, status: 409);
+        },
+      );
+      await _pump(tester, adapter);
+      await _continue(tester);
+      await tester.enterText(find.byType(TextField), '  My note ');
+      await _tap(tester, 'apply.submit');
+      expect(find.text('apply.errors.offline'), findsOneWidget);
+
+      await _tap(tester, 'apply.submit');
+
+      expect(find.text('apply.submitted.title'), findsOneWidget);
+      expect(find.text('apply.blocked.alreadyApplied.title'), findsNothing);
     });
   });
 }

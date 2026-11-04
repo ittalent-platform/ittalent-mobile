@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../api/client.dart';
+import 'apply_attempts.dart';
 import 'apply_constants.dart';
 import 'apply_files.dart';
 import 'apply_models.dart';
@@ -90,6 +91,38 @@ class ApplyRepository {
     );
     final items = _items(response.data);
     return items.isEmpty ? null : PreviousApplication.fromJson(items.first);
+  }
+
+  /// What the application [id] holds, as an [applyFingerprint]: the CV, the
+  /// cover letter, the note and the certificates it was sent with. It is how
+  /// an application is told to be (or not to be) what an attempt sent.
+  Future<String> fingerprintOf(String id, String jobId) async {
+    final response = await client.get<Map<String, dynamic>>(
+      ApplyConstants.applicationPath(id),
+    );
+    final data = response.data ?? const <String, dynamic>{};
+
+    // The document of one kind among what the application attached.
+    String? attached(String type) {
+      for (final item in (data['attachments'] as List<dynamic>?) ?? const []) {
+        if (item is Map<String, dynamic> && item['type'] == type) {
+          return item['documentId'] as String?;
+        }
+      }
+      return null;
+    }
+
+    return applyFingerprint(
+      jobId: jobId,
+      cvId: attached(ApplyConstants.typeCv) ?? '',
+      coverLetterId: attached(ApplyConstants.typeCoverLetter),
+      message: data['message'] as String? ?? '',
+      certificateIds: [
+        for (final item in (data['certificates'] as List<dynamic>?) ?? const [])
+          if (item is Map<String, dynamic> && item['id'] is String)
+            item['id'] as String,
+      ],
+    );
   }
 
   /// Saves [file] to the applicant's documents, as the documents screen does.
