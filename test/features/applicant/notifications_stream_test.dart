@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -80,6 +81,29 @@ void main() {
       expect(events.length, 1);
       expect(events[0]['event'], 'notification');
       expect(events[0]['data']['id'], 'notif-no-space');
+    });
+
+    test('parses Uint8List streams without Utf8Decoder type error', () async {
+      final controller = StreamController<Uint8List>();
+
+      final parsedEventsFuture = NotificationSseParser.parse(controller.stream)
+          .toList();
+
+      controller.add(
+        Uint8List.fromList(
+          utf8.encode(
+            'event: notification\ndata: {"id":"notif-uint8","title":"Uint8 Test"}\n\n',
+          ),
+        ),
+      );
+
+      await controller.close();
+
+      final events = await parsedEventsFuture;
+      expect(events.length, 1);
+      expect(events[0]['event'], 'notification');
+      expect(events[0]['data']['id'], 'notif-uint8');
+      expect(events[0]['data']['title'], 'Uint8 Test');
     });
   });
 

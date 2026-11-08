@@ -18,8 +18,8 @@ class NotificationSseParser {
   static Stream<Map<String, dynamic>> parse(
     Stream<List<int>> byteStream,
   ) async* {
-    final lineStream = byteStream
-        .transform(utf8.decoder)
+    final lineStream = utf8.decoder
+        .bind(byteStream)
         .transform(const LineSplitter());
 
     String? currentEvent;
