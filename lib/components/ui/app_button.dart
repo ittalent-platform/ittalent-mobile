@@ -18,6 +18,7 @@ class AppButton extends StatelessWidget {
     this.size = AppButtonSize.md,
     this.isLoading = false,
     this.isFullWidth = false,
+    this.borderRadius,
   }) : assert(
          text != null || icon != null,
          'AppButton requires either text or icon',
@@ -30,6 +31,7 @@ class AppButton extends StatelessWidget {
   final AppButtonSize size;
   final bool isLoading;
   final bool isFullWidth;
+  final BorderRadiusGeometry? borderRadius;
 
   @override
   Widget build(BuildContext context) {
@@ -143,7 +145,7 @@ class AppButton extends StatelessWidget {
     Widget button = Material(
       color: backgroundColor,
       shape: RoundedRectangleBorder(
-        borderRadius: AppRadius.buttonRadius,
+        borderRadius: borderRadius ?? AppRadius.buttonRadius,
         side: borderSide,
       ),
       clipBehavior: Clip.antiAlias,

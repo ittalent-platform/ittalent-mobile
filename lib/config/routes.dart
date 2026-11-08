@@ -18,6 +18,7 @@ class AppRoutes {
   static const String notifications = '/notifications';
   static const String certificates = '/certificates';
   static const String documents = '/profile/documents';
+  static const String savedJobs = '/profile/saved-jobs';
   static const String portfolio = '/portfolio';
   static const String profile = '/profile';
   static const String profileDetails = '/profile/details';
