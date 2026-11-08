@@ -223,23 +223,23 @@ class SavedJobCard extends ConsumerWidget {
                         customBorder: const CircleBorder(),
                         onTap: isRemoving ? null : () => onRemove(item),
                         child: Padding(
-                          padding: const EdgeInsets.all(9),
+                          padding: const EdgeInsets.all(7),
                           child: Icon(
                             Icons.favorite,
-                            size: 18,
+                            size: 16,
                             color: colors.primary,
                           ),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 6),
                     AppButton(
                       text: tr(
                         hasApplied
                             ? 'savedJobs.card.submitted'
                             : 'savedJobs.card.apply',
                       ),
-                      size: AppButtonSize.sm,
+                      size: AppButtonSize.xs,
                       borderRadius: AppRadius.pillRadius,
                       onPressed:
                           hasApplied || isRemoving
