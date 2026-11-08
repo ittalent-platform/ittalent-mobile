@@ -47,7 +47,12 @@ class SavedJobsQueryNotifier extends Notifier<SavedJobsQuery> {
   }
 
   void setSearch(String? q) {
-    state = state.copyWith(q: q, page: 1);
+    final trimmed = q?.trim();
+    if (trimmed == null || trimmed.isEmpty) {
+      state = state.copyWith(clearQuery: true, page: 1);
+    } else {
+      state = state.copyWith(q: trimmed, page: 1);
+    }
   }
 
   void setPage(int page) {

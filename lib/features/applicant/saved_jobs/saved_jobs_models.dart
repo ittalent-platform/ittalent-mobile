@@ -131,6 +131,8 @@ class SavedJobsCounts {
   }
 }
 
+const Object _unspecified = Object();
+
 @immutable
 class SavedJobsQuery {
   const SavedJobsQuery({
@@ -160,14 +162,17 @@ class SavedJobsQuery {
 
   SavedJobsQuery copyWith({
     String? status,
-    String? q,
+    Object? q = _unspecified,
     int? page,
     int? limit,
     bool clearQuery = false,
   }) {
+    final newQ = clearQuery
+        ? null
+        : (identical(q, _unspecified) ? this.q : q as String?);
     return SavedJobsQuery(
       status: status ?? this.status,
-      q: clearQuery ? null : (q ?? this.q),
+      q: newQ,
       page: page ?? this.page,
       limit: limit ?? this.limit,
     );

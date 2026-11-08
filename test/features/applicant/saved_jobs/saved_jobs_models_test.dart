@@ -70,6 +70,26 @@ void main() {
       expect(params['limit'], 10);
     });
 
+    test('SavedJobsQuery copyWith clears query when passed null or clearQuery', () {
+      const query = SavedJobsQuery(
+        status: 'available',
+        q: 'java',
+        page: 2,
+        limit: 10,
+      );
+
+      final clearedByNull = query.copyWith(q: null);
+      expect(clearedByNull.q, isNull);
+      expect(clearedByNull.toQueryParams()['q'], isNull);
+
+      final clearedByFlag = query.copyWith(clearQuery: true);
+      expect(clearedByFlag.q, isNull);
+      expect(clearedByFlag.toQueryParams()['q'], isNull);
+
+      final kept = query.copyWith(page: 3);
+      expect(kept.q, 'java');
+    });
+
     test('SavedJobsResponse parses list of items', () {
       final json = {
         'items': [
