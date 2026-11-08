@@ -10,6 +10,7 @@ void main() {
     WidgetTester tester, {
     bool error = false,
     bool undo = false,
+    String actionLabel = 'Undo',
   }) async {
     await tester.pumpWidget(
       MaterialApp(
@@ -22,7 +23,7 @@ void main() {
                 'Saved',
                 error: error,
                 action: undo
-                    ? SnackBarAction(label: 'Undo', onPressed: () {})
+                    ? SnackBarAction(label: actionLabel, onPressed: () {})
                     : null,
               ),
               child: const Text('go'),
@@ -78,5 +79,13 @@ void main() {
     expect(tester.widget<SnackBar>(find.byType(SnackBar)).persist, isTrue);
     await tester.pump(const Duration(seconds: 5));
     expect(find.text('Saved'), findsOneWidget);
+  });
+
+  testWidgets('a long action label stays on the message row', (tester) async {
+    await show(tester, undo: true, actionLabel: 'Set as default CV');
+
+    final message = tester.getCenter(find.text('Saved'));
+    final action = tester.getCenter(find.text('Set as default CV'));
+    expect((action.dy - message.dy).abs(), lessThan(8));
   });
 }

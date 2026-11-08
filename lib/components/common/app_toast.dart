@@ -18,6 +18,8 @@ void showAppToast(
     ..showSnackBar(
       SnackBar(
         action: action,
+        // Keep the action on the message row (design) instead of wrapping below.
+        actionOverflowThreshold: 1,
         persist:
             action != null &&
             MediaQuery.accessibleNavigationOf(messenger.context),

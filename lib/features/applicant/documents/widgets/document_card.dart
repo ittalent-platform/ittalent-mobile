@@ -5,10 +5,10 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../components/ui/app_badge.dart';
 import '../../../../components/ui/app_card.dart';
 import '../../../../theme/app_colors.dart';
-import '../../../../theme/app_radius.dart';
 import '../../../../theme/app_typography.dart';
 import '../document_formatters.dart';
 import '../document_model.dart';
+import 'document_type_tile.dart';
 
 class DocumentCard extends StatelessWidget {
   const DocumentCard({
@@ -36,32 +36,7 @@ class DocumentCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 42,
-                height: 52,
-                decoration: BoxDecoration(
-                  color: isCv ? colors.statusPeachBg : colors.statusInfoBg,
-                  borderRadius: AppRadius.inputRadius,
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      LucideIcons.fileText,
-                      size: 18,
-                      color: isCv ? colors.primary : colors.statusInfoFg,
-                    ),
-                    Text(
-                      tr(isCv ? 'documents.typeCv' : 'documents.mobile.cl'),
-                      style: AppTypography.body(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: isCv ? colors.primary : colors.statusInfoFg,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              DocumentTypeTile(type: item.type),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(

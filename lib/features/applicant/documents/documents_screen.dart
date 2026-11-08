@@ -31,6 +31,7 @@ import 'widgets/document_action_sheet.dart';
 import 'widgets/document_card.dart';
 import 'widgets/document_filter_chips.dart';
 import 'widgets/document_preview_screen.dart';
+import 'widgets/document_upload_sheet.dart';
 import 'widgets/document_upload_card.dart';
 
 String documentError(
@@ -130,53 +131,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
     setState(() => _busy = true);
     try {
       FocusScope.of(context).unfocus();
-      final type = await showModalBottomSheet<DocumentType>(
-        context: context,
-        backgroundColor: context.colors.card,
-        isScrollControlled: true,
-        builder: (sheetContext) => SafeArea(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    tr('documents.mobile.sheetTitle'),
-                    style: AppTypography.display(fontSize: 22),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(tr('documents.mobile.helper')),
-                  const SizedBox(height: 16),
-                  for (final choice in DocumentType.values)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: AppButton(
-                        key: Key('pick_${choice.value}'),
-                        size: AppButtonSize.lg,
-                        text: tr(
-                          choice == DocumentType.cv
-                              ? 'documents.mobile.uploadCv'
-                              : 'documents.mobile.uploadCover',
-                        ),
-                        icon: const Icon(LucideIcons.fileUp),
-                        variant: AppButtonVariant.outline,
-                        onPressed: () => Navigator.pop(sheetContext, choice),
-                      ),
-                    ),
-                  AppButton(
-                    size: AppButtonSize.lg,
-                    text: tr('documents.mobile.cancel'),
-                    variant: AppButtonVariant.ghost,
-                    onPressed: () => Navigator.pop(sheetContext),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      );
+      final type = await showDocumentUploadSheet(context);
       if (type == null || !mounted) return;
       final file = await ref.read(documentFilesProvider).pick();
       if (!mounted) return;
@@ -236,7 +191,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
       _toast(
         tr('documents.uploadedTitle'),
         actionLabel: uploaded.type == DocumentType.cv && !uploaded.isDefault
-            ? tr('documents.mobile.setDefault')
+            ? tr('documents.mobile.setDefaultShort')
             : null,
         action: uploaded.type == DocumentType.cv && !uploaded.isDefault
             ? () => _setDefault(uploaded)
@@ -531,28 +486,18 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
         ?.value;
     return ScreenScaffold(
       appBar: AppBar(
-        leading: IconButton(
-          tooltip: tr('documents.mobile.back'),
-          icon: const Icon(LucideIcons.chevronLeft),
+        leadingWidth: 96,
+        leading: TextButton.icon(
+          style: TextButton.styleFrom(foregroundColor: context.colors.primary),
+          icon: const Icon(LucideIcons.chevronLeft, size: 20),
+          label: Text(tr('certificates.back')),
           onPressed: () =>
               context.canPop() ? context.pop() : context.go(AppRoutes.profile),
         ),
-        title: Text(tr('documents.title')),
-        actions: [
-          IconButton(
-            tooltip: tr('documents.mobile.refresh'),
-            icon: const Icon(LucideIcons.refreshCw),
-            onPressed: () {
-              ref.invalidate(documentsProvider);
-              _invalidateDocumentCounts();
-            },
-          ),
-        ],
       ),
       floatingActionButton: FloatingActionButton(
         key: const Key('documents_upload'),
         shape: const CircleBorder(),
-        elevation: 0,
         tooltip: tr('documents.mobile.upload'),
         backgroundColor: context.colors.primary,
         foregroundColor: context.colors.primaryForeground,
@@ -562,6 +507,14 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          Text(
+            tr('documents.title'),
+            style: AppTypography.display(
+              fontSize: 28,
+              fontWeight: FontWeight.w700,
+              color: context.colors.foreground,
+            ),
+          ),
           const SizedBox(height: 12),
           AppInput(
             controller: _search,
@@ -628,14 +581,6 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
                       ),
                     ),
                   _content(async, query),
-                  const SizedBox(height: 12),
-                  Text(
-                    tr('documents.mobile.helper'),
-                    style: AppTypography.body(
-                      fontSize: 12,
-                      color: context.colors.mutedForeground,
-                    ),
-                  ),
                 ],
               ),
             ),
