@@ -161,7 +161,7 @@ class SavedJobCard extends ConsumerWidget {
                               TextSpan(
                                 text: salaryText,
                                 style: AppTypography.body(
-                                  fontSize: 15,
+                                  fontSize: 13,
                                   fontWeight: FontWeight.w700,
                                   color: colors.foreground,
                                 ),
@@ -170,12 +170,14 @@ class SavedJobCard extends ConsumerWidget {
                                 TextSpan(
                                   text: ' ${tr('jobs.salary.perMonth')}',
                                   style: AppTypography.body(
-                                    fontSize: 13,
+                                    fontSize: 11,
                                     color: colors.mutedForeground,
                                   ),
                                 ),
                             ],
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       const SizedBox(height: 4),
                       Wrap(
@@ -223,23 +225,23 @@ class SavedJobCard extends ConsumerWidget {
                         customBorder: const CircleBorder(),
                         onTap: isRemoving ? null : () => onRemove(item),
                         child: Padding(
-                          padding: const EdgeInsets.all(7),
+                          padding: const EdgeInsets.all(9),
                           child: Icon(
                             Icons.favorite,
-                            size: 16,
+                            size: 18,
                             color: colors.primary,
                           ),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 8),
                     AppButton(
                       text: tr(
                         hasApplied
                             ? 'savedJobs.card.submitted'
                             : 'savedJobs.card.apply',
                       ),
-                      size: AppButtonSize.xs,
+                      size: AppButtonSize.sm,
                       borderRadius: AppRadius.pillRadius,
                       onPressed:
                           hasApplied || isRemoving

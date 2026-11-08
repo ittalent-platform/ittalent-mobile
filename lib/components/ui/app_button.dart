@@ -6,7 +6,7 @@ import '../../theme/app_typography.dart';
 
 enum AppButtonVariant { primary, secondary, outline, ghost, destructive }
 
-enum AppButtonSize { xs, sm, md, lg, icon }
+enum AppButtonSize { sm, md, lg, icon }
 
 class AppButton extends StatelessWidget {
   const AppButton({
@@ -81,11 +81,6 @@ class AppButton extends StatelessWidget {
     double height;
 
     switch (size) {
-      case AppButtonSize.xs:
-        height = 30;
-        padding = const EdgeInsets.symmetric(horizontal: 10);
-        fontSize = 12;
-        break;
       case AppButtonSize.sm:
         height = 36;
         padding = const EdgeInsets.symmetric(horizontal: 12);
