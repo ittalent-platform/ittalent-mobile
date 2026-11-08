@@ -113,9 +113,9 @@ class UnavailableJobCard extends StatelessWidget {
                     customBorder: const CircleBorder(),
                     onTap: isRemoving ? null : () => onRequestRemove(item),
                     child: Padding(
-                      padding: const EdgeInsets.all(10),
+                      padding: const EdgeInsets.all(9),
                       child: Icon(
-                        LucideIcons.heart,
+                        Icons.favorite,
                         size: 18,
                         color: colors.primary,
                       ),

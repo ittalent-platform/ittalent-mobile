@@ -1,6 +1,5 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../components/common/company_avatar.dart';
 import '../../../../components/ui/app_badge.dart';
@@ -158,88 +157,99 @@ class SavedJobCard extends StatelessWidget {
             Divider(color: colors.border.withValues(alpha: 0.7), height: 1),
             const SizedBox(height: 10),
 
-            // Salary, Badges & Deadlines
-            if (salaryText != null)
-              Text.rich(
-                TextSpan(
-                  children: [
-                    TextSpan(
-                      text: salaryText,
-                      style: AppTypography.body(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: colors.foreground,
+            // Bottom row: Salary & Meta on the left, Heart & Apply on the right
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (salaryText != null)
+                        Text.rich(
+                          TextSpan(
+                            children: [
+                              TextSpan(
+                                text: salaryText,
+                                style: AppTypography.body(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                  color: colors.foreground,
+                                ),
+                              ),
+                              if (isVndSalary)
+                                TextSpan(
+                                  text: ' ${tr('jobs.salary.perMonth')}',
+                                  style: AppTypography.body(
+                                    fontSize: 13,
+                                    color: colors.mutedForeground,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      const SizedBox(height: 4),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 4,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          if (item.isClosingSoon)
+                            AppBadge(
+                              label: tr('savedJobs.card.closesIn2Days'),
+                              tone: BadgeTone.warning,
+                            ),
+                          if (deadlineText != null)
+                            Text(
+                              deadlineText,
+                              style: AppTypography.body(
+                                fontSize: 12,
+                                color: colors.mutedForeground,
+                              ),
+                            ),
+                          if (savedAgo != null)
+                            Text(
+                              tr(
+                                'savedJobs.card.savedTime',
+                                namedArgs: {'time': savedAgo},
+                              ),
+                              style: AppTypography.body(
+                                fontSize: 12,
+                                color: colors.mutedForeground,
+                              ),
+                            ),
+                        ],
                       ),
-                    ),
-                    if (isVndSalary)
-                      TextSpan(
-                        text: ' ${tr('jobs.salary.perMonth')}',
-                        style: AppTypography.body(
-                          fontSize: 13,
-                          color: colors.mutedForeground,
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Material(
+                      color: colors.statusPeachBg,
+                      shape: const CircleBorder(),
+                      child: InkWell(
+                        customBorder: const CircleBorder(),
+                        onTap: isRemoving ? null : () => onRemove(item),
+                        child: Padding(
+                          padding: const EdgeInsets.all(9),
+                          child: Icon(
+                            Icons.favorite,
+                            size: 18,
+                            color: colors.primary,
+                          ),
                         ),
                       ),
+                    ),
+                    const SizedBox(width: 8),
+                    AppButton(
+                      text: tr('savedJobs.card.apply'),
+                      size: AppButtonSize.sm,
+                      onPressed: isRemoving ? null : (onApply ?? onTap),
+                    ),
                   ],
-                ),
-              ),
-
-            const SizedBox(height: 6),
-            Wrap(
-              spacing: 8,
-              runSpacing: 4,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                if (item.isClosingSoon)
-                  AppBadge(
-                    label: tr('savedJobs.card.closesIn2Days'),
-                    tone: BadgeTone.warning,
-                  ),
-                if (deadlineText != null)
-                  Text(
-                    deadlineText,
-                    style: AppTypography.body(
-                      fontSize: 12,
-                      color: colors.mutedForeground,
-                    ),
-                  ),
-                if (savedAgo != null)
-                  Text(
-                    tr('savedJobs.card.savedTime', namedArgs: {'time': savedAgo}),
-                    style: AppTypography.body(
-                      fontSize: 12,
-                      color: colors.mutedForeground,
-                    ),
-                  ),
-              ],
-            ),
-
-            const SizedBox(height: 12),
-
-            // Action row: Heart button + Apply button
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // Heart button (tinted circle, filled heart)
-                Material(
-                  color: colors.statusPeachBg,
-                  shape: const CircleBorder(),
-                  child: InkWell(
-                    customBorder: const CircleBorder(),
-                    onTap: isRemoving ? null : () => onRemove(item),
-                    child: Padding(
-                      padding: const EdgeInsets.all(10),
-                      child: Icon(
-                        LucideIcons.heart,
-                        size: 18,
-                        color: colors.primary,
-                      ),
-                    ),
-                  ),
-                ),
-                AppButton(
-                  text: tr('savedJobs.card.apply'),
-                  size: AppButtonSize.sm,
-                  onPressed: isRemoving ? null : (onApply ?? onTap),
                 ),
               ],
             ),

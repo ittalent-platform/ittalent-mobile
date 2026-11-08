@@ -3,7 +3,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import 'package:ittalent_mobile/api/client.dart';
 import 'package:ittalent_mobile/auth/auth_notifier.dart';
@@ -117,7 +116,7 @@ void main() {
       await tester.tap(find.byType(SavedJobCard));
       expect(tapped, isTrue);
 
-      await tester.tap(find.byIcon(LucideIcons.heart));
+      await tester.tap(find.byIcon(Icons.favorite));
       expect(removed, isTrue);
     });
   });
@@ -144,7 +143,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byType(UnavailableJobCard), findsOneWidget);
 
-      await tester.tap(find.byIcon(LucideIcons.heart));
+      await tester.tap(find.byIcon(Icons.favorite));
       expect(requestRemove, isTrue);
     });
   });
