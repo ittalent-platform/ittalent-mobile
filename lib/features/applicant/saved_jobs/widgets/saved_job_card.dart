@@ -236,11 +236,15 @@ class SavedJobCard extends ConsumerWidget {
                     ),
                     const SizedBox(width: 8),
                     AppButton(
-                      text: tr(
-                        hasApplied
-                            ? 'savedJobs.card.submitted'
-                            : 'savedJobs.card.apply',
-                      ),
+                      text: hasApplied
+                          ? (tr('savedJobs.card.submitted') !=
+                                  'savedJobs.card.submitted'
+                              ? tr('savedJobs.card.submitted')
+                              : (tr('applications.card.status.submitted') !=
+                                      'applications.card.status.submitted'
+                                  ? tr('applications.card.status.submitted')
+                                  : 'Submitted'))
+                          : tr('savedJobs.card.apply'),
                       size: AppButtonSize.sm,
                       borderRadius: AppRadius.pillRadius,
                       onPressed:

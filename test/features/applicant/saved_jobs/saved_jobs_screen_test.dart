@@ -150,7 +150,7 @@ void main() {
       );
 
       await tester.pumpAndSettle();
-      expect(find.text('savedJobs.card.submitted'), findsOneWidget);
+      expect(find.text('Submitted'), findsOneWidget);
     });
   });
 
