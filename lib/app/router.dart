@@ -24,6 +24,7 @@ import '../features/applicant/notifications/announcement_detail_screen.dart';
 import '../features/applicant/notifications/notifications_providers.dart';
 import '../features/applicant/notifications/notifications_screen.dart';
 import '../features/applicant/portfolio/portfolio_screen.dart';
+import '../features/applicant/saved_jobs/saved_jobs_screen.dart';
 import '../features/auth/forgot_password/forgot_password_screen.dart';
 import '../features/auth/forgot_password/reset_link_sent_screen.dart';
 import '../features/auth/login/login_screen.dart';
@@ -391,6 +392,10 @@ final routerProvider = Provider<GoRouter>((ref) {
                   GoRoute(
                     path: 'documents',
                     builder: (context, state) => const DocumentsScreen(),
+                  ),
+                  GoRoute(
+                    path: 'saved-jobs',
+                    builder: (context, state) => const SavedJobsScreen(),
                   ),
                 ],
               ),

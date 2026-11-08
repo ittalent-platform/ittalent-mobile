@@ -136,8 +136,7 @@ class MeScreen extends ConsumerWidget {
                   key: const Key('me_menu_saved_jobs'),
                   icon: LucideIcons.heart,
                   title: tr('profile.me.savedJobs'),
-                  trailingChevron: false,
-                  onTap: null,
+                  onTap: () => context.push(AppRoutes.savedJobs),
                 ),
                 AppMenuTile(
                   key: const Key('me_menu_my_reports'),
