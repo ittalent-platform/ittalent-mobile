@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../api/client.dart';
 import '../../../auth/auth_notifier.dart';
+import '../../../config/routes.dart';
 import 'notifications_constants.dart';
 
 class NotificationItem {
@@ -58,13 +59,20 @@ class NotificationItem {
   }
 
   factory NotificationItem.fromJson(Map<String, dynamic> json) {
+    final actionUrl =
+        json['actionUrl'] as String? ?? json['action_url'] as String?;
+    final applicationId = RegExp(r'^/applications/([0-9a-fA-F]{24})$')
+        .firstMatch(actionUrl ?? '')
+        ?.group(1);
     return NotificationItem(
       id: json['id'] as String? ?? json['_id'] as String? ?? '',
       title: json['title'] as String? ?? '',
       message: json['message'] as String? ?? '',
       type: json['type'] as String? ?? NotificationConstants.typeAccountAlert,
       category: json['category'] as String? ?? 'info',
-      actionUrl: json['actionUrl'] as String? ?? json['action_url'] as String?,
+      actionUrl: applicationId == null
+          ? actionUrl
+          : AppRoutes.applicationDetail(applicationId),
       data: json['data'] as Map<String, dynamic>?,
       isRead: json['isRead'] as bool? ?? json['is_read'] as bool? ?? false,
       readAt: json['readAt'] != null
