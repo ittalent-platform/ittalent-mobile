@@ -29,7 +29,7 @@ class DocumentFilterChips extends StatelessWidget {
               padding: const EdgeInsets.only(right: 8),
               child: ChoiceChip(
                 key: Key('filter_${type?.value ?? 'all'}'),
-                label: Text(_label(type)),
+                label: _label(context, type, selectedType == type),
                 selected: selectedType == type,
                 showCheckmark: false,
                 selectedColor: context.colors.statusPeachBg,
@@ -55,13 +55,29 @@ class DocumentFilterChips extends StatelessWidget {
     );
   }
 
-  String _label(DocumentType? type) {
+  Widget _label(BuildContext context, DocumentType? type, bool selected) {
     final label = tr(
       type == null ? 'documents.mobile.all' : 'documents.tabs.${type.value}',
     );
-    return tr(
-      'documents.mobile.filterCount',
-      namedArgs: {'label': label, 'count': '${counts?.forType(type) ?? '—'}'},
+    final count = '${counts?.forType(type) ?? '—'}';
+    final colors = context.colors;
+    return Text.rich(
+      TextSpan(
+        text: label,
+        children: [
+          TextSpan(
+            text: ' $count',
+            style: TextStyle(
+              fontWeight: FontWeight.w400,
+              color: selected ? colors.primary : colors.mutedForeground,
+            ),
+          ),
+        ],
+      ),
+      semanticsLabel: tr(
+        'documents.mobile.filterCount',
+        namedArgs: {'label': label, 'count': count},
+      ),
     );
   }
 }
