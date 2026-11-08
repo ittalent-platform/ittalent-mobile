@@ -2,10 +2,8 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../components/common/company_avatar.dart';
-import '../../../../components/ui/app_badge.dart';
 import '../../../../components/ui/app_button.dart';
 import '../../../../components/ui/app_card.dart';
-import '../../../../components/ui/app_tag.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_typography.dart';
 import '../../jobs/jobs_format.dart';
@@ -26,8 +24,6 @@ class SavedJobCard extends StatelessWidget {
   final VoidCallback? onTap;
   final VoidCallback? onApply;
   final bool isRemoving;
-
-  static const double avatarSize = 44;
 
   String? _formatSalary(BuildContext context) {
     if (item.salaryNegotiable) {
@@ -77,26 +73,30 @@ class SavedJobCard extends StatelessWidget {
             ? item.enterprise!.name.trim()
             : tr('savedJobs.card.companyFallback');
 
-    final meta = [
+    final locationText = [
       companyName,
       if (item.location != null && item.location!.isNotEmpty) item.location!,
-      if (item.employmentType != null && item.employmentType!.isNotEmpty)
-        JobFormat.employmentLabel(item.employmentType!),
     ].join(' · ');
 
-    final tags = [
-      if (item.employmentType != null && item.employmentType!.isNotEmpty)
-        JobFormat.employmentLabel(item.employmentType!),
-      if (item.level != null && item.level!.isNotEmpty)
-        JobFormat.levelLabel(item.level!),
-    ];
-
     final salaryText = _formatSalary(context);
-    final isVndSalary = item.currency == 'VND' && !item.salaryNegotiable && item.hasSalary;
+    final isVndSalary =
+        item.currency == 'VND' && !item.salaryNegotiable && item.hasSalary;
     final savedAgo = JobFormat.postedAgo(item.savedAt, now);
-    final deadlineText = item.expiresAt != null
-        ? JobFormat.applyBy(item.expiresAt, Localizations.localeOf(context).toString(), now)
-        : null;
+    final deadlineText =
+        item.expiresAt != null
+            ? JobFormat.applyBy(
+              item.expiresAt,
+              Localizations.localeOf(context).toString(),
+              now,
+            )
+            : null;
+
+    final meta = [
+      if (savedAgo != null)
+        tr('savedJobs.card.savedTime', namedArgs: {'time': savedAgo}),
+      if (item.isClosingSoon) tr('savedJobs.card.closesIn2Days'),
+      ?deadlineText,
+    ].join(' · ');
 
     return Opacity(
       opacity: isRemoving ? 0.4 : 1.0,
@@ -105,15 +105,10 @@ class SavedJobCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Top Section: Avatar & Info
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                CompanyAvatar(
-                  name: companyName,
-                  size: avatarSize,
-                  tinted: true,
-                ),
+                CompanyAvatar(name: companyName),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -129,9 +124,9 @@ class SavedJobCard extends StatelessWidget {
                           color: colors.foreground,
                         ),
                       ),
-                      const SizedBox(height: 3),
+                      const SizedBox(height: 2),
                       Text(
-                        meta,
+                        locationText,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: AppTypography.body(
@@ -139,40 +134,15 @@ class SavedJobCard extends StatelessWidget {
                           color: colors.mutedForeground,
                         ),
                       ),
-                      if (tags.isNotEmpty) ...[
-                        const SizedBox(height: 8),
-                        Wrap(
-                          spacing: 6,
-                          runSpacing: 6,
-                          children: [for (final tag in tags) AppTag(label: tag)],
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 12),
-            Divider(color: colors.border.withValues(alpha: 0.7), height: 1),
-            const SizedBox(height: 10),
-
-            // Bottom row: Salary & Meta on the left, Heart & Apply on the right
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (salaryText != null)
+                      if (salaryText != null) ...[
+                        const SizedBox(height: 6),
                         Text.rich(
                           TextSpan(
                             children: [
                               TextSpan(
                                 text: salaryText,
                                 style: AppTypography.body(
-                                  fontSize: 15,
+                                  fontSize: 14,
                                   fontWeight: FontWeight.w700,
                                   color: colors.foreground,
                                 ),
@@ -181,52 +151,27 @@ class SavedJobCard extends StatelessWidget {
                                 TextSpan(
                                   text: ' ${tr('jobs.salary.perMonth')}',
                                   style: AppTypography.body(
-                                    fontSize: 13,
+                                    fontSize: 12,
                                     color: colors.mutedForeground,
                                   ),
                                 ),
                             ],
                           ),
                         ),
-                      const SizedBox(height: 4),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 4,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: [
-                          if (item.isClosingSoon)
-                            AppBadge(
-                              label: tr('savedJobs.card.closesIn2Days'),
-                              tone: BadgeTone.warning,
-                            ),
-                          if (deadlineText != null)
-                            Text(
-                              deadlineText,
-                              style: AppTypography.body(
-                                fontSize: 12,
-                                color: colors.mutedForeground,
-                              ),
-                            ),
-                          if (savedAgo != null)
-                            Text(
-                              tr(
-                                'savedJobs.card.savedTime',
-                                namedArgs: {'time': savedAgo},
-                              ),
-                              style: AppTypography.body(
-                                fontSize: 12,
-                                color: colors.mutedForeground,
-                              ),
-                            ),
-                        ],
-                      ),
+                      ],
                     ],
                   ),
                 ),
                 const SizedBox(width: 8),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
+                    AppButton(
+                      text: tr('savedJobs.card.apply'),
+                      size: AppButtonSize.sm,
+                      onPressed: isRemoving ? null : (onApply ?? onTap),
+                    ),
+                    const SizedBox(height: 8),
                     Material(
                       color: colors.statusPeachBg,
                       shape: const CircleBorder(),
@@ -234,7 +179,7 @@ class SavedJobCard extends StatelessWidget {
                         customBorder: const CircleBorder(),
                         onTap: isRemoving ? null : () => onRemove(item),
                         child: Padding(
-                          padding: const EdgeInsets.all(9),
+                          padding: const EdgeInsets.all(8),
                           child: Icon(
                             Icons.favorite,
                             size: 18,
@@ -243,16 +188,20 @@ class SavedJobCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    AppButton(
-                      text: tr('savedJobs.card.apply'),
-                      size: AppButtonSize.sm,
-                      onPressed: isRemoving ? null : (onApply ?? onTap),
-                    ),
                   ],
                 ),
               ],
             ),
+            if (meta.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Text(
+                meta,
+                style: AppTypography.body(
+                  fontSize: 12,
+                  color: colors.mutedForeground,
+                ),
+              ),
+            ],
           ],
         ),
       ),

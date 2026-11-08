@@ -77,35 +77,7 @@ class UnavailableJobCard extends StatelessWidget {
                     ],
                   ),
                 ),
-              ],
-            ),
-
-            const SizedBox(height: 12),
-            Divider(color: colors.border.withValues(alpha: 0.6), height: 1),
-            const SizedBox(height: 10),
-
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    AppTag(label: tr('savedJobs.unavailable.tag')),
-                    if (savedAgo != null) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        tr(
-                          'savedJobs.card.savedTime',
-                          namedArgs: {'time': savedAgo},
-                        ),
-                        style: AppTypography.body(
-                          fontSize: 12,
-                          color: colors.mutedForeground,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
+                const SizedBox(width: 8),
                 Material(
                   color: colors.statusPeachBg,
                   shape: const CircleBorder(),
@@ -122,6 +94,26 @@ class UnavailableJobCard extends StatelessWidget {
                     ),
                   ),
                 ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                AppTag(label: tr('savedJobs.unavailable.tag')),
+                if (savedAgo != null)
+                  Text(
+                    tr(
+                      'savedJobs.card.savedTime',
+                      namedArgs: {'time': savedAgo},
+                    ),
+                    style: AppTypography.body(
+                      fontSize: 12,
+                      color: colors.mutedForeground,
+                    ),
+                  ),
               ],
             ),
           ],
