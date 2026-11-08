@@ -270,6 +270,29 @@ void main() {
       expect(adapter.requests.last.method, 'GET');
     });
 
+    testWidgets('the Undo toast closes when opening the edit form', (
+      tester,
+    ) async {
+      final adapter = FakeAdapter((options) {
+        if (options.method == 'PATCH') {
+          return jsonBody(_cert('c1', 'AWS', suggested: true));
+        }
+        return jsonBody(_page([_cert('c1', 'AWS')]));
+      });
+      await _pump(tester, adapter);
+
+      await tester.tap(find.byType(Switch));
+      await tester.pumpAndSettle();
+      expect(find.text('certificates.toast.suggested'), findsOneWidget);
+      await tester.tap(find.byTooltip('certificates.moreFor'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('certificates.edit'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('certificates.form.editTitle'), findsOneWidget);
+      expect(find.text('certificates.toast.suggested'), findsNothing);
+    });
+
     testWidgets('the ⋯ menu shows the domain and version', (tester) async {
       await _pump(
         tester,

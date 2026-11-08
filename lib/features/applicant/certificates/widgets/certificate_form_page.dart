@@ -88,12 +88,15 @@ class CertificateFormPage extends ConsumerStatefulWidget {
   static Future<CertificateFormResult?> open(
     BuildContext context, [
     CertificateLink? existing,
-  ]) => Navigator.of(context).push(
-    MaterialPageRoute(
-      fullscreenDialog: true,
-      builder: (_) => CertificateFormPage(existing: existing),
-    ),
-  );
+  ]) {
+    ScaffoldMessenger.of(context).removeCurrentSnackBar();
+    return Navigator.of(context).push(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => CertificateFormPage(existing: existing),
+      ),
+    );
+  }
 
   @override
   ConsumerState<CertificateFormPage> createState() =>

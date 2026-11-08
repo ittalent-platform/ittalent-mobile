@@ -6,7 +6,11 @@ import 'package:ittalent_mobile/theme/app_colors.dart';
 import 'package:ittalent_mobile/theme/app_theme.dart';
 
 void main() {
-  Future<void> show(WidgetTester tester, {bool error = false}) async {
+  Future<void> show(
+    WidgetTester tester, {
+    bool error = false,
+    bool undo = false,
+  }) async {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light,
@@ -17,6 +21,9 @@ void main() {
                 ScaffoldMessenger.of(context),
                 'Saved',
                 error: error,
+                action: undo
+                    ? SnackBarAction(label: 'Undo', onPressed: () {})
+                    : null,
               ),
               child: const Text('go'),
             ),
@@ -49,5 +56,27 @@ void main() {
 
     expect(find.byIcon(LucideIcons.circleAlert), findsOneWidget);
     expect(find.byIcon(LucideIcons.circleCheck), findsNothing);
+  });
+
+  testWidgets('an Undo toast closes after four seconds', (tester) async {
+    await show(tester, undo: true);
+
+    final snackBar = tester.widget<SnackBar>(find.byType(SnackBar));
+    expect(snackBar.duration, const Duration(seconds: 4));
+    expect(snackBar.persist, isFalse);
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
+    expect(find.text('Saved'), findsNothing);
+  });
+
+  testWidgets('an Undo toast stays for accessible navigation', (tester) async {
+    tester.platformDispatcher.accessibilityFeaturesTestValue =
+        const FakeAccessibilityFeatures(accessibleNavigation: true);
+    addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
+    await show(tester, undo: true);
+
+    expect(tester.widget<SnackBar>(find.byType(SnackBar)).persist, isTrue);
+    await tester.pump(const Duration(seconds: 5));
+    expect(find.text('Saved'), findsOneWidget);
   });
 }

@@ -18,6 +18,9 @@ void showAppToast(
     ..showSnackBar(
       SnackBar(
         action: action,
+        persist:
+            action != null &&
+            MediaQuery.accessibleNavigationOf(messenger.context),
         content: Row(
           children: [
             Icon(
