@@ -628,14 +628,6 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
                       ),
                     ),
                   _content(async, query),
-                  const SizedBox(height: 12),
-                  Text(
-                    tr('documents.mobile.helper'),
-                    style: AppTypography.body(
-                      fontSize: 12,
-                      color: context.colors.mutedForeground,
-                    ),
-                  ),
                 ],
               ),
             ),
