@@ -5,7 +5,6 @@ import '../../../../components/common/company_avatar.dart';
 import '../../../../components/ui/app_badge.dart';
 import '../../../../components/ui/app_button.dart';
 import '../../../../components/ui/app_card.dart';
-import '../../../../components/ui/app_tag.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_radius.dart';
 import '../../../../theme/app_typography.dart';
@@ -85,13 +84,6 @@ class SavedJobCard extends StatelessWidget {
         JobFormat.employmentLabel(item.employmentType!),
     ].join(' · ');
 
-    final tags = [
-      if (item.employmentType != null && item.employmentType!.isNotEmpty)
-        JobFormat.employmentLabel(item.employmentType!),
-      if (item.level != null && item.level!.isNotEmpty)
-        JobFormat.levelLabel(item.level!),
-    ];
-
     final salaryText = _formatSalary(context);
     final isVndSalary =
         item.currency == 'VND' && !item.salaryNegotiable && item.hasSalary;
@@ -135,21 +127,11 @@ class SavedJobCard extends StatelessWidget {
                       const SizedBox(height: 3),
                       Text(
                         meta,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                         style: AppTypography.body(
                           fontSize: 13,
                           color: colors.mutedForeground,
                         ),
                       ),
-                      if (tags.isNotEmpty) ...[
-                        const SizedBox(height: 8),
-                        Wrap(
-                          spacing: 6,
-                          runSpacing: 6,
-                          children: [for (final tag in tags) AppTag(label: tag)],
-                        ),
-                      ],
                     ],
                   ),
                 ),
