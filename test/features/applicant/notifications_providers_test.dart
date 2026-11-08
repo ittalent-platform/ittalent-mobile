@@ -78,6 +78,19 @@ void main() {
   });
 
   group('NotificationItem & NotificationsPage models', () {
+    test('maps a backend application link to the mobile detail route', () {
+      final item = NotificationItem.fromJson({
+        'id': 'notif-application',
+        'title': 'Application update',
+        'message': 'Your application changed',
+        'type': 'application_status_changed',
+        'actionUrl': '/applications/e81cfd3f4ce086c078434c6e',
+        'createdAt': '2026-11-08T00:00:00.000Z',
+      });
+
+      expect(item.actionUrl, '/my-applications/e81cfd3f4ce086c078434c6e');
+    });
+
     test('NotificationItem.fromJson parses all fields', () {
       final json = {
         'id': 'notif-1',
