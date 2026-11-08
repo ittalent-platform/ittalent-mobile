@@ -6,37 +6,38 @@ import 'saved_jobs_constants.dart';
 import 'saved_jobs_models.dart';
 
 /// Provider for tab counts: all, available, unavailable.
-final savedJobsCountsProvider =
-    FutureProvider.autoDispose<SavedJobsCounts>((ref) async {
-      if (!ref.watch(authNotifierProvider).isAuthenticated) {
-        return const SavedJobsCounts();
-      }
-      final client = ref.watch(apiClientProvider);
+final savedJobsCountsProvider = FutureProvider.autoDispose<SavedJobsCounts>((
+  ref,
+) async {
+  if (!ref.watch(authNotifierProvider).isAuthenticated) {
+    return const SavedJobsCounts();
+  }
+  final client = ref.watch(apiClientProvider);
 
-      Future<int> fetchTotal(String status) async {
-        try {
-          final res = await client.get<Map<String, dynamic>>(
-            SavedJobsConstants.wishlistPath,
-            queryParameters: {'status': status, 'limit': 1},
-          );
-          return (res.data?['total'] as num?)?.toInt() ?? 0;
-        } catch (_) {
-          return 0;
-        }
-      }
-
-      final results = await Future.wait([
-        fetchTotal(SavedJobsConstants.tabAll),
-        fetchTotal(SavedJobsConstants.tabAvailable),
-        fetchTotal(SavedJobsConstants.tabUnavailable),
-      ]);
-
-      return SavedJobsCounts(
-        all: results[0],
-        available: results[1],
-        unavailable: results[2],
+  Future<int> fetchTotal(String status) async {
+    try {
+      final res = await client.get<Map<String, dynamic>>(
+        SavedJobsConstants.wishlistPath,
+        queryParameters: {'status': status, 'limit': 1},
       );
-    });
+      return (res.data?['total'] as num?)?.toInt() ?? 0;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  final results = await Future.wait([
+    fetchTotal(SavedJobsConstants.tabAll),
+    fetchTotal(SavedJobsConstants.tabAvailable),
+    fetchTotal(SavedJobsConstants.tabUnavailable),
+  ]);
+
+  return SavedJobsCounts(
+    all: results[0],
+    available: results[1],
+    unavailable: results[2],
+  );
+});
 
 class SavedJobsQueryNotifier extends Notifier<SavedJobsQuery> {
   @override

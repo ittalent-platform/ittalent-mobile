@@ -46,10 +46,9 @@ class _SavedJobsScreenState extends ConsumerState<SavedJobsScreen> {
     _debounce = Timer(const Duration(milliseconds: 300), () {
       if (!mounted) return;
       final trimmed = value.trim();
-      final limited =
-          trimmed.length > SavedJobsConstants.maxSearchLength
-              ? trimmed.substring(0, SavedJobsConstants.maxSearchLength)
-              : trimmed;
+      final limited = trimmed.length > SavedJobsConstants.maxSearchLength
+          ? trimmed.substring(0, SavedJobsConstants.maxSearchLength)
+          : trimmed;
       ref
           .read(savedJobsQueryProvider.notifier)
           .setSearch(limited.isEmpty ? null : limited);
@@ -171,9 +170,7 @@ class _SavedJobsScreenState extends ConsumerState<SavedJobsScreen> {
                     key: Key('saved_jobs_tab_${tab.id}'),
                     borderRadius: BorderRadius.circular(999),
                     onTap: () {
-                      ref
-                          .read(savedJobsQueryProvider.notifier)
-                          .setTab(tab.id);
+                      ref.read(savedJobsQueryProvider.notifier).setTab(tab.id);
                     },
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 150),
@@ -185,22 +182,18 @@ class _SavedJobsScreenState extends ConsumerState<SavedJobsScreen> {
                         color: isActive ? colors.card : Colors.transparent,
                         borderRadius: BorderRadius.circular(999),
                         border: Border.all(
-                          color:
-                              isActive
-                                  ? colors.border
-                                  : Colors.transparent,
+                          color: isActive ? colors.border : Colors.transparent,
                           width: 1,
                         ),
-                        boxShadow:
-                            isActive
-                                ? [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.04),
-                                    blurRadius: 2,
-                                    offset: const Offset(0, 1),
-                                  ),
-                                ]
-                                : null,
+                        boxShadow: isActive
+                            ? [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.04),
+                                  blurRadius: 2,
+                                  offset: const Offset(0, 1),
+                                ),
+                              ]
+                            : null,
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -209,12 +202,12 @@ class _SavedJobsScreenState extends ConsumerState<SavedJobsScreen> {
                             tab.label,
                             style: AppTypography.body(
                               fontSize: 13,
-                              fontWeight:
-                                  isActive ? FontWeight.w600 : FontWeight.w500,
-                              color:
-                                  isActive
-                                      ? colors.foreground
-                                      : colors.mutedForeground,
+                              fontWeight: isActive
+                                  ? FontWeight.w600
+                                  : FontWeight.w500,
+                              color: isActive
+                                  ? colors.foreground
+                                  : colors.mutedForeground,
                             ),
                           ),
                           const SizedBox(width: 6),
@@ -224,10 +217,9 @@ class _SavedJobsScreenState extends ConsumerState<SavedJobsScreen> {
                               vertical: 1.5,
                             ),
                             decoration: BoxDecoration(
-                              color:
-                                  isActive
-                                      ? colors.muted.withValues(alpha: 0.4)
-                                      : colors.muted.withValues(alpha: 0.2),
+                              color: isActive
+                                  ? colors.muted.withValues(alpha: 0.4)
+                                  : colors.muted.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(999),
                             ),
                             child: Text(
@@ -235,10 +227,9 @@ class _SavedJobsScreenState extends ConsumerState<SavedJobsScreen> {
                               style: AppTypography.body(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700,
-                                color:
-                                  isActive
-                                      ? colors.foreground
-                                      : colors.mutedForeground,
+                                color: isActive
+                                    ? colors.foreground
+                                    : colors.mutedForeground,
                               ),
                             ),
                           ),
@@ -293,14 +284,13 @@ class _SavedJobsScreenState extends ConsumerState<SavedJobsScreen> {
                 children: [
                   IconButton(
                     icon: const Icon(LucideIcons.chevronLeft, size: 18),
-                    onPressed:
-                        page > 1
-                            ? () {
-                              ref
-                                  .read(savedJobsQueryProvider.notifier)
-                                  .setPage(page - 1);
-                            }
-                            : null,
+                    onPressed: page > 1
+                        ? () {
+                            ref
+                                .read(savedJobsQueryProvider.notifier)
+                                .setPage(page - 1);
+                          }
+                        : null,
                   ),
                   Text(
                     '$page / $totalPages',
@@ -312,14 +302,13 @@ class _SavedJobsScreenState extends ConsumerState<SavedJobsScreen> {
                   ),
                   IconButton(
                     icon: const Icon(LucideIcons.chevronRight, size: 18),
-                    onPressed:
-                        page < totalPages
-                            ? () {
-                              ref
-                                  .read(savedJobsQueryProvider.notifier)
-                                  .setPage(page + 1);
-                            }
-                            : null,
+                    onPressed: page < totalPages
+                        ? () {
+                            ref
+                                .read(savedJobsQueryProvider.notifier)
+                                .setPage(page + 1);
+                          }
+                        : null,
                   ),
                 ],
               ),
@@ -394,7 +383,9 @@ class _SavedJobsScreenState extends ConsumerState<SavedJobsScreen> {
                               color: colors.foreground,
                             ),
                             decoration: InputDecoration(
-                              hintText: tr('savedJobs.toolbar.searchPlaceholder'),
+                              hintText: tr(
+                                'savedJobs.toolbar.searchPlaceholder',
+                              ),
                               hintStyle: AppTypography.body(
                                 fontSize: 13.5,
                                 color: colors.mutedForeground,
@@ -540,35 +531,29 @@ class _SavedJobsScreenState extends ConsumerState<SavedJobsScreen> {
                 }
 
                 return SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final item = items[index];
-                      final isRemoving = _removingIds.contains(item.id);
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    final item = items[index];
+                    final isRemoving = _removingIds.contains(item.id);
 
-                      final cardWidget =
-                          item.isAvailable
-                              ? SavedJobCard(
-                                item: item,
-                                isRemoving: isRemoving,
-                                onRemove: _handleRemoveAvailable,
-                                onTap: () => context.push(
-                                  AppRoutes.jobDetail(item.jobId),
-                                ),
-                              )
-                              : UnavailableJobCard(
-                                item: item,
-                                isRemoving: isRemoving,
-                                onRequestRemove:
-                                    _handleRequestRemoveUnavailable,
-                              );
+                    final cardWidget = item.isAvailable
+                        ? SavedJobCard(
+                            item: item,
+                            isRemoving: isRemoving,
+                            onRemove: _handleRemoveAvailable,
+                            onTap: () =>
+                                context.push(AppRoutes.jobDetail(item.jobId)),
+                          )
+                        : UnavailableJobCard(
+                            item: item,
+                            isRemoving: isRemoving,
+                            onRequestRemove: _handleRequestRemoveUnavailable,
+                          );
 
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: cardWidget,
-                      );
-                    },
-                    childCount: items.length,
-                  ),
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: cardWidget,
+                    );
+                  }, childCount: items.length),
                 );
               },
             ),

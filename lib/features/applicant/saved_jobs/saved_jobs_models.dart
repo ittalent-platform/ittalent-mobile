@@ -80,14 +80,14 @@ class SavedJobItem {
     }
 
     final rawEnterprise = json['enterprise'];
-    final enterprise =
-        rawEnterprise is Map<String, dynamic>
-            ? SavedJobEnterprise.fromJson(rawEnterprise)
-            : null;
+    final enterprise = rawEnterprise is Map<String, dynamic>
+        ? SavedJobEnterprise.fromJson(rawEnterprise)
+        : null;
 
     final rawExpiresAt = json['expiresAt'];
-    final expiresAt =
-        rawExpiresAt is String ? DateTime.tryParse(rawExpiresAt) : null;
+    final expiresAt = rawExpiresAt is String
+        ? DateTime.tryParse(rawExpiresAt)
+        : null;
 
     return SavedJobItem(
       id: json['id'] as String? ?? json['_id'] as String? ?? '',
@@ -196,11 +196,10 @@ class SavedJobsResponse {
   factory SavedJobsResponse.fromJson(Map<String, dynamic> json) {
     final rawItems = (json['items'] as List<dynamic>?) ?? const [];
     return SavedJobsResponse(
-      items:
-          rawItems
-              .whereType<Map<String, dynamic>>()
-              .map(SavedJobItem.fromJson)
-              .toList(growable: false),
+      items: rawItems
+          .whereType<Map<String, dynamic>>()
+          .map(SavedJobItem.fromJson)
+          .toList(growable: false),
       total: (json['total'] as num?)?.toInt() ?? 0,
       page: (json['page'] as num?)?.toInt() ?? 1,
       totalPages: (json['totalPages'] as num?)?.toInt() ?? 1,

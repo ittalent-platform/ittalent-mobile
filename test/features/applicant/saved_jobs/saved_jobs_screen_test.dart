@@ -74,10 +74,7 @@ Map<String, dynamic> _savedJobJson({
   'savedAt': '2026-03-01T12:00:00.000Z',
   'availability': availability,
   'title': title,
-  'enterprise': {
-    'id': 'ent-1',
-    'name': companyName,
-  },
+  'enterprise': {'id': 'ent-1', 'name': companyName},
   'location': 'Ho Chi Minh',
   'employmentType': 'full_time',
   'level': 'senior',
@@ -124,38 +121,43 @@ void main() {
       expect(removed, isTrue);
     });
 
-    testWidgets('renders Submitted button and disables it when job is applied', (tester) async {
-      final item = SavedJobItem.fromJson(_savedJobJson(id: 's1', jobId: 'j1'));
-      final application = JobApplication.fromJson({
-        'id': 'app-1',
-        'status': 'submitted',
-        'canApplyAgain': false,
-      });
+    testWidgets(
+      'renders Submitted button and disables it when job is applied',
+      (tester) async {
+        final item = SavedJobItem.fromJson(
+          _savedJobJson(id: 's1', jobId: 'j1'),
+        );
+        final application = JobApplication.fromJson({
+          'id': 'app-1',
+          'status': 'submitted',
+          'canApplyAgain': false,
+        });
 
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            jobApplicationProvider('j1').overrideWith((_) => Future.value(application)),
-          ],
-          child: MaterialApp(
-            theme: AppTheme.light,
-            home: Scaffold(
-              body: SavedJobCard(
-                item: item,
-                onRemove: (_) {},
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              jobApplicationProvider('j1')
+                  .overrideWith((_) => Future.value(application)),
+            ],
+            child: MaterialApp(
+              theme: AppTheme.light,
+              home: Scaffold(
+                body: SavedJobCard(item: item, onRemove: (_) {}),
               ),
             ),
           ),
-        ),
-      );
+        );
 
-      await tester.pumpAndSettle();
-      expect(find.text('Submitted'), findsOneWidget);
-    });
+        await tester.pumpAndSettle();
+        expect(find.text('Submitted'), findsOneWidget);
+      },
+    );
   });
 
   group('UnavailableJobCard', () {
-    testWidgets('renders unavailable warning and triggers request remove', (tester) async {
+    testWidgets('renders unavailable warning and triggers request remove', (
+      tester,
+    ) async {
       final item = SavedJobItem.fromJson(
         _savedJobJson(id: 's2', jobId: 'j2', availability: 'unavailable'),
       );
@@ -217,11 +219,7 @@ void main() {
           return jsonBody({
             'items': [
               _savedJobJson(id: 's1', jobId: 'j1'),
-              _savedJobJson(
-                id: 's2',
-                jobId: 'j2',
-                availability: 'unavailable',
-              ),
+              _savedJobJson(id: 's2', jobId: 'j2', availability: 'unavailable'),
             ],
             'total': 2,
             'page': 1,
@@ -240,7 +238,10 @@ void main() {
       // Verify tabs exist
       expect(find.byKey(const Key('saved_jobs_tab_all')), findsOneWidget);
       expect(find.byKey(const Key('saved_jobs_tab_available')), findsOneWidget);
-      expect(find.byKey(const Key('saved_jobs_tab_unavailable')), findsOneWidget);
+      expect(
+        find.byKey(const Key('saved_jobs_tab_unavailable')),
+        findsOneWidget,
+      );
 
       // Tap available tab
       await tester.tap(find.byKey(const Key('saved_jobs_tab_available')));

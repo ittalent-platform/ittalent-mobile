@@ -16,7 +16,10 @@ class RemoveUnavailableDialog extends StatelessWidget {
   final VoidCallback onConfirm;
   final bool isPending;
 
-  static Future<bool?> show(BuildContext context, {required VoidCallback onConfirm}) {
+  static Future<bool?> show(
+    BuildContext context, {
+    required VoidCallback onConfirm,
+  }) {
     return showDialog<bool>(
       context: context,
       builder: (ctx) => RemoveUnavailableDialog(
@@ -67,7 +70,9 @@ class RemoveUnavailableDialog extends StatelessWidget {
                   text: tr('common.cancel'),
                   variant: AppButtonVariant.outline,
                   size: AppButtonSize.sm,
-                  onPressed: isPending ? null : () => Navigator.of(context).pop(false),
+                  onPressed: isPending
+                      ? null
+                      : () => Navigator.of(context).pop(false),
                 ),
                 const SizedBox(width: 8),
                 AppButton(

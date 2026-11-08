@@ -76,10 +76,9 @@ class SavedJobCard extends ConsumerWidget {
     final now = DateTime.now();
     final application = ref.watch(jobApplicationProvider(item.jobId)).value;
     final hasApplied = application != null && !application.canApplyAgain;
-    final companyName =
-        item.enterprise?.name.trim().isNotEmpty == true
-            ? item.enterprise!.name.trim()
-            : tr('savedJobs.card.companyFallback');
+    final companyName = item.enterprise?.name.trim().isNotEmpty == true
+        ? item.enterprise!.name.trim()
+        : tr('savedJobs.card.companyFallback');
 
     final meta = [
       companyName,
@@ -92,14 +91,13 @@ class SavedJobCard extends ConsumerWidget {
     final isVndSalary =
         item.currency == 'VND' && !item.salaryNegotiable && item.hasSalary;
     final savedAgo = JobFormat.postedAgo(item.savedAt, now);
-    final deadlineText =
-        item.expiresAt != null
-            ? JobFormat.applyBy(
-              item.expiresAt,
-              Localizations.localeOf(context).toString(),
-              now,
-            )
-            : null;
+    final deadlineText = item.expiresAt != null
+        ? JobFormat.applyBy(
+            item.expiresAt,
+            Localizations.localeOf(context).toString(),
+            now,
+          )
+        : null;
 
     return Opacity(
       opacity: isRemoving ? 0.4 : 1.0,
@@ -238,19 +236,18 @@ class SavedJobCard extends ConsumerWidget {
                     AppButton(
                       text: hasApplied
                           ? (tr('savedJobs.card.submitted') !=
-                                  'savedJobs.card.submitted'
-                              ? tr('savedJobs.card.submitted')
-                              : (tr('applications.card.status.submitted') !=
-                                      'applications.card.status.submitted'
-                                  ? tr('applications.card.status.submitted')
-                                  : 'Submitted'))
+                                    'savedJobs.card.submitted'
+                                ? tr('savedJobs.card.submitted')
+                                : (tr('applications.card.status.submitted') !=
+                                          'applications.card.status.submitted'
+                                      ? tr('applications.card.status.submitted')
+                                      : 'Submitted'))
                           : tr('savedJobs.card.apply'),
                       size: AppButtonSize.sm,
                       borderRadius: AppRadius.pillRadius,
-                      onPressed:
-                          hasApplied || isRemoving
-                              ? null
-                              : (onApply ?? onTap),
+                      onPressed: hasApplied || isRemoving
+                          ? null
+                          : (onApply ?? onTap),
                     ),
                   ],
                 ),
