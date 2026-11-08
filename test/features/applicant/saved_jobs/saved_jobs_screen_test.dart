@@ -7,6 +7,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ittalent_mobile/api/client.dart';
 import 'package:ittalent_mobile/auth/auth_notifier.dart';
 import 'package:ittalent_mobile/auth/auth_state.dart';
+import 'package:ittalent_mobile/features/applicant/jobs/jobs_models.dart';
+import 'package:ittalent_mobile/features/applicant/jobs/jobs_providers.dart';
 import 'package:ittalent_mobile/features/applicant/saved_jobs/saved_jobs_models.dart';
 import 'package:ittalent_mobile/features/applicant/saved_jobs/saved_jobs_screen.dart';
 import 'package:ittalent_mobile/features/applicant/saved_jobs/widgets/remove_unavailable_dialog.dart';
@@ -97,13 +99,15 @@ void main() {
       var tapped = false;
 
       await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.light,
-          home: Scaffold(
-            body: SavedJobCard(
-              item: item,
-              onRemove: (_) => removed = true,
-              onTap: () => tapped = true,
+        ProviderScope(
+          child: MaterialApp(
+            theme: AppTheme.light,
+            home: Scaffold(
+              body: SavedJobCard(
+                item: item,
+                onRemove: (_) => removed = true,
+                onTap: () => tapped = true,
+              ),
             ),
           ),
         ),
@@ -118,6 +122,35 @@ void main() {
 
       await tester.tap(find.byIcon(Icons.favorite));
       expect(removed, isTrue);
+    });
+
+    testWidgets('renders Submitted button and disables it when job is applied', (tester) async {
+      final item = SavedJobItem.fromJson(_savedJobJson(id: 's1', jobId: 'j1'));
+      final application = JobApplication.fromJson({
+        'id': 'app-1',
+        'status': 'submitted',
+        'canApplyAgain': false,
+      });
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            jobApplicationProvider('j1').overrideWith((_) => Future.value(application)),
+          ],
+          child: MaterialApp(
+            theme: AppTheme.light,
+            home: Scaffold(
+              body: SavedJobCard(
+                item: item,
+                onRemove: (_) {},
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+      expect(find.text('savedJobs.card.submitted'), findsOneWidget);
     });
   });
 

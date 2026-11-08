@@ -45,7 +45,8 @@
       "savedTime": "Đã lưu {{time}}",
       "removeAriaLabel": "Đã lưu. Xóa khỏi việc đã lưu",
       "removeTitle": "Xóa khỏi việc đã lưu",
-      "apply": "Ứng tuyển"
+      "apply": "Ứng tuyển",
+      "submitted": "Đã nộp"
     },
     "unavailable": {
       "title": "Việc làm này không còn khả dụng",

@@ -45,7 +45,8 @@
       "savedTime": "Saved {{time}}",
       "removeAriaLabel": "Saved. Remove from saved jobs",
       "removeTitle": "Remove from saved jobs",
-      "apply": "Apply"
+      "apply": "Apply",
+      "submitted": "Submitted"
     },
     "unavailable": {
       "title": "This job is no longer available",

@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../components/common/company_avatar.dart';
 import '../../../../components/ui/app_badge.dart';
@@ -9,9 +10,10 @@ import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_radius.dart';
 import '../../../../theme/app_typography.dart';
 import '../../jobs/jobs_format.dart';
+import '../../jobs/jobs_providers.dart';
 import '../saved_jobs_models.dart';
 
-class SavedJobCard extends StatelessWidget {
+class SavedJobCard extends ConsumerWidget {
   const SavedJobCard({
     super.key,
     required this.item,
@@ -69,9 +71,11 @@ class SavedJobCard extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.colors;
     final now = DateTime.now();
+    final application = ref.watch(jobApplicationProvider(item.jobId)).value;
+    final hasApplied = application != null && !application.canApplyAgain;
     final companyName =
         item.enterprise?.name.trim().isNotEmpty == true
             ? item.enterprise!.name.trim()
@@ -230,10 +234,17 @@ class SavedJobCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     AppButton(
-                      text: tr('savedJobs.card.apply'),
+                      text: tr(
+                        hasApplied
+                            ? 'savedJobs.card.submitted'
+                            : 'savedJobs.card.apply',
+                      ),
                       size: AppButtonSize.sm,
                       borderRadius: AppRadius.pillRadius,
-                      onPressed: isRemoving ? null : (onApply ?? onTap),
+                      onPressed:
+                          hasApplied || isRemoving
+                              ? null
+                              : (onApply ?? onTap),
                     ),
                   ],
                 ),
