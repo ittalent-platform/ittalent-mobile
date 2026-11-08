@@ -129,42 +129,6 @@ class _SavedJobsScreenState extends ConsumerState<SavedJobsScreen> {
     if (confirmed != true) return;
   }
 
-  Widget _buildSubtitle(
-    BuildContext context, {
-    required int total,
-    required String activeTab,
-    required String? query,
-  }) {
-    final colors = context.colors;
-    final String text;
-
-    if (activeTab == SavedJobsConstants.tabUnavailable) {
-      text = tr(
-        'savedJobs.subtitleUnavailable',
-        namedArgs: {'count': '$total'},
-      );
-    } else if (query != null && query.isNotEmpty) {
-      text = tr(
-        'savedJobs.subtitleSearch',
-        namedArgs: {'count': '$total', 'query': query},
-      );
-    } else {
-      text = tr('savedJobs.subtitleAll', namedArgs: {'count': '$total'});
-    }
-
-    return Padding(
-      padding: const EdgeInsets.only(top: 10, bottom: 12),
-      child: Text(
-        text,
-        style: AppTypography.body(
-          fontSize: 13,
-          fontWeight: FontWeight.w500,
-          color: colors.mutedForeground,
-        ),
-      ),
-    );
-  }
-
   Widget _buildTabs(BuildContext context, SavedJobsCounts counts) {
     final colors = context.colors;
     final activeTab = ref.watch(savedJobsQueryProvider).status;
@@ -467,15 +431,7 @@ class _SavedJobsScreenState extends ConsumerState<SavedJobsScreen> {
 
                   // Segmented Tabs
                   _buildTabs(context, counts),
-
-                  // Subtitle
-                  if (!asyncList.hasError && asyncList.asData != null)
-                    _buildSubtitle(
-                      context,
-                      total: asyncList.asData!.value.total,
-                      activeTab: query.status,
-                      query: query.q,
-                    ),
+                  const SizedBox(height: 12),
                 ],
               ),
             ),
