@@ -17,6 +17,92 @@
     "documents": "Documents",
     "certificates": "Certificates"
   },
+  "savedJobs": {
+    "title": "Saved jobs",
+    "subtitle": "Review, track and manage your saved IT opportunities.",
+    "subtitleAll": "{{count}} saved jobs · newest saved first",
+    "subtitleUnavailable": "{{count}} saved jobs are no longer available · you can only remove them",
+    "subtitleSearch": "{{count}} saved jobs match “{{query}}”",
+    "loadingTitle": "Saved jobs workspace",
+    "loadingDescription": "Your saved jobs list is ready. Detailed card management and filters will appear here.",
+    "toolbar": {
+      "searchPlaceholder": "Search title, company, city or skill",
+      "searchLabel": "Search saved jobs",
+      "clearSearch": "Clear search",
+      "keywordTooLong": "Use up to 100 characters."
+    },
+    "tabs": {
+      "label": "Filter saved jobs",
+      "all": "All",
+      "available": "Available",
+      "unavailable": "No longer available"
+    },
+    "card": {
+      "companyFallback": "Company",
+      "jobTitleFallback": "Untitled Position",
+      "closesIn2Days": "Closes in 2 days",
+      "applyBy": "Apply by",
+      "savedTime": "Saved {{time}}",
+      "removeAriaLabel": "Saved. Remove from saved jobs",
+      "removeTitle": "Remove from saved jobs",
+      "apply": "Apply"
+    },
+    "unavailable": {
+      "title": "This job is no longer available",
+      "description": "It may have closed, passed its deadline or been taken down. Its details are hidden.",
+      "tag": "No longer available"
+    },
+    "allAvailable": {
+      "title": "All your saved jobs are still available",
+      "showAll": "Show all"
+    },
+    "empty": {
+      "title": "No saved jobs yet",
+      "description": "Tap the heart on any job to keep it here. Only you can see them.",
+      "browseJobs": "Browse jobs",
+      "searchNoMatchTitle": "No saved jobs match “{{query}}”",
+      "searchNoMatchDescription": "Try another word or clear the search."
+    },
+    "error": {
+      "title": "Your saved jobs didn’t load",
+      "description": "Check your connection and try again.",
+      "retry": "Try again"
+    },
+    "pagination": {
+      "showing": "Showing {{start}}–{{end}} of {{total}}"
+    },
+    "button": {
+      "save": "Save",
+      "saved": "Saved",
+      "saving": "Saving…",
+      "ariaSave": "Save {{title}}",
+      "ariaSaved": "Saved. Remove {{title}} from saved jobs",
+      "tooltipSave": "Save job",
+      "tooltipRemove": "Click to remove from saved jobs",
+      "staffDisabled": "Saving jobs is for candidate accounts"
+    },
+    "dialog": {
+      "signInTitle": "Sign in to save jobs",
+      "signInDescription": "Saved jobs are private to your candidate account. Sign in to return directly to this job.",
+      "createAccountAction": "Create an account",
+      "signInAction": "Sign in",
+      "removeUnavailableTitle": "Remove this saved job?",
+      "removeUnavailableDescription": "It's no longer available, so you can't save it again unless the employer reopens it.",
+      "removeConfirm": "Remove"
+    },
+    "toast": {
+      "savedTitle": "Job saved",
+      "savedMessage": "Job saved to your bookmarks.",
+      "viewSavedJobs": "View saved jobs",
+      "removedTitle": "Removed from saved jobs",
+      "removedMessage": "Job removed from your bookmarks.",
+      "undo": "Undo",
+      "errorSaveTitle": "Couldn't save job",
+      "errorRemoveTitle": "Couldn't remove job",
+      "errorSaveFallback": "Couldn't save. Try again",
+      "errorRemoveFallback": "Couldn't remove. Try again"
+    }
+  },
   "certificates": {
     "title": "Certificates",
     "add": "Add certificate",

@@ -17,6 +17,92 @@
     "documents": "Tài liệu",
     "certificates": "Chứng chỉ"
   },
+  "savedJobs": {
+    "title": "Việc đã lưu",
+    "subtitle": "Xem lại, theo dõi và quản lý các cơ hội IT bạn đã lưu.",
+    "subtitleAll": "{{count}} việc đã lưu · lưu gần đây nhất trước",
+    "subtitleUnavailable": "{{count}} việc đã lưu không còn khả dụng · bạn chỉ có thể xóa",
+    "subtitleSearch": "{{count}} việc đã lưu khớp với “{{query}}”",
+    "loadingTitle": "Không gian làm việc việc đã lưu",
+    "loadingDescription": "Danh sách việc đã lưu đã sẵn sàng. Giao diện quản lý thẻ việc làm và bộ lọc chi tiết sẽ xuất hiện ở đây.",
+    "toolbar": {
+      "searchPlaceholder": "Tìm chức danh, công ty, thành phố hoặc kỹ năng",
+      "searchLabel": "Tìm kiếm việc đã lưu",
+      "clearSearch": "Xóa tìm kiếm",
+      "keywordTooLong": "Vui lòng nhập tối đa 100 ký tự."
+    },
+    "tabs": {
+      "label": "Lọc việc đã lưu",
+      "all": "Tất cả",
+      "available": "Còn tuyển",
+      "unavailable": "Không còn khả dụng"
+    },
+    "card": {
+      "companyFallback": "Công ty",
+      "jobTitleFallback": "Vị trí tuyển dụng",
+      "closesIn2Days": "Đóng trong 2 ngày",
+      "applyBy": "Hạn nộp",
+      "savedTime": "Đã lưu {{time}}",
+      "removeAriaLabel": "Đã lưu. Xóa khỏi việc đã lưu",
+      "removeTitle": "Xóa khỏi việc đã lưu",
+      "apply": "Ứng tuyển"
+    },
+    "unavailable": {
+      "title": "Việc làm này không còn khả dụng",
+      "description": "Công việc có thể đã đóng, hết hạn nộp hoặc đã bị gỡ. Chi tiết công việc bị ẩn.",
+      "tag": "Không còn khả dụng"
+    },
+    "allAvailable": {
+      "title": "Tất cả việc đã lưu đều đang mở tuyển",
+      "showAll": "Xem tất cả"
+    },
+    "empty": {
+      "title": "Chưa có việc làm nào được lưu",
+      "description": "Nhấn vào biểu tượng trái tim trên bất kỳ tin tuyển dụng nào để lưu tại đây. Chỉ bạn mới nhìn thấy.",
+      "browseJobs": "Khám phá việc làm",
+      "searchNoMatchTitle": "Không có việc đã lưu nào khớp với “{{query}}”",
+      "searchNoMatchDescription": "Hãy thử từ khóa khác hoặc xóa tìm kiếm."
+    },
+    "error": {
+      "title": "Không thể tải danh sách việc đã lưu",
+      "description": "Vui lòng kiểm tra kết nối mạng và thử lại.",
+      "retry": "Thử lại"
+    },
+    "pagination": {
+      "showing": "Đang hiển thị {{start}}–{{end}} trên {{total}}"
+    },
+    "button": {
+      "save": "Lưu",
+      "saved": "Đã lưu",
+      "saving": "Đang lưu…",
+      "ariaSave": "Lưu {{title}}",
+      "ariaSaved": "Đã lưu. Bỏ lưu {{title}} khỏi danh sách",
+      "tooltipSave": "Lưu việc làm",
+      "tooltipRemove": "Nhấp để bỏ lưu việc làm",
+      "staffDisabled": "Tính năng lưu việc làm chỉ dành cho tài khoản ứng viên"
+    },
+    "dialog": {
+      "signInTitle": "Đăng nhập để lưu việc làm",
+      "signInDescription": "Các việc làm đã lưu được bảo mật cho tài khoản ứng viên của bạn. Đăng nhập để quay lại ngay việc làm này.",
+      "createAccountAction": "Tạo tài khoản",
+      "signInAction": "Đăng nhập",
+      "removeUnavailableTitle": "Xóa việc làm đã lưu này?",
+      "removeUnavailableDescription": "Việc làm này không còn khả dụng, nên bạn sẽ không thể lưu lại trừ khi nhà tuyển dụng mở lại.",
+      "removeConfirm": "Xóa"
+    },
+    "toast": {
+      "savedTitle": "Đã lưu việc làm",
+      "savedMessage": "Đã lưu việc làm vào danh sách của bạn.",
+      "viewSavedJobs": "Xem việc đã lưu",
+      "removedTitle": "Đã xóa khỏi việc đã lưu.",
+      "removedMessage": "Đã bỏ việc làm khỏi danh sách lưu của bạn.",
+      "undo": "Hoàn tác",
+      "errorSaveTitle": "Không thể lưu việc làm",
+      "errorRemoveTitle": "Không thể bỏ lưu việc làm",
+      "errorSaveFallback": "Không thể lưu việc làm. Vui lòng thử lại.",
+      "errorRemoveFallback": "Không thể bỏ lưu việc làm. Vui lòng thử lại."
+    }
+  },
   "certificates": {
     "title": "Chứng chỉ",
     "add": "Thêm chứng chỉ",
