@@ -127,7 +127,7 @@ class NotificationsScreen extends ConsumerWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: colors.card,
+        color: colors.background,
         border: Border(
           bottom: BorderSide(
             color: colors.border.withValues(alpha: 0.6),
