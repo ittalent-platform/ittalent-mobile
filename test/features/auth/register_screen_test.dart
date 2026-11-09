@@ -118,6 +118,7 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('Full name'), findsOneWidget);
+      expect(find.text('Username'), findsOneWidget);
       expect(find.text('Email'), findsOneWidget);
       expect(find.text('Mobile'), findsOneWidget);
       expect(find.text('Password'), findsOneWidget);
@@ -146,12 +147,83 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Full name is required'), findsOneWidget);
+      expect(
+        find.text('Username must be at least 3 characters'),
+        findsOneWidget,
+      );
       expect(find.text('Email is required'), findsOneWidget);
       expect(find.text('Password is required'), findsOneWidget);
       expect(find.text('Please confirm your password'), findsOneWidget);
       expect(
         find.text('You must agree to the Terms and Privacy'),
         findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'RegisterScreen validates username length and character constraints',
+    (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(800, 1200);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(buildTestableScreen());
+      await tester.pumpAndSettle();
+
+      final textFields = find.byType(TextField);
+
+      // Min length violation
+      await tester.enterText(textFields.at(1), 'ab');
+      await tester.tap(find.text('Create account'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('Username must be at least 3 characters'),
+        findsOneWidget,
+      );
+
+      // Max length violation (> 30 characters)
+      await tester.enterText(
+        textFields.at(1),
+        'this_username_is_way_too_long_and_exceeds_thirty_chars',
+      );
+      await tester.tap(find.text('Create account'));
+      await tester.pumpAndSettle();
+      expect(find.text('Username cannot exceed 30 characters'), findsOneWidget);
+
+      // Invalid character violation (hyphen)
+      await tester.enterText(textFields.at(1), 'alex-dev');
+      await tester.tap(find.text('Create account'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text(
+          'Username may only contain letters, numbers, and underscores',
+        ),
+        findsOneWidget,
+      );
+
+      // Invalid character violation (special character @)
+      await tester.enterText(textFields.at(1), 'alex@dev');
+      await tester.tap(find.text('Create account'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text(
+          'Username may only contain letters, numbers, and underscores',
+        ),
+        findsOneWidget,
+      );
+
+      // Valid username clears error on change
+      await tester.enterText(textFields.at(1), 'alex_dev');
+      await tester.pumpAndSettle();
+      expect(
+        find.text(
+          'Username may only contain letters, numbers, and underscores',
+        ),
+        findsNothing,
       );
     },
   );
@@ -169,14 +241,15 @@ void main() {
     await tester.pumpWidget(buildTestableScreen());
     await tester.pumpAndSettle();
 
-    // Fill valid name, email
+    // Fill valid name, username, email
     final textFields = find.byType(TextField);
     await tester.enterText(textFields.at(0), 'Nguyễn Văn An');
-    await tester.enterText(textFields.at(1), 'an.nguyen@example.com');
+    await tester.enterText(textFields.at(1), 'alex_dev');
+    await tester.enterText(textFields.at(2), 'an.nguyen@example.com');
 
     // Fill simple password
-    await tester.enterText(textFields.at(3), 'short');
     await tester.enterText(textFields.at(4), 'short');
+    await tester.enterText(textFields.at(5), 'short');
     await tester.tap(find.byType(AppCheckbox));
 
     await tester.tap(find.text('Create account'));
@@ -185,8 +258,8 @@ void main() {
     expect(find.text('Password must be 8–64 characters'), findsOneWidget);
 
     // Mismatched password
-    await tester.enterText(textFields.at(3), 'Password123!');
-    await tester.enterText(textFields.at(4), 'DifferentPass123!');
+    await tester.enterText(textFields.at(4), 'Password123!');
+    await tester.enterText(textFields.at(5), 'DifferentPass123!');
 
     await tester.tap(find.text('Create account'));
     await tester.pumpAndSettle();
@@ -244,15 +317,18 @@ void main() {
 
       final textFields = find.byType(TextField);
       await tester.enterText(textFields.at(0), 'Nguyễn Văn An');
-      await tester.enterText(textFields.at(1), 'an.nguyen@example.com');
-      await tester.enterText(textFields.at(3), 'Password123!');
+      await tester.enterText(textFields.at(1), 'an_nguyen');
+      await tester.enterText(textFields.at(2), 'an.nguyen@example.com');
       await tester.enterText(textFields.at(4), 'Password123!');
+      await tester.enterText(textFields.at(5), 'Password123!');
       await tester.tap(find.byType(AppCheckbox));
 
       await tester.tap(find.text('Create account'));
       await tester.pumpAndSettle();
 
       expect(fakeApiClient.lastPostPath, '/api/v1/auth/register');
+      expect(fakeApiClient.lastPostData['username'], 'an_nguyen');
+      expect(fakeApiClient.lastPostData['email'], 'an.nguyen@example.com');
       expect(find.text('Verify Email Notice Screen'), findsOneWidget);
     },
   );

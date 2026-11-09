@@ -22,6 +22,7 @@ class RegisterScreen extends ConsumerStatefulWidget {
 
 class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _nameController = TextEditingController();
+  final _usernameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -32,6 +33,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   bool _termsAccepted = false;
 
   String? _nameError;
+  String? _usernameError;
   String? _emailError;
   String? _phoneError;
   String? _passwordError;
@@ -41,6 +43,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   @override
   void dispose() {
     _nameController.dispose();
+    _usernameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
     _passwordController.dispose();
@@ -51,6 +54,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   bool _validateForm() {
     setState(() {
       _nameError = null;
+      _usernameError = null;
       _emailError = null;
       _phoneError = null;
       _passwordError = null;
@@ -60,6 +64,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
     bool isValid = true;
     final name = _nameController.text.trim();
+    final username = _usernameController.text.trim();
     final email = _emailController.text.trim();
     final phone = _phoneController.text.trim();
     final password = _passwordController.text;
@@ -70,6 +75,21 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       isValid = false;
     } else if (name.length < 2) {
       setState(() => _nameError = 'Full name must be at least 2 characters');
+      isValid = false;
+    }
+
+    final usernameRegex = RegExp(r'^[a-zA-Z0-9_]+$');
+    if (username.isEmpty || username.length < 3) {
+      setState(() => _usernameError = 'Username must be at least 3 characters');
+      isValid = false;
+    } else if (username.length > 30) {
+      setState(() => _usernameError = 'Username cannot exceed 30 characters');
+      isValid = false;
+    } else if (!usernameRegex.hasMatch(username)) {
+      setState(
+        () => _usernameError =
+            'Username may only contain letters, numbers, and underscores',
+      );
       isValid = false;
     }
 
@@ -136,23 +156,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     if (!_validateForm()) return;
 
     final email = _emailController.text.trim();
+    final username = _usernameController.text.trim().toLowerCase();
     final password = _passwordController.text;
-
-    var prefix = email
-        .split('@')
-        .first
-        .replaceAll(RegExp(r'[^a-zA-Z0-9_]'), '_');
-    if (prefix.length < 3) {
-      prefix = '${prefix}_usr';
-    }
-    if (prefix.length > 30) {
-      prefix = prefix.substring(0, 30);
-    }
 
     final success = await ref
         .read(authNotifierProvider.notifier)
         .register(
-          RegisterRequest(email: email, username: prefix, password: password),
+          RegisterRequest(email: email, username: username, password: password),
         );
 
     if (success && mounted) {
@@ -242,6 +252,19 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         onChanged: (_) {
                           if (_nameError != null) {
                             setState(() => _nameError = null);
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 14),
+                      AppInput(
+                        controller: _usernameController,
+                        label: 'Username',
+                        isRequired: true,
+                        hintText: 'e.g. alex_dev',
+                        errorText: _usernameError,
+                        onChanged: (_) {
+                          if (_usernameError != null) {
+                            setState(() => _usernameError = null);
                           }
                         },
                       ),
